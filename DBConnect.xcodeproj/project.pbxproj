@@ -1,0 +1,292 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		790329C11383E73800741EE8 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 790329C01383E73800741EE8 /* UIKit.framework */; };
+		790329C31383E73800741EE8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 790329C21383E73800741EE8 /* Foundation.framework */; };
+		790329C51383E73800741EE8 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 790329C41383E73800741EE8 /* CoreGraphics.framework */; };
+		790329CB1383E73800741EE8 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 790329C91383E73800741EE8 /* InfoPlist.strings */; };
+		790329CE1383E73800741EE8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329CD1383E73800741EE8 /* main.m */; };
+		790329FB1383EB2500741EE8 /* DBConnectAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */; };
+		79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 79032A091383ED0D00741EE8 /* LICENSE.txt */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		790329BC1383E73800741EE8 /* DBConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DBConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		790329C01383E73800741EE8 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		790329C21383E73800741EE8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		790329C41383E73800741EE8 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		790329C81383E73800741EE8 /* DBConnect-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "DBConnect-Info.plist"; sourceTree = "<group>"; };
+		790329CA1383E73800741EE8 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		790329CC1383E73800741EE8 /* DBConnect-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "DBConnect-Prefix.pch"; sourceTree = "<group>"; };
+		790329CD1383E73800741EE8 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		790329F91383EB2500741EE8 /* DBConnectAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBConnectAppDelegate.h; path = Classes/DBConnectAppDelegate.h; sourceTree = "<group>"; };
+		790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBConnectAppDelegate.m; path = Classes/DBConnectAppDelegate.m; sourceTree = "<group>"; };
+		79032A091383ED0D00741EE8 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = LICENSE.txt; path = libs/dbconnect/LICENSE.txt; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		790329B91383E73800741EE8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				790329C11383E73800741EE8 /* UIKit.framework in Frameworks */,
+				790329C31383E73800741EE8 /* Foundation.framework in Frameworks */,
+				790329C51383E73800741EE8 /* CoreGraphics.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		790329B11383E73800741EE8 = {
+			isa = PBXGroup;
+			children = (
+				790329C61383E73800741EE8 /* DBConnect */,
+				790329BF1383E73800741EE8 /* Frameworks */,
+				790329BD1383E73800741EE8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		790329BD1383E73800741EE8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				790329BC1383E73800741EE8 /* DBConnect.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		790329BF1383E73800741EE8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				790329C01383E73800741EE8 /* UIKit.framework */,
+				790329C21383E73800741EE8 /* Foundation.framework */,
+				790329C41383E73800741EE8 /* CoreGraphics.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		790329C61383E73800741EE8 /* DBConnect */ = {
+			isa = PBXGroup;
+			children = (
+				790329F81383EB0200741EE8 /* Classes */,
+				790329FD1383EB4C00741EE8 /* libs */,
+				790329FC1383EB3F00741EE8 /* Resources */,
+				790329C71383E73800741EE8 /* Supporting Files */,
+			);
+			path = DBConnect;
+			sourceTree = "<group>";
+		};
+		790329C71383E73800741EE8 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				790329C81383E73800741EE8 /* DBConnect-Info.plist */,
+				790329C91383E73800741EE8 /* InfoPlist.strings */,
+				790329CC1383E73800741EE8 /* DBConnect-Prefix.pch */,
+				790329CD1383E73800741EE8 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		790329F81383EB0200741EE8 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				790329F91383EB2500741EE8 /* DBConnectAppDelegate.h */,
+				790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		790329FC1383EB3F00741EE8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		790329FD1383EB4C00741EE8 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				79032A081383ED0100741EE8 /* dbconnect */,
+			);
+			name = libs;
+			sourceTree = "<group>";
+		};
+		79032A081383ED0100741EE8 /* dbconnect */ = {
+			isa = PBXGroup;
+			children = (
+				79032A091383ED0D00741EE8 /* LICENSE.txt */,
+			);
+			name = dbconnect;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		790329BB1383E73800741EE8 /* DBConnect */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 790329DD1383E73800741EE8 /* Build configuration list for PBXNativeTarget "DBConnect" */;
+			buildPhases = (
+				790329B81383E73800741EE8 /* Sources */,
+				790329B91383E73800741EE8 /* Frameworks */,
+				790329BA1383E73800741EE8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DBConnect;
+			productName = DBConnect;
+			productReference = 790329BC1383E73800741EE8 /* DBConnect.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		790329B31383E73800741EE8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				ORGANIZATIONNAME = "Tattooed Orange";
+			};
+			buildConfigurationList = 790329B61383E73800741EE8 /* Build configuration list for PBXProject "DBConnect" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 790329B11383E73800741EE8;
+			productRefGroup = 790329BD1383E73800741EE8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				790329BB1383E73800741EE8 /* DBConnect */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		790329BA1383E73800741EE8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				790329CB1383E73800741EE8 /* InfoPlist.strings in Resources */,
+				79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		790329B81383E73800741EE8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				790329CE1383E73800741EE8 /* main.m in Sources */,
+				790329FB1383EB2500741EE8 /* DBConnectAppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		790329C91383E73800741EE8 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				790329CA1383E73800741EE8 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		790329DB1383E73800741EE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		790329DC1383E73800741EE8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
+		790329DE1383E73800741EE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "DBConnect/DBConnect-Prefix.pch";
+				INFOPLIST_FILE = "DBConnect/DBConnect-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		790329DF1383E73800741EE8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "DBConnect/DBConnect-Prefix.pch";
+				INFOPLIST_FILE = "DBConnect/DBConnect-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALIDATE_PRODUCT = YES;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		790329B61383E73800741EE8 /* Build configuration list for PBXProject "DBConnect" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				790329DB1383E73800741EE8 /* Debug */,
+				790329DC1383E73800741EE8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		790329DD1383E73800741EE8 /* Build configuration list for PBXNativeTarget "DBConnect" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				790329DE1383E73800741EE8 /* Debug */,
+				790329DF1383E73800741EE8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 790329B31383E73800741EE8 /* Project object */;
+}

@@ -1,0 +1,7 @@
+.DB_Store
+build
+DerivedData
+*.xcodeproj/*.pbxuser
+*.xcodeproj/*.perspectivev3
+*.xcodeproj/project.workspace/xcuserdata
+*.xcodeproj/xcuserdata
