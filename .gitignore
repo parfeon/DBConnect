@@ -1,7 +1,12 @@
 .DB_Store
+DBConnect/.DB_Store
+DBConnect/Classes/.DB_Store
+DBConnect/en.lproj/.DB_Store
+DBConnect/libs/.DB_Store
+DBConnect/libs/dbconnect/.DB_Store
 build
 DerivedData
 *.xcodeproj/*.pbxuser
 *.xcodeproj/*.perspectivev3
-*.xcodeproj/project.workspace/xcuserdata
+*.xcodeproj/project.xcworkspace/xcuserdata
 *.xcodeproj/xcuserdata
