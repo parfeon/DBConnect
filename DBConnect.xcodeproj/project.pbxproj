@@ -14,7 +14,7 @@
 		790329CE1383E73800741EE8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329CD1383E73800741EE8 /* main.m */; };
 		790329FB1383EB2500741EE8 /* DBConnectAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */; };
 		79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 79032A091383ED0D00741EE8 /* LICENSE.txt */; };
-		79D4BCBA138402F5001EC1A3 /* README in Resources */ = {isa = PBXBuildFile; fileRef = 79D4BCB9138402F5001EC1A3 /* README */; };
+		79D4BCBA138402F5001EC1A3 /* README.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 79D4BCB9138402F5001EC1A3 /* README.markdown */; };
 		79D4BCC713840E92001EC1A3 /* DBCDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */; };
 		79D4BCC813840E92001EC1A3 /* DBCDatabaseResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D4BCBF13840E92001EC1A3 /* DBCDatabaseResult.m */; };
 		79D4BCC913840E92001EC1A3 /* DBCDatabaseStatement.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D4BCC113840E92001EC1A3 /* DBCDatabaseStatement.m */; };
@@ -35,7 +35,7 @@
 		790329F91383EB2500741EE8 /* DBConnectAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBConnectAppDelegate.h; path = Classes/DBConnectAppDelegate.h; sourceTree = "<group>"; };
 		790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBConnectAppDelegate.m; path = Classes/DBConnectAppDelegate.m; sourceTree = "<group>"; };
 		79032A091383ED0D00741EE8 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = LICENSE.txt; path = libs/dbconnect/LICENSE.txt; sourceTree = "<group>"; };
-		79D4BCB9138402F5001EC1A3 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = SOURCE_ROOT; };
+		79D4BCB9138402F5001EC1A3 /* README.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.markdown; sourceTree = SOURCE_ROOT; };
 		79D4BCBC13840E92001EC1A3 /* DBCDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCDatabase.h; path = libs/dbconnect/DBCDatabase.h; sourceTree = "<group>"; };
 		79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBCDatabase.m; path = libs/dbconnect/DBCDatabase.m; sourceTree = "<group>"; };
 		79D4BCBE13840E92001EC1A3 /* DBCDatabaseResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCDatabaseResult.h; path = libs/dbconnect/DBCDatabaseResult.h; sourceTree = "<group>"; };
@@ -126,7 +126,7 @@
 		790329FC1383EB3F00741EE8 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				79D4BCB9138402F5001EC1A3 /* README */,
+				79D4BCB9138402F5001EC1A3 /* README.markdown */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -228,7 +228,7 @@
 			files = (
 				790329CB1383E73800741EE8 /* InfoPlist.strings in Resources */,
 				79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */,
-				79D4BCBA138402F5001EC1A3 /* README in Resources */,
+				79D4BCBA138402F5001EC1A3 /* README.markdown in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
