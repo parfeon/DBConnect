@@ -43,7 +43,7 @@
     NSString *errorMsg = nil;\
     if(cErrorMsg!=NULL)\
         errorMsg = [NSString stringWithCString:cErrorMsg \
-                                          encoding:(dbEncoding==DBCDatabaseEncodingUTF16?NSUTF16StringEncoding:NSUTF8StringEncoding)];\
+                                      encoding:(dbEncoding==DBCDatabaseEncodingUTF16?NSUTF16StringEncoding:NSUTF8StringEncoding)];\
     errorMsg;\
 })
 
@@ -59,13 +59,19 @@
 #define DBCLockLogger(...)
 #endif
 
+//
 #define VAListToNSArray(LAST_PARAMETER)({\
     NSMutableArray *array = [NSMutableArray array];\
     id object;\
+    char *charObject;\
+    int intObject;\
     va_list args;\
+    va_list charsArgs;\
+    va_list intArgs;\
     va_start(args, LAST_PARAMETER);\
-    while((object = va_arg(args, id)))\
-        [array addObject:object];\
+    va_copy(charsArgs, args);\
+    va_copy(intArgs, args);\
+    while((object = va_arg(args, id))) [array addObject:object];\
     va_end(args);\
     [NSArray arrayWithArray:array];\
 })
@@ -74,10 +80,14 @@
 
 - (BOOL)isDatabaseConnectionForReadOnlyMode;
 
+- (BOOL)containsNSStringFormatSpecifier:(NSString*)testString;
+
 - (NSArray*)extractCommandsSequence:(NSString*)sql;
 - (NSArray*)extractCommandParametersMap:(NSString*)sql;
+- (NSArray*)extractBindParametersFrom:(NSString*)sql andVAList:(va_list)parameters;
 - (BOOL)commandSequenceContainsTCL:(NSArray*)commandsList;
 
+- (NSArray*)parametersBindMapFromNSStringFormat:(NSString*)format vaParameters:(va_list)vaParametersList;
 - (BOOL)bindStatement:(sqlite3_stmt*)statement toParameters:(NSArray*)parameters;
 - (int)bindObject:(id)object atIndex:(int)index inStatement:(sqlite3_stmt*)statement;
 - (void)addStatementToCache:(DBCStatement*)statement;
@@ -143,7 +153,10 @@
         [self setCreateTransactionOnSQLSequences:YES];
         [self setRollbackSQLSequenceTransactionOnError:YES];
         [self setDefaultSQLSequencesTransactinoLock:DBCDatabaseAutocommitModeDeferred];
-        
+        listOfPossibleTCLCommands = [[NSArray arrayWithObjects:@"begin", @"begin transaction", @"begin deferred transaction", @"begin immediate transaction", 
+                                      @"begin exclusive transaction", @"commit", @"commit transaction",  @"end", @"end transaction",nil] retain];
+        listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", @"%S",@"%c", @"%C", 
+                                           @"%lld", @"%llu", @"%Lf",nil] retain];
         dbEncoding = encoding;
         statementCachingEnabled = YES;
         dbBusyRequestRetryCount = 0;
@@ -288,6 +301,7 @@
  * @return update request evaluate result
  */
 - (BOOL)evaluateUpdateWithParameters:(NSString*)sqlUpdate, ... {
+    NSLog(@"CONTAINS FORMAT SPECIFIER? %@", [self containsNSStringFormatSpecifier:sqlUpdate]?@"YES":@"NO");
     NSArray *parametersList = VAListToNSArray(sqlUpdate);
     return [self evaluateUpdate:sqlUpdate parameters:parametersList];
 }
@@ -310,6 +324,7 @@
  * @return update request evaluate result
  */
 - (BOOL)evaluateUpdate:(NSString*)sqlUpdate parameters:(NSArray*)parameters {
+    NSLog(@"PARAMETERS: %@", parameters);
     if([self isDatabaseConnectionForReadOnlyMode]) return NO;
     DBCLockLogger(@"[DBC:Update] Waiting for Lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
     [queryLock lock];
@@ -415,6 +430,8 @@
     DBCReleaseObject(dbPath);
     DBCReleaseObject(queryLock);
     DBCReleaseObject(cachedStatementsList);
+    DBCReleaseObject(listOfPossibleTCLCommands);
+    DBCReleaseObject(listOfNSStringFormatSpecifiers);
     [super dealloc];
 }
 
@@ -430,6 +447,35 @@
  */
 - (BOOL)isDatabaseConnectionForReadOnlyMode {
     return dbFlags&SQLITE_OPEN_READONLY;
+}
+
+/**
+ * Check whether tested strgin containt NSString format specifiers or not
+ * @return test result
+ */
+- (BOOL)containsNSStringFormatSpecifier:(NSString*)testString {
+    BOOL testResult = NO;
+    if(testString == nil) return testResult;
+    int i, testStringLength = [testString length];
+    unichar lastChar = '\0';
+    BOOL isLiteral = NO;
+    for (i = 0; i < testStringLength; i++) {
+        unichar currentChar = [testString characterAtIndex:i];
+        if(!isLiteral && currentChar=='\'') isLiteral = YES;
+        else if(isLiteral && currentChar=='\'') isLiteral = NO;
+        if (!isLiteral && lastChar == '%') {
+            if(currentChar=='@'||currentChar=='d'||currentChar=='i'||currentChar=='u'||currentChar=='f'||currentChar=='g'||currentChar=='s'||
+               currentChar=='S'||currentChar=='c'||currentChar=='C') {
+                testResult = YES;
+            } else if(currentChar=='l') {
+                if(i+2<testStringLength && [testString characterAtIndex:(i+1)]=='l' && ([testString characterAtIndex:(i+2)]=='d' || [testString characterAtIndex:(i+2)]=='u'))
+                    testResult = YES;
+            } else if(currentChar=='L') if(i+1 < testStringLength && [testString characterAtIndex:(i+1)] == 'f') testResult = YES;
+        }
+        if(testResult) break;
+        lastChar = currentChar;
+    }
+    return testResult;
 }
 
 /**
@@ -457,16 +503,23 @@
 }
 
 /**
+ * Extract parameters or binding from provided va_list based on SQL query string
+ * @parameters
+ *      NSString *sql      - SQL query string
+ *      va_list parameters - list of parameters
+ * @return extracted parameters
+ */
+- (NSArray*)extractBindParametersFrom:(NSString*)sql andVAList:(va_list)parameters {
+    //NSMutableArray *extractedParameters = [NSMuta]
+}
+
+/**
  * Check whether list contains at least one of TCL commands
  */
 - (BOOL)commandSequenceContainsTCL:(NSArray*)commandsList {
     if(!commandsList) return NO;
     if([commandsList count] == 0) return NO;
     BOOL containsTCL = NO;
-    NSArray *listOfPossibleTCLCommands = [NSArray arrayWithObjects:@"begin", @"begin transaction", 
-                                          @"begin deferred transaction", @"begin immediate transaction", 
-                                          @"begin exclusive transaction", @"commit", @"commit transaction", 
-                                          @"end", @"end transaction",nil];
     int i, count = [commandsList count];
     for (i=0; i<count; i++) {
         NSString *lowerCasedCommand = [[[[commandsList objectAtIndex:i] lowercaseString] stringByReplacingOccurrencesOfString:@";" withString:@""] trimmedString];
@@ -476,6 +529,41 @@
         }
     }
     return containsTCL;
+}
+
+/**
+ * Build parameters bind map based on NSString format specifiers and based on them 
+ * items data type
+ * @parameters
+ *      NSString *format         - formated string
+ *      va_list vaParametersList - variable list of parameters
+ * @return mapped parameters
+ */
+- (NSArray*)parametersBindMapFromNSStringFormat:(NSString*)format vaParameters:(va_list)vaParametersList {
+    NSMutableArray *parametersBindMap = [NSMutableArray array];
+    /*if(format == nil) return parametersBindMap;
+    int i, formarStringLength = [format length];
+    unichar lastChar = '\0';
+    BOOL isLiteral = NO;
+    for (i = 0; i < formarStringLength; i++) {
+        id parameter = nil;
+        unichar currentChar = [format characterAtIndex:i];
+        if(!isLiteral && currentChar=='\'') isLiteral = YES;
+        else if(isLiteral && currentChar=='\'') isLiteral = NO;
+        if (!isLiteral && lastChar == '%') {
+            if(currentChar=='@'||currentChar=='d'||currentChar=='i'||currentChar=='u'||currentChar=='f'||currentChar=='g'||currentChar=='s'||
+               currentChar=='S'||currentChar=='c'||currentChar=='C') {
+                testResult = YES;
+            } else if(currentChar=='l') {
+                if(i+2<formarStringLength && [format characterAtIndex:(i+1)]=='l' && ([format characterAtIndex:(i+2)]=='d' || [format characterAtIndex:(i+2)]=='u')){
+                    testResult = YES;
+                }
+            } else if(currentChar=='L') if(i+1 < formarStringLength && [format characterAtIndex:(i+1)] == 'f') testResult = YES;
+        }
+        if(testResult) break;
+        lastChar = currentChar;
+    }*/
+    return parametersBindMap;
 }
 
 /**

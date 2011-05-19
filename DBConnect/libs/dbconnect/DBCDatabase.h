@@ -60,6 +60,9 @@ typedef enum _DBCDatabaseTransactionLock {
     BOOL                        inMemoryDB;
     
     NSMutableDictionary         *cachedStatementsList;
+    
+    NSArray                     *listOfPossibleTCLCommands;
+    NSArray                     *listOfNSStringFormatSpecifiers;
 }
 @property (nonatomic, assign)int dbBusyRequestRetryCount;
 @property (nonatomic, assign, getter = isStatementCachingEnabled)BOOL statementCachingEnabled;

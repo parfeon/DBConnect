@@ -7,10 +7,14 @@
 //
 
 #import "DBConnectAppDelegate.h"
+#import "DBCDatabase.h"
 
 @implementation DBConnectAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    DBCDatabase *db = [[DBCDatabase alloc] initWithPath:@":memory:" defaultEncoding:DBCDatabaseEncodingUTF8];
+    [db open];
+    [db evaluateUpdateWithParameters:@"SELECT * FROM sqlite3_master WHERE type='table' NOT LIKE 'sqlite_%@' %l", @"BOOOOO", [NSNumber numberWithFloat:116.0f], @"test", [NSNumber numberWithFloat:16.0f], nil];
     window = [[UIWindow alloc] init];
     viewController = [[UIViewController alloc] init];
     [window addSubview:[viewController view]];

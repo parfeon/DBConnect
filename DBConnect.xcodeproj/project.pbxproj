@@ -14,6 +14,7 @@
 		790329CE1383E73800741EE8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329CD1383E73800741EE8 /* main.m */; };
 		790329FB1383EB2500741EE8 /* DBConnectAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */; };
 		79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 79032A091383ED0D00741EE8 /* LICENSE.txt */; };
+		7962F25913843B6E00765B9D /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7962F25813843B6E00765B9D /* libsqlite3.0.dylib */; };
 		79D4BCBA138402F5001EC1A3 /* README.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 79D4BCB9138402F5001EC1A3 /* README.markdown */; };
 		79D4BCC713840E92001EC1A3 /* DBCDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */; };
 		79D4BCC813840E92001EC1A3 /* DBCDatabaseResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D4BCBF13840E92001EC1A3 /* DBCDatabaseResult.m */; };
@@ -35,6 +36,7 @@
 		790329F91383EB2500741EE8 /* DBConnectAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBConnectAppDelegate.h; path = Classes/DBConnectAppDelegate.h; sourceTree = "<group>"; };
 		790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBConnectAppDelegate.m; path = Classes/DBConnectAppDelegate.m; sourceTree = "<group>"; };
 		79032A091383ED0D00741EE8 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = LICENSE.txt; path = libs/dbconnect/LICENSE.txt; sourceTree = "<group>"; };
+		7962F25813843B6E00765B9D /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
 		79D4BCB9138402F5001EC1A3 /* README.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.markdown; sourceTree = SOURCE_ROOT; };
 		79D4BCBC13840E92001EC1A3 /* DBCDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCDatabase.h; path = libs/dbconnect/DBCDatabase.h; sourceTree = "<group>"; };
 		79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBCDatabase.m; path = libs/dbconnect/DBCDatabase.m; sourceTree = "<group>"; };
@@ -56,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7962F25913843B6E00765B9D /* libsqlite3.0.dylib in Frameworks */,
 				790329C11383E73800741EE8 /* UIKit.framework in Frameworks */,
 				790329C31383E73800741EE8 /* Foundation.framework in Frameworks */,
 				790329C51383E73800741EE8 /* CoreGraphics.framework in Frameworks */,
@@ -85,6 +88,7 @@
 		790329BF1383E73800741EE8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7962F25813843B6E00765B9D /* libsqlite3.0.dylib */,
 				790329C01383E73800741EE8 /* UIKit.framework */,
 				790329C21383E73800741EE8 /* Foundation.framework */,
 				790329C41383E73800741EE8 /* CoreGraphics.framework */,
