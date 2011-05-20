@@ -65,20 +65,19 @@ typedef enum _DBCDatabaseTransactionLock {
     NSArray                     *listOfNSStringFormatSpecifiers;
 }
 @property (nonatomic, assign)int dbBusyRequestRetryCount;
+@property (nonatomic, assign)DBCDatabaseTransactionLock defaultSQLSequencesTransactinoLock;
 @property (nonatomic, assign, getter = isStatementCachingEnabled)BOOL statementCachingEnabled;
 @property (nonatomic, assign)BOOL rollbackSQLSequenceTransactionOnError;
-@property (nonatomic, assign)DBCDatabaseTransactionLock defaultSQLSequencesTransactinoLock;
 @property (nonatomic, assign)BOOL createTransactionOnSQLSequences;
 @property (nonatomic, readonly)int recentErrorCode;
 @property (nonatomic, readonly)DBCError *recentError;
 
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-+ (id)databaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding contineOnEvaluateErrors:(BOOL)contineOnEvaluateErrors;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding contineOnEvaluateErrors:(BOOL)contineOnEvaluateErrors;
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
 - (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding contineOnEvaluateErrors:(BOOL)contineOnEvaluateErrors;
 
 - (BOOL)open;
-- (NSArray*)extractCommandsSequence:(NSString*)sql;
 - (BOOL)openReadonly;
 - (BOOL)close;
 

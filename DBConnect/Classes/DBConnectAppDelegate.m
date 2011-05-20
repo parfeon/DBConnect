@@ -14,7 +14,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     DBCDatabase *db = [[DBCDatabase alloc] initWithPath:@":memory:" defaultEncoding:DBCDatabaseEncodingUTF8];
     [db open];
-    [db evaluateUpdateWithParameters:@"SELECT * FROM sqlite3_master WHERE type='table' NOT LIKE 'sqlite_%@' %l", @"BOOOOO", [NSNumber numberWithFloat:116.0f], @"test", [NSNumber numberWithFloat:16.0f], nil];
+    [db evaluateUpdateWithParameters:@"SELECT * FROM sqlite3_master WHERE type='table' NOT LIKE 'sqlite_%@' :  ?1 %@, %@, %@, %@, %c, %d, %f, %lld", @"BOOOOO", [NSNumber numberWithFloat:116.0f], @"test", [NSNumber numberWithFloat:16.0f], 'a', 23, 35.7f, 16576876854657687, nil];
     window = [[UIWindow alloc] init];
     viewController = [[UIViewController alloc] init];
     [window addSubview:[viewController view]];
