@@ -26,6 +26,10 @@
 #import "DBCString+Utils.h"
 #import "sqlite3lib.h"
 
+#define PARAMETERS_LIST @"parametersList"
+#define PARAMETERS_MAPPING_INFORMATION @"parametersMappingInformation"
+#define PREPARED_SQL_STATEMENT @"preparedSQLStatement"
+
 #define DBCUseDebugLogger 1
 #define DBCUseLockLogger 1
 
@@ -59,26 +63,16 @@
 #define DBCLockLogger(...)
 #endif
 
-// va_list to NSArray convertion
-#define VAListToNSArray(LAST_PARAMETER)({\
-    NSMutableArray *array = [NSMutableArray array];\
-    id object;\
-    va_list args;\
-    va_start(args, LAST_PARAMETER);\
-    while((object = va_arg(args, id))) [array addObject:object];\
-    va_end(args);\
-    [NSArray arrayWithArray:array];\
-})
-
+// SQL statement parameters token format
 typedef enum _SQLStatementFromat {
     SQLStatementFromatUnknown,
     SQLStatementFromatNSStringFormat,
+    SQLStatementFromatAnonymousToken,
     SQLStatementFromatIndexedToken,
     SQLStatementFromatNamedToken
 } SQLStatementFromat;
 
 /// int sqlite3_data_count(sqlite3_stmt *pStmt); - использовать для того, что-бы убедится что данных больше не вернул запрос
-/// const char *sqlite3_sql(sqlite3_stmt *pStmt); - можно использовать для получения SQL запроса из скомпилированного запроса
 /*  int sqlite3_stmt_status(sqlite3_stmt*, int op,int resetFlg); - использовать вместе с флагами, что-бы проанализировать работу запроса
  SQLITE_STMTSTATUS_FULLSCAN_STEP
  This is the number of times that SQLite has stepped forward in a table as part of a full table scan. Large numbers for this counter may indicate opportunities for performance improvement through careful use of indices.
@@ -92,11 +86,13 @@ typedef enum _SQLStatementFromat {
 
 - (BOOL)isDatabaseConnectionForReadOnlyMode;
 
+- (BOOL)evaluateUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData;
+
 - (SQLStatementFromat)getSQLStatementType:(NSString*)sqlStatement;
 
 - (NSArray*)getSQLStatementsSequence:(NSString*)sql;
 - (NSArray*)getSQLStatementParametersTokensMap:(NSString*)sql;
-- (id)getBindParametersFromSQLStatement:(NSString*)sqlStatement andVAList:(va_list)parameters;
+- (NSDictionary*)getParametersBindingMapData:(NSString*)sqlStatement vaList:(va_list)parameters;
 - (BOOL)SQLStatementsSequenceContainsTCL:(NSArray*)commandsList;
 
 - (BOOL)bindStatement:(sqlite3_stmt*)statement toParameters:(NSArray*)parameters;
@@ -105,11 +101,13 @@ typedef enum _SQLStatementFromat {
 - (void)removeStatementFromChache:(DBCStatement*)statement;
 - (DBCStatement*)getCachedStatementFor:(NSString*)sqlRequest;
 
+- (Class)getVAItemClass:(va_list)parameters;
+
 @end
 
 @implementation DBCDatabase
 
-@synthesize dbBusyRequestRetryCount, statementCachingEnabled, createTransactionOnSQLSequences;
+@synthesize dbBusyRetryCount, statementsCachingEnabled, createTransactionOnSQLSequences;
 @synthesize rollbackSQLSequenceTransactionOnError, defaultSQLSequencesTransactinoLock, recentErrorCode, recentError;
 
 #pragma mark DBCDatabase instance initialization
@@ -159,8 +157,8 @@ typedef enum _SQLStatementFromat {
         listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", @"%S",@"%c", @"%C", 
                                            @"%lld", @"%llu", @"%Lf",nil] retain];
         dbEncoding = encoding;
-        statementCachingEnabled = YES;
-        dbBusyRequestRetryCount = 0;
+        statementsCachingEnabled = YES;
+        dbBusyRetryCount = 0;
         recentError = nil;
         recentErrorCode = -1;
         dbConnection = NULL;
@@ -222,16 +220,25 @@ typedef enum _SQLStatementFromat {
  * @parameters
  *      BOOL sCacheStatements - caching flag
  */
-- (void)setStatementCachingEnabled:(BOOL)sCacheStatements {
+- (void)setStatementsCachingEnabled:(BOOL)sCacheStatements {
     DBCLockLogger(@"[DBC:StatementCache] Waiting for Lock (Line: %d)", __LINE__);
     [queryLock lock];
     DBCLockLogger(@"[DBC:Update] Lock acquired (Line: %d)", __LINE__);
     if(!sCacheStatements && cachedStatementsList) {
         DBCReleaseObject(cachedStatementsList);
     } else if(sCacheStatements && cachedStatementsList==nil) cachedStatementsList = [[NSMutableDictionary alloc] init];
-    statementCachingEnabled = sCacheStatements;
+    statementsCachingEnabled = sCacheStatements;
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock (Line: %d)", __LINE__);
+}
+
+/**
+ * Retrieve reference on opened dstabase connection handler instance
+ * @return reference on opened database connection handler instance
+ */
+- (sqlite3*)database {
+    if(!dbConnectionOpened) return NULL;
+    return dbConnection;
 }
 
 #pragma mark Database open and close
@@ -268,7 +275,7 @@ typedef enum _SQLStatementFromat {
         shouldRetry = NO;
         returnCode = sqlite3_close(dbConnection);
         if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-            if(dbBusyRequestRetryCount && retryCount < dbBusyRequestRetryCount){
+            if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             } else {
@@ -302,108 +309,11 @@ typedef enum _SQLStatementFromat {
  * @return update request evaluate result
  */
 - (BOOL)evaluateUpdateWithParameters:(NSString*)sqlUpdate, ... {
-    NSLog(@"CONTAINS FORMAT SPECIFIER? %@", [self getSQLStatementType:sqlUpdate]==SQLStatementFromatNSStringFormat?@"YES":@"NO");
     va_list parameters;
     va_start(parameters, sqlUpdate);
-    NSArray *parametersList = [self getBindParametersFromSQLStatement:sqlUpdate andVAList:parameters];
+    NSDictionary *parametersBindingMap = [self getParametersBindingMapData:sqlUpdate vaList:parameters];
     va_end(parameters);
-    NSLog(@"BINDED PARAMETERS: %@", parametersList);
-    //NSArray *parametersList = VAListToNSArray(sqlUpdate);
-    return [self evaluateUpdate:sqlUpdate parameters:parametersList];
-}
-
-/**
- * Evaluate prepared SQL statement on current database connection
- * @parameters
- *      NSString *sqlUpdate - SQL query command
- * @return update request evaluate result
- */
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate {
-    return [self evaluateUpdate:sqlUpdate parameters:nil];
-}
-
-/**
- * Evaluate prepared SQL statement on current database connection
- * @parameters
- *      NSString *sqlUpdate - SQL query command
- *      NSArray *parameters - list of binding parameters
- * @return update request evaluate result
- */
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate parameters:(NSArray*)parameters {
-    NSLog(@"PARAMETERS: %@", parameters);
-    if([self isDatabaseConnectionForReadOnlyMode]) return NO;
-    DBCLockLogger(@"[DBC:Update] Waiting for Lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
-    [queryLock lock];
-    DBCLockLogger(@"[DBC:Update] Lock acquired: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
-    
-    if(![self open]){
-        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
-        [queryLock unlock];
-        return NO;
-    }
-    
-    int retryCount = 0;
-    BOOL shouldRetry = NO;
-    int returnCode = SQLITE_OK;
-    BOOL transactionUsed = NO;
-    DBCStatement *dbcStatement = nil;
-    sqlite3_stmt *statement = NULL;
-    NSMutableArray *updateCommandsList = [[self getSQLStatementsSequence:sqlUpdate] mutableCopy];
-    // Injecting TRANSACTION if required by flag
-    if(createTransactionOnSQLSequences && [updateCommandsList count] > 1){
-        transactionUsed = YES;
-        if (![self SQLStatementsSequenceContainsTCL:updateCommandsList]) {
-            [updateCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                              (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock):@"DEFERRED")] 
-                                                                atIndex:0];
-            [updateCommandsList addObject:@"COMMIT TRANSACTION;"];
-        }
-    }
-    for (NSString *sql in updateCommandsList) {
-        if(statementCachingEnabled){
-            dbcStatement = [self getCachedStatementFor:sql];
-            if(dbcStatement) [dbcStatement reset];
-            statement = dbcStatement?[dbcStatement statement]:NULL;
-        }
-        
-        if(statement==NULL){
-            do {
-                shouldRetry = NO;
-                if (dbEncoding==DBCDatabaseEncodingUTF8) 
-                    returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
-                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                 returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, &statement, NULL);
-                if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-                    if(dbBusyRequestRetryCount && retryCount < dbBusyRequestRetryCount){
-                        shouldRetry = YES;
-                        sqlite3_sleep(150);
-                    } else {
-                        DBCReleaseObject(recentError);
-                        recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                              additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
-                        sqlite3_finalize(statement);
-                        [queryLock unlock];
-                        return NO;
-                    }
-                }
-            } while (shouldRetry);
-            
-            
-        }
-    }
-    int queryParametersCount = sqlite3_bind_parameter_count(statement);
-    int userDefinedParametersCount = [parameters count];
-    if(queryParametersCount > userDefinedParametersCount){
-        if(dbcStatement) [self removeStatementFromChache:dbcStatement];
-        DBCDebugLogger(@"[DBC:ERROR] Update statement have parameters count different from provided by user: %@ (Line: %d)", sqlUpdate, __LINE__);
-        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
-        [queryLock unlock];
-        return NO;
-    }
-    
-    [queryLock unlock];
-    DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+    return [self evaluateUpdate:sqlUpdate withBindingMapData:parametersBindingMap];
 }
 
 /**
@@ -456,6 +366,100 @@ typedef enum _SQLStatementFromat {
 }
 
 /**
+ * Evaluate prepared SQL statement on current database connection
+ * @parameters
+ *      NSString *sqlUpdate - SQL query command
+ *      NSArray *parameters - list of binding parameters
+ * @return update request evaluate result
+ */
+- (BOOL)evaluateUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData {
+    NSLog(@"BINDING MAP DATA: %@", bindingMapData);
+    if([self isDatabaseConnectionForReadOnlyMode]) return NO;
+    DBCLockLogger(@"[DBC:Update] Waiting for Lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+    [queryLock lock];
+    DBCLockLogger(@"[DBC:Update] Lock acquired: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+    
+    if(![self open]){
+        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+        [queryLock unlock];
+        return NO;
+    }
+    
+    int retryCount = 0;
+    BOOL shouldRetry = NO;
+    int returnCode = SQLITE_OK;
+    BOOL transactionUsed = NO;
+    DBCStatement *dbcStatement = nil;
+    sqlite3_stmt *statement = NULL;
+    NSMutableArray *updateCommandsList = [[self getSQLStatementsSequence:sqlUpdate] mutableCopy];
+    // Injecting TRANSACTION if required by flag
+    if(createTransactionOnSQLSequences && [updateCommandsList count] > 1){
+        transactionUsed = YES;
+        if (![self SQLStatementsSequenceContainsTCL:updateCommandsList]) {
+            [updateCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
+                                              (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock):@"DEFERRED")] 
+                                     atIndex:0];
+            [updateCommandsList addObject:@"COMMIT TRANSACTION;"];
+        }
+    }
+    for (NSString *sql in updateCommandsList) {
+        if(statementsCachingEnabled){
+            dbcStatement = [self getCachedStatementFor:sql];
+            if(dbcStatement) [dbcStatement reset];
+            statement = dbcStatement?[dbcStatement statement]:NULL;
+        }
+        
+        if(statement==NULL){
+            do {
+                shouldRetry = NO;
+                NSLog(@"%s", [sql UTF8String]);
+                NSLog(@"%s", [sql cStringUsingEncoding:NSUTF16StringEncoding]);
+                if (dbEncoding==DBCDatabaseEncodingUTF8) 
+                    returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
+                else if(dbEncoding==DBCDatabaseEncodingUTF16) 
+                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, &statement, NULL);
+                if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
+                    if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
+                        shouldRetry = YES;
+                        sqlite3_sleep(150);
+                    } else {
+                        DBCReleaseObject(recentError);
+                        recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                              additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+                        sqlite3_finalize(statement);
+                        [queryLock unlock];
+                        return NO;
+                    }
+                } else if(returnCode != SQLITE_OK){
+                    DBCReleaseObject(recentError);
+                    recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                          additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                    DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+                    sqlite3_finalize(statement);
+                    [queryLock unlock];
+                    return NO;
+                }
+            } while (shouldRetry);
+            NSLog(@"---> %@ [%i]", statement, returnCode);
+            //[self bindStatement:statement toParameters:parameters];
+        }
+    }
+    /*int queryParametersCount = sqlite3_bind_parameter_count(statement);
+    int userDefinedParametersCount = [parameters count];
+    if(queryParametersCount > userDefinedParametersCount){
+        if(dbcStatement) [self removeStatementFromChache:dbcStatement];
+        DBCDebugLogger(@"[DBC:ERROR] Update statement have parameters count different from provided by user: %@ (Line: %d)", sqlUpdate, __LINE__);
+        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+        [queryLock unlock];
+        return NO;
+    }*/
+    
+    [queryLock unlock];
+    DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+}
+
+/**
  * Get SQL statement format style
  * @parameters
  *      NSString *sqlStatement - SQL statement
@@ -470,7 +474,7 @@ typedef enum _SQLStatementFromat {
     BOOL isNamed = NO;
     for (i = 0; i < sqlStatementLength; i++) {
         unichar currentChar = [sqlStatement characterAtIndex:i];
-        if(!isNamed && lastChar==':' && currentChar!=' ' && !isdigit(currentChar)) isNamed = YES;
+        if(!isLiteral && !isNamed && (lastChar==':' || lastChar=='@' || lastChar=='$') && currentChar!=' ' && !isdigit(currentChar)) isNamed = YES;
         else if(isNamed && currentChar==' ') isNamed = NO;
         if(!isLiteral && currentChar=='\'') isLiteral = YES;
         else if(isLiteral && currentChar=='\'') isLiteral = NO;
@@ -483,8 +487,9 @@ typedef enum _SQLStatementFromat {
                     format = SQLStatementFromatNSStringFormat;
             }
         } else if (!isLiteral && lastChar == '?') {
-            if(currentChar==' ' || isdigit(currentChar)) format = SQLStatementFromatIndexedToken;
-        } else if (isNamed) format = SQLStatementFromatNamedToken;
+            if(currentChar==' ' || !isdigit(currentChar)) format = SQLStatementFromatAnonymousToken;
+            else if(isdigit(currentChar)) format = SQLStatementFromatIndexedToken;
+        } else if (!isLiteral && isNamed) format = SQLStatementFromatNamedToken;
         if(format != SQLStatementFromatUnknown) break;
         lastChar = currentChar;
     }
@@ -516,55 +521,242 @@ typedef enum _SQLStatementFromat {
 }
 
 /**
- * Extract parameters or binding from provided va_list based on SQL query string
+ * Retrieve parameters mapping informatino (values and mapping indices)
  * @parameters
  *      NSString *sqlStatement - SQL statement
  *      va_list parameters     - list of parameters
- * @return extracted parameters
+ * @return parameters mapping data
  */
-- (id)getBindParametersFromSQLStatement:(NSString*)sqlStatement andVAList:(va_list)parameters {
+- (NSDictionary*)getParametersBindingMapData:(NSString*)sqlStatement vaList:(va_list)parameters {
+    NSMutableDictionary *mappingData = [NSMutableDictionary dictionary];
+    NSMutableString *newSQLStatement = [NSMutableString string];
+    NSMutableArray *parsedParameters = [NSMutableArray array];
+    NSMutableArray *parsedParametersMap = [NSMutableArray array];
     SQLStatementFromat sqlStatementFormat = [self getSQLStatementType:sqlStatement];
-    id extractedParameters = nil;
+    int i, count = [sqlStatement length];
+    int tokensCount = 0;
+    int charToIgnore = 0;
+    unichar lastChar = '\0';
+    BOOL isLiteral = NO;
+    BOOL foundToken = NO;
+    BOOL shouldParseValues = YES;
+    NSRange tokenRange = NSMakeRange(NSNotFound, 0);
+    NSCharacterSet *tokenTerminatorsCharset = [NSCharacterSet characterSetWithCharactersInString:@", );"];
     if(sqlStatementFormat==SQLStatementFromatNSStringFormat){
-        extractedParameters = [NSMutableArray array];
-        int i, sqlStatementLength = [sqlStatement length];
-        unichar lastChar = '\0';
-        BOOL isLiteral = NO;
-        for (i = 0; i < sqlStatementLength; i++) {
+        for (i = 0; i < count; i++) {
             unichar currentChar = [sqlStatement characterAtIndex:i];
             if(!isLiteral && currentChar=='\'') isLiteral = YES;
             else if(isLiteral && currentChar=='\'') isLiteral = NO;
+            foundToken = NO;
             if (!isLiteral && lastChar == '%') {
-                if(currentChar=='@'||currentChar=='p') [extractedParameters addObject:va_arg(parameters, id)];
-                if(currentChar=='d'||currentChar=='i') [extractedParameters addObject:[NSNumber numberWithInt:va_arg(parameters, int)]];
-                if(currentChar=='u') [extractedParameters addObject:[NSNumber numberWithUnsignedInt:va_arg(parameters, unsigned int)]];
-                if(currentChar=='f'||currentChar=='g') [extractedParameters addObject:[NSNumber numberWithDouble:va_arg(parameters, double)]];
-                if(currentChar=='s') [extractedParameters addObject:[NSString stringWithCString:va_arg(parameters, char*) encoding:NSUTF8StringEncoding]];
-                if(currentChar=='S') [extractedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]];
-                if(currentChar=='c') [extractedParameters addObject:[NSString stringWithFormat:@"%c", va_arg(parameters, int)]];
-                if(currentChar=='C') [extractedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]];
-                if(currentChar=='h'){
-                    if(i+1<sqlStatementLength && ([sqlStatement characterAtIndex:(i+1)]=='i' || [sqlStatement characterAtIndex:(i+1)]=='x') || 
-                       [sqlStatement characterAtIndex:(i+1)]=='o') [extractedParameters addObject:[NSNumber numberWithShort:va_arg(parameters, int)]];
-                    if(i+1<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='u')
-                        [extractedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
+                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset options:NSCaseInsensitiveSearch
+                                                                                    range:NSMakeRange(i, count-i)];
+                tokenRange.location = i-1;
+                tokenRange.length = (tokenTerminationCharRange.location-i+1);
+                if(currentChar=='@'||currentChar=='p') {
+                    id object = nil;
+                    Class itemClass = nil;
+                    if(tokensCount == 0) itemClass = [self getVAItemClass:parameters];
+                    if(itemClass != nil){
+                        if([itemClass isSubclassOfClass:[NSArray class]]){
+                            object = va_arg(parameters, NSArray*);
+                            shouldParseValues = NO;
+                            [parsedParameters addObjectsFromArray:object];
+                        } else object = va_arg(parameters, id);
+                    } else object = va_arg(parameters, id);
+                    foundToken = YES;
+                    if(object != nil && shouldParseValues) [parsedParameters addObject:object];
+                } else if(currentChar=='d'||currentChar=='i') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithInt:va_arg(parameters, int)]];
+                } else if(currentChar=='u') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithUnsignedInt:va_arg(parameters, unsigned int)]];
+                } else if(currentChar=='f'||currentChar=='g') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithDouble:va_arg(parameters, double)]];
+                } else if(currentChar=='s') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithCString:va_arg(parameters, char*) encoding:NSUTF8StringEncoding]];
+                } else if(currentChar=='S') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]];
+                } else if(currentChar=='c') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithFormat:@"%c", va_arg(parameters, int)]];
+                } else if(currentChar=='C') {
+                    foundToken = YES;
+                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]];
+                } else if(currentChar=='h'){
+                    if(i+1<count && ([sqlStatement characterAtIndex:(i+1)]=='i' || [sqlStatement characterAtIndex:(i+1)]=='x') || 
+                       [sqlStatement characterAtIndex:(i+1)]=='o') {
+                        foundToken = YES;
+                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithShort:va_arg(parameters, int)]];
+                    } else if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='u'){
+                        foundToken = YES;
+                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
+                    }
+                } else if(currentChar=='l'){
+                    if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='i'){
+                        foundToken = YES;
+                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithLong:va_arg(parameters, long int)]];
+                    } else if(i+2<count && [sqlStatement characterAtIndex:(i+1)]=='l' && [sqlStatement characterAtIndex:(i+2)]=='d') {
+                        foundToken = YES;
+                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithLongLong:va_arg(parameters, long long)]];
+                    } else if(i+2<count && [sqlStatement characterAtIndex:(i+1)]=='l' && [sqlStatement characterAtIndex:(i+2)]=='u') {
+                        foundToken = YES;
+                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
+                    }
                 }
-                if(currentChar=='l'){
-                    if(i+1<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='i')
-                        [extractedParameters addObject:[NSNumber numberWithLong:va_arg(parameters, long int)]];
-                    if(i+2<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='l' && [sqlStatement characterAtIndex:(i+2)]=='d')
-                        [extractedParameters addObject:[NSNumber numberWithLongLong:va_arg(parameters, long long)]];
-                    if(i+2<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='l' && [sqlStatement characterAtIndex:(i+2)]=='u')
-                        [extractedParameters addObject:[NSNumber numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
+                if(foundToken){
+                    tokensCount++;
+                    [parsedParametersMap addObject:[NSNumber numberWithInt:[parsedParameters indexOfObject:[parsedParameters lastObject]]]];
+                    NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", tokensCount];
+                    charToIgnore = tokenRange.length>[tokenReplacement length]?(tokenRange.length-([tokenReplacement length]>1?[tokenReplacement length]-1:[tokenReplacement length])):0;
+                    [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
                 }
+            } else {
+                if(charToIgnore == 0) [newSQLStatement appendFormat:@"%c", currentChar];
+                if(charToIgnore > 0) charToIgnore--;
             }
             lastChar = currentChar;
         }
-    } else {
-        extractedParameters = [NSMutableDictionary dictionary];
+    } else if(sqlStatementFormat==SQLStatementFromatAnonymousToken){
+        for (i = 0; i < count; i++) {
+            unichar currentChar = [sqlStatement characterAtIndex:i];
+            if(!isLiteral && currentChar=='\'') isLiteral = YES;
+            else if(isLiteral && currentChar=='\'') isLiteral = NO;
+            foundToken = NO;
+            if (!isLiteral && lastChar == '?' && (currentChar == ',' || currentChar == ' ' || currentChar == ')' || currentChar == ';')) {
+                id object = nil;
+                Class itemClass = nil;
+                if(tokensCount == 0) itemClass = [self getVAItemClass:parameters];
+                if(itemClass != nil){
+                    if([itemClass isSubclassOfClass:[NSArray class]]){
+                        object = va_arg(parameters, NSArray*);
+                        shouldParseValues = NO;
+                        [parsedParameters addObjectsFromArray:object];
+                    } else object = va_arg(parameters, id);
+                } else object = va_arg(parameters, id);
+                if(object != nil && shouldParseValues) [parsedParameters addObject:object];
+                tokensCount++;
+                NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", tokensCount];
+                [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
+                [parsedParametersMap addObject:[NSNumber numberWithInt:[parsedParameters indexOfObject:[parsedParameters lastObject]]]];
+            } else {
+                if(charToIgnore == 0) [newSQLStatement appendFormat:@"%c", currentChar];
+                if(charToIgnore > 0) charToIgnore--;
+            }
+            lastChar = currentChar;
+        }
+    } else if(sqlStatementFormat==SQLStatementFromatIndexedToken){
+        [newSQLStatement appendString:sqlStatement];
+        for (i = 0; i < count; i++) {
+            unichar currentChar = [sqlStatement characterAtIndex:i];
+            if(!isLiteral && currentChar=='\'') isLiteral = YES;
+            else if(isLiteral && currentChar=='\'') isLiteral = NO;
+            foundToken = NO;
+            if (!isLiteral && lastChar == '?' && currentChar != ' ' && isdigit(currentChar)) {
+                id object = nil;
+                Class itemClass = nil;
+                if(tokensCount == 0) itemClass = [self getVAItemClass:parameters];
+                if(itemClass != nil){
+                    if([itemClass isSubclassOfClass:[NSArray class]]){
+                        object = va_arg(parameters, NSArray*);
+                        shouldParseValues = NO;
+                        [parsedParameters addObjectsFromArray:object];
+                    } else object = va_arg(parameters, id);
+                } else object = va_arg(parameters, id);
+                if(object != nil && shouldParseValues) [parsedParameters addObject:object];
+                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset options:NSCaseInsensitiveSearch
+                                                                                    range:NSMakeRange(i, count-i)];
+                int bindingValueIndex = [[sqlStatement substringWithRange:NSMakeRange(i, tokenTerminationCharRange.location-i)] intValue]-1;
+                [parsedParametersMap addObject:[NSNumber numberWithInt:bindingValueIndex]];
+                tokensCount++;
+            }
+            lastChar = currentChar;
+        }
+    } else if(sqlStatementFormat==SQLStatementFromatNamedToken){
+        NSMutableDictionary *namesToIndicesMap = [NSMutableDictionary dictionary];
+        BOOL parsingFromVA = NO;
+        for (i = 0; i < count; i++) {
+            unichar currentChar = [sqlStatement characterAtIndex:i];
+            if(!isLiteral && currentChar=='\'') isLiteral = YES;
+            else if(isLiteral && currentChar=='\'') isLiteral = NO;
+            foundToken = NO;
+            if (!isLiteral && (lastChar == ':' || lastChar == '@' || lastChar == '$') && !isdigit(currentChar) && 
+                (currentChar != ',' && currentChar != ' ' && currentChar != ')' && currentChar != ';' && currentChar != '\'')) {
+                id object = nil;
+                Class itemClass = nil;
+                if(tokensCount == 0) {
+                    itemClass = [self getVAItemClass:parameters];
+                }
+                if(itemClass != nil){
+                    if([itemClass isSubclassOfClass:[NSArray class]]){
+                        object = va_arg(parameters, NSArray*);
+                        if([object count]%2!=0) return nil;
+                        int k, count2 = [object count];
+                        for (k=1; k<count2; k+=2) {
+                            NSString *key = [object objectAtIndex:k];
+                            id value = [object objectAtIndex:(k-1)];
+                            [parsedParameters addObject:value];
+                            [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] forKey:key];
+                        }
+                    } else if([itemClass isSubclassOfClass:[NSDictionary class]]){
+                        object = va_arg(parameters, NSDictionary*);
+                        NSArray *listOfKeys = [object allKeys];
+                        int k, count2 = [listOfKeys count];
+                        for (k=0; k<count2; k++) {
+                            NSString *key = [listOfKeys objectAtIndex:k];
+                            id value = [object valueForKey:key];
+                            [parsedParameters addObject:value];
+                            [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] forKey:key];
+                        }
+                    } else {
+                        parsingFromVA = YES;
+                    }
+                } else if(tokensCount == 0) {
+                    parsingFromVA = YES;
+                }
+                if(parsingFromVA){
+                    parsingFromVA = NO;
+                    va_list params;
+                    va_copy(params, parameters);
+                    NSMutableArray *parametersList = [NSMutableArray array];
+                    for (id param = sqlStatement; param != nil; param = va_arg(params, id))
+                        [parametersList addObject:param];
+                    va_end(params);
+                    [parametersList removeObjectAtIndex:0];
+                    if([parametersList count]%2!=0) return nil;
+                    int k, count2 = [parametersList count];
+                    for (k=1; k<count2; k+=2) {
+                        NSString *key = [parametersList objectAtIndex:k];
+                        id value = [parametersList objectAtIndex:(k-1)];
+                        [parsedParameters addObject:value];
+                        [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] forKey:key];
+                    }
+                }
+                tokensCount++;
+                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset options:NSCaseInsensitiveSearch
+                                                                                    range:NSMakeRange(i, count-i)];
+                NSString *tokenName = [sqlStatement substringWithRange:NSMakeRange(i, tokenTerminationCharRange.location-i)];
+                int bindingValueIndex = [[namesToIndicesMap valueForKey:tokenName] intValue];
+                tokenRange.length = [tokenName length];
+                NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", (bindingValueIndex+1)];
+                charToIgnore = tokenRange.length>[tokenReplacement length]?(tokenRange.length-([tokenReplacement length]>1?[tokenReplacement length]-1:[tokenReplacement length])):0;
+                [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
+                [parsedParametersMap addObject:[NSNumber numberWithInt:bindingValueIndex]];
+            } else {
+                if(charToIgnore == 0) [newSQLStatement appendFormat:@"%c", currentChar];
+                if(charToIgnore > 0) charToIgnore--;
+            }
+            lastChar = currentChar;
+        }
     }
-    //NSMutableArray *extractedParameters = [NSMuta]
-    return extractedParameters;
+    [mappingData setValue:newSQLStatement forKey:PREPARED_SQL_STATEMENT];
+    [mappingData setValue:parsedParameters forKey:PARAMETERS_LIST];
+    [mappingData setValue:parsedParametersMap forKey:PARAMETERS_MAPPING_INFORMATION];
+    return mappingData;
 }
 
 /**
@@ -592,7 +784,13 @@ typedef enum _SQLStatementFromat {
  *      NSArray *parameters     - list of parameters for binding
  */
 - (BOOL)bindStatement:(sqlite3_stmt*)statement toParameters:(NSArray*)parameters {
-    
+    NSString *sqlStatement = nil;
+    NSLog(@"%s", sqlite3_sql(statement));
+    if (dbEncoding==DBCDatabaseEncodingUTF8)
+        sqlStatement = [NSString stringWithCString:sqlite3_sql(statement) encoding:NSUTF8StringEncoding];
+    else if(dbEncoding==DBCDatabaseEncodingUTF16)
+        sqlStatement = [NSString stringWithCString:sqlite3_sql(statement) encoding:NSUTF16StringEncoding];
+    NSLog(@"SQL: %@", sqlStatement);
 }
 
 /**
@@ -664,7 +862,7 @@ typedef enum _SQLStatementFromat {
     const char *cSQL = sqlite3_sql([statement statement]);
     if(cSQL) {
         NSString *sql = [NSString stringWithCString:cSQL encoding:NSUTF8StringEncoding];
-        if(sql && [self isStatementCachingEnabled]) [cachedStatementsList setValue:statement forKey:[sql md5]];
+        if(sql && [self isStatementsCachingEnabled]) [cachedStatementsList setValue:statement forKey:[sql md5]];
     }
 }
 
@@ -697,6 +895,20 @@ typedef enum _SQLStatementFromat {
     DBCLockLogger(@"[DBC:StatementCache] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlRequest md5], __LINE__);
     [queryLock unlock];
     return statement;
+}
+
+/**
+ * Retrieve class of current item in variable list
+ */
+- (Class)getVAItemClass:(va_list)parameters {
+    Class class = nil;
+    va_list parametersCopy;
+    va_copy(parametersCopy, parameters);
+    id object = va_arg(parametersCopy, id);
+    if([object respondsToSelector:@selector(initWithArray:)]) class = [NSArray class];
+    if([object respondsToSelector:@selector(initWithDictionary:)]) class = [NSDictionary class];
+    va_end(parametersCopy);
+    return class;
 }
 
 @end
@@ -898,16 +1110,7 @@ typedef enum _SQLStatementFromat {
     return returnCode;
 }
 
-#pragma mark DBCDatabase advcance getter/setter methods
-
-/**
- * Retrieve reference on opened dstabase connection handler instance
- * @return reference on opened database connection handler instance
- */
-- (sqlite3*)database {
-    if(!dbConnectionOpened) return NULL;
-    return dbConnection;
-}
+//#pragma mark DBCDatabase advcance getter/setter methods
 
 @end
 

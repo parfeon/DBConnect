@@ -42,8 +42,8 @@ typedef enum _DBCDatabaseTransactionLock {
     NSString                    *dbPath;
     NSRecursiveLock             *queryLock;
     
-    int                         dbBusyRequestRetryCount;
-    BOOL                        statementCachingEnabled;
+    int                         dbBusyRetryCount;
+    BOOL                        statementsCachingEnabled;
     
     BOOL                        createTransactionOnSQLSequences;
     BOOL                        rollbackSQLSequenceTransactionOnError;
@@ -64,9 +64,9 @@ typedef enum _DBCDatabaseTransactionLock {
     NSArray                     *listOfPossibleTCLCommands;
     NSArray                     *listOfNSStringFormatSpecifiers;
 }
-@property (nonatomic, assign)int dbBusyRequestRetryCount;
+@property (nonatomic, assign)int dbBusyRetryCount;
 @property (nonatomic, assign)DBCDatabaseTransactionLock defaultSQLSequencesTransactinoLock;
-@property (nonatomic, assign, getter = isStatementCachingEnabled)BOOL statementCachingEnabled;
+@property (nonatomic, assign, getter = isStatementsCachingEnabled)BOOL statementsCachingEnabled;
 @property (nonatomic, assign)BOOL rollbackSQLSequenceTransactionOnError;
 @property (nonatomic, assign)BOOL createTransactionOnSQLSequences;
 @property (nonatomic, readonly)int recentErrorCode;
@@ -80,10 +80,9 @@ typedef enum _DBCDatabaseTransactionLock {
 - (BOOL)open;
 - (BOOL)openReadonly;
 - (BOOL)close;
+- (sqlite3*)database;
 
-- (BOOL)evaluateUpdateWithParameters:(NSString*)sqlUpdate, ... NS_REQUIRES_NIL_TERMINATION;
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate;
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate parameters:(NSArray*)parameters;
+- (BOOL)evaluateUpdateWithParameters:(NSString*)sqlUpdate, ...;
 - (id)evaluateQuery:(NSString*)sqlQuery;
 
 @end
@@ -92,7 +91,6 @@ typedef enum _DBCDatabaseTransactionLock {
 @interface DBCDatabase (advanced)
 
 - (int)openWithFlags:(int)flags;
-- (sqlite3*)database;
 - (int)registerModule:(const sqlite3_module*)module moduleName:(NSString*)moduleName userData:(void*)userData cleanupFunction:(void(*)(void*))cleanupFunction;
 - (int)registerScalarFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))function functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData;
 - (int)unRegisterScalarFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation;
