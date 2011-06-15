@@ -34,6 +34,30 @@
 # define stifle_history(X)
 #endif
 
+typedef enum _DBCDatabaseEncoding {
+    DBCDatabaseEncodingUTF8,
+    DBCDatabaseEncodingUTF16
+} DBCDatabaseEncoding;
+
+typedef enum _DBCDatabaseJournalingMode {
+    DBCDatabaseJournalingModeDelete,
+    DBCDatabaseJournalingModeTruncate,
+    DBCDatabaseJournalingModePersist,
+    DBCDatabaseJournalingModeMemory,
+    DBCDatabaseJournalingModeOff
+} DBCDatabaseJournalingMode;
+
+typedef enum _DBCDatabaseLockingMode {
+    DBCDatabaseLockingModeNormal,
+    DBCDatabaseLockingModeExclusive
+} DBCDatabaseLockingMode;
+
+typedef enum _DBCDatabaseTransactionLock {
+    DBCDatabaseAutocommitModeDeferred,
+    DBCDatabaseAutocommitModeImmediate,
+    DBCDatabaseAutocommitModeExclusive
+} DBCDatabaseTransactionLock;
+
 struct sqlite3lib_error {
     char    errorDescription[400];
     int     errorLine;

@@ -1,5 +1,6 @@
-#DBConnection
+#DBConnect
 
-DBConnection is Objective-C wrapper for SQLite embedded database
+DBConnect is a thread-safe Objective-C [SQLite][sqliteweb] wrapper for embedded systems. 
+[sqliteweb]:http://www.sqlite.org
 
-#__DBConnection__ still under development
+#__DBConnect__ still under development

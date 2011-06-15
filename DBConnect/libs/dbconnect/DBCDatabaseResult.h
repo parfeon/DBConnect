@@ -23,10 +23,40 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "DBCDatabase.h"
+#import "sqlite3lib.h"
+#import <sqlite3.h>
 
+@protocol DBCDatabaseResultStructure <NSObject>
 
-@interface DBCDatabaseResult : NSObject {
-    
+@required
+- (int)columnsCount;
+- (DBCDatabaseEncoding)databaseEncoding;
+- (NSString*)nameForColumnAtIndex:(int)columnIdx;
+- (int)indexForColumn:(NSString*)columnName;
+- (NSString*)stringifiedTypeForColumn:(NSString*)columnName;
+- (int)typeForColumn:(NSString*)columnName;
+- (NSString*)stringifiedTypeForColumnAtIndex:(int)columnIdx;
+- (int)typeForColumnAtIndex:(int)columnIdx;
+
+@end
+
+@class DBCDatabaseRow;
+
+@interface DBCDatabaseResult : NSObject <NSFastEnumeration, DBCDatabaseResultStructure> {
+@private
+    NSMutableArray      *colNames;
+    NSMutableArray      *colTypes;
+    NSMutableArray      *rows;
+    DBCDatabaseEncoding dbEncoding;
 }
+
++(id)resultWithPreparedStatement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding;
+- (id)initWidthPreparedSatetement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding;
+
+- (int)count;
+- (NSArray*)columnNames;
+- (void)addRowFromStatement:(sqlite3_stmt*)statement;
+- (DBCDatabaseRow*)rowAtIndex:(int)rowIdx;
 
 @end

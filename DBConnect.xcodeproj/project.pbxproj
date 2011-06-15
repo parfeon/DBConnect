@@ -14,6 +14,9 @@
 		790329CE1383E73800741EE8 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329CD1383E73800741EE8 /* main.m */; };
 		790329FB1383EB2500741EE8 /* DBConnectAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */; };
 		79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 79032A091383ED0D00741EE8 /* LICENSE.txt */; };
+		7907B0431391426D0045ABC6 /* DBCDatabaseRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 7907B0421391426C0045ABC6 /* DBCDatabaseRow.m */; };
+		791C957113A2BDA500F47188 /* DBCDatabase+Advanced.m in Sources */ = {isa = PBXBuildFile; fileRef = 791C957013A2BDA500F47188 /* DBCDatabase+Advanced.m */; };
+		791C957413A2CEFE00F47188 /* DBCDatabase+Aliases.m in Sources */ = {isa = PBXBuildFile; fileRef = 791C957313A2CEFE00F47188 /* DBCDatabase+Aliases.m */; };
 		7962F25913843B6E00765B9D /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7962F25813843B6E00765B9D /* libsqlite3.0.dylib */; };
 		79D4BCBA138402F5001EC1A3 /* README.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 79D4BCB9138402F5001EC1A3 /* README.markdown */; };
 		79D4BCC713840E92001EC1A3 /* DBCDatabase.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */; };
@@ -36,7 +39,15 @@
 		790329F91383EB2500741EE8 /* DBConnectAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBConnectAppDelegate.h; path = Classes/DBConnectAppDelegate.h; sourceTree = "<group>"; };
 		790329FA1383EB2500741EE8 /* DBConnectAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBConnectAppDelegate.m; path = Classes/DBConnectAppDelegate.m; sourceTree = "<group>"; };
 		79032A091383ED0D00741EE8 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = LICENSE.txt; path = libs/dbconnect/LICENSE.txt; sourceTree = "<group>"; };
+		7907B0411391426C0045ABC6 /* DBCDatabaseRow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCDatabaseRow.h; path = libs/dbconnect/DBCDatabaseRow.h; sourceTree = "<group>"; };
+		7907B0421391426C0045ABC6 /* DBCDatabaseRow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBCDatabaseRow.m; path = libs/dbconnect/DBCDatabaseRow.m; sourceTree = "<group>"; };
+		791C956F13A2BDA500F47188 /* DBCDatabase+Advanced.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "DBCDatabase+Advanced.h"; path = "libs/dbconnect/categories/DBCDatabase+Advanced.h"; sourceTree = "<group>"; };
+		791C957013A2BDA500F47188 /* DBCDatabase+Advanced.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "DBCDatabase+Advanced.m"; path = "libs/dbconnect/categories/DBCDatabase+Advanced.m"; sourceTree = "<group>"; };
+		791C957213A2CEFE00F47188 /* DBCDatabase+Aliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "DBCDatabase+Aliases.h"; path = "libs/dbconnect/categories/DBCDatabase+Aliases.h"; sourceTree = "<group>"; };
+		791C957313A2CEFE00F47188 /* DBCDatabase+Aliases.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "DBCDatabase+Aliases.m"; path = "libs/dbconnect/categories/DBCDatabase+Aliases.m"; sourceTree = "<group>"; };
 		7962F25813843B6E00765B9D /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
+		79C905F51391512B00D3B614 /* DBCConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCConfiguration.h; path = libs/dbconnect/DBCConfiguration.h; sourceTree = "<group>"; };
+		79C905F7139151CC00D3B614 /* DBCMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCMacro.h; path = libs/dbconnect/DBCMacro.h; sourceTree = "<group>"; };
 		79D4BCB9138402F5001EC1A3 /* README.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.markdown; sourceTree = SOURCE_ROOT; };
 		79D4BCBC13840E92001EC1A3 /* DBCDatabase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCDatabase.h; path = libs/dbconnect/DBCDatabase.h; sourceTree = "<group>"; };
 		79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DBCDatabase.m; path = libs/dbconnect/DBCDatabase.m; sourceTree = "<group>"; };
@@ -148,12 +159,16 @@
 			children = (
 				79D4BCCD138413BA001EC1A3 /* categories */,
 				79D4BCCC13841236001EC1A3 /* sqlite3lib */,
+				79C905F7139151CC00D3B614 /* DBCMacro.h */,
+				79C905F51391512B00D3B614 /* DBCConfiguration.h */,
 				79D4BCC213840E92001EC1A3 /* DBCError.h */,
 				79D4BCC313840E92001EC1A3 /* DBCError.m */,
 				79D4BCBC13840E92001EC1A3 /* DBCDatabase.h */,
 				79D4BCBD13840E92001EC1A3 /* DBCDatabase.m */,
 				79D4BCBE13840E92001EC1A3 /* DBCDatabaseResult.h */,
 				79D4BCBF13840E92001EC1A3 /* DBCDatabaseResult.m */,
+				7907B0411391426C0045ABC6 /* DBCDatabaseRow.h */,
+				7907B0421391426C0045ABC6 /* DBCDatabaseRow.m */,
 				79D4BCC013840E92001EC1A3 /* DBCDatabaseStatement.h */,
 				79D4BCC113840E92001EC1A3 /* DBCDatabaseStatement.m */,
 				79032A091383ED0D00741EE8 /* LICENSE.txt */,
@@ -164,8 +179,8 @@
 		79D4BCCC13841236001EC1A3 /* sqlite3lib */ = {
 			isa = PBXGroup;
 			children = (
-				79D4BCC513840E92001EC1A3 /* sqlite3lib.c */,
 				79D4BCC613840E92001EC1A3 /* sqlite3lib.h */,
+				79D4BCC513840E92001EC1A3 /* sqlite3lib.c */,
 				79D4BCC413840E92001EC1A3 /* sqlite3lib_ext.h */,
 			);
 			name = sqlite3lib;
@@ -176,6 +191,10 @@
 			children = (
 				79D4BCD4138414BC001EC1A3 /* DBCString+Utils.h */,
 				79D4BCD5138414BC001EC1A3 /* DBCString+Utils.m */,
+				791C956F13A2BDA500F47188 /* DBCDatabase+Advanced.h */,
+				791C957013A2BDA500F47188 /* DBCDatabase+Advanced.m */,
+				791C957213A2CEFE00F47188 /* DBCDatabase+Aliases.h */,
+				791C957313A2CEFE00F47188 /* DBCDatabase+Aliases.m */,
 			);
 			name = categories;
 			sourceTree = "<group>";
@@ -251,6 +270,9 @@
 				79D4BCCA13840E92001EC1A3 /* DBCError.m in Sources */,
 				79D4BCCB13840E92001EC1A3 /* sqlite3lib.c in Sources */,
 				79D4BCD6138414BC001EC1A3 /* DBCString+Utils.m in Sources */,
+				7907B0431391426D0045ABC6 /* DBCDatabaseRow.m in Sources */,
+				791C957113A2BDA500F47188 /* DBCDatabase+Advanced.m in Sources */,
+				791C957413A2CEFE00F47188 /* DBCDatabase+Aliases.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

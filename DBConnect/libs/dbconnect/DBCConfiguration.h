@@ -22,16 +22,7 @@
  *
  */
 
-#ifndef SQLITE_EXTENDED_ERROR_CODES_
-    #define SQLITE_EXTENDED_ERROR_CODES_ 1
-    #define SQLITE_OOM 2000
-    #define SQLITE_SYNTAX_ERROR 2001
-    #define SQLITE_INCOMPLETE_REQUEST 2002
-    #define SQLITE_GENERAL_PROCESSING_ERROR 2003
-#endif //SQLITE_EXTENDED_ERROR_CODES_
-
-#ifndef DBCONNECT_ERROR_CODES_
-    #define DBCONNECT_ERROR_CODES_ 1
-    #define DBC_TARGET_FILE_MISSED 3000
-    #define DBC_WRONG_BINDING_PARMETERS_COUNT 3001
-#endif
+// Should log out debug messages or not
+#define DBCUseDebugLogger 1
+// Should log out thread lock messages or not
+#define DBCUseLockLogger 1
