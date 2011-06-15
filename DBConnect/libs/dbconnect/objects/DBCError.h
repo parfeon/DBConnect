@@ -23,11 +23,21 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "DBCAdditionalErrorCodes.h"
+#import <sqlite3.h>
 
+#define kSQLiteErrorDomain @"kSQLiteErrorDomain"
+#define DBCAdditionalErrorInformation @"DBCAdditionalErrorInformation"
 
-@interface NSString (DBCString_Utils)
+@interface DBCError : NSError {
+    
+}
 
-- (NSString*)md5;
-- (NSString*)trimmedString;
-
++ (NSString*)errorDescriptionByCode:(int)errorCode;
++ (id)errorWithErrorCode:(NSInteger)code;
++ (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
++ (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
+- (id)initWithErrorCode:(NSInteger)code;
+- (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
+- (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
 @end

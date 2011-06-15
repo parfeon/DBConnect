@@ -23,8 +23,14 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "DBCDatabaseIndexedColumnInfo.h"
+#import "DBCDatabaseTableColumnInfo.h"
+#import "DBCAdditionalErrorCodes.h"
+#import "DBCDatabaseIndexInfo.h"
 #import "DBCDatabaseResult.h"
+#import "DBCDatabaseInfo.h"
 #import "DBCDatabaseRow.h"
+#import "DBCStatement.h"
 #import "DBCError.h"
 #import "sqlite3lib.h"
 #import <sqlite3.h>
@@ -77,6 +83,9 @@
 
 - (BOOL)open;
 - (BOOL)openReadonly;
+#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination;
+#endif
 - (BOOL)close;
 
 #pragma mark DDL and DML methods
@@ -97,79 +106,5 @@
 #pragma mark DBCDatabase getter/setter methods
 
 - (sqlite3*)database;
-
-@end
-
-@interface DBCDatabaseInfo : NSObject {
-    int         dbSeqNumber;
-    NSString    *dbName;
-    NSString    *dbFilePath;
-}
-@property (nonatomic, readonly, getter = numberInSequence)int dbSeqNumber;
-@property (nonatomic, readonly, getter = name)NSString *dbName;
-@property (nonatomic, readonly, getter = filePath)NSString *dbFilePath;
-+ (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
-- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
-
-@end
-
-
-@interface DBCStatement : NSObject {
-    NSString                *sqlQuery;
-    sqlite3_stmt            *statement;
-}
-@property (nonatomic, copy)NSString *sqlQuery;
-
-- (id)initWithSQLQuery:(NSString*)sql;
-- (void)reset;
-- (void)close;
-
-- (void)setStatement:(sqlite3_stmt*)newStatement;
-- (sqlite3_stmt*)statement;
-
-@end
-
-@interface DBCDatabaseIndexInfo : NSObject {
-    int         idxSeqNumber;
-    NSString    *idxName;
-    BOOL        idxUnique;
-}
-@property (nonatomic, readonly, getter = numberInSequence)int idxSeqNumber;
-@property (nonatomic, readonly, getter = name)NSString *idxName;
-@property (nonatomic, readonly, getter = isUnique)BOOL idxUnique;
-+ (id)indexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique;
-- (id)initIndexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique;
-
-@end
-
-@interface DBCDatabaseIndexedColumnInfo : NSObject {
-    int         colIdxInIndex;
-    int         colIdxInTable;
-    NSString    *colName;
-}
-@property (nonatomic, readonly, getter = indexInIndex)int colIdxInIndex;
-@property (nonatomic, readonly, getter = indexInTable)int colIdxInTable;
-@property (nonatomic, readonly, getter = name)NSString *colName;
-+ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName;
-- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName;
-
-@end
-
-@interface DBCDatabaseTableColumnInfo : NSObject {
-    int         colIdx;
-    NSString    *colName;
-    NSString    *colType;
-    BOOL        colNotNull;
-    NSString    *colDefValue;
-    BOOL        colIsPartOfPK;
-}
-@property (nonatomic, readonly, getter = numberInSequence)int colIdx;
-@property (nonatomic, readonly, getter = name)NSString *colName;
-@property (nonatomic, readonly, getter = type)NSString *colType;
-@property (nonatomic, readonly, getter = isNotNull)BOOL colNotNull;
-@property (nonatomic, readonly, getter = defaultValue)NSString *colDefValue;
-@property (nonatomic, readonly, getter = isPartOfThePrimaryKey)BOOL colIsPartOfPK;
-+ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
-- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
 
 @end

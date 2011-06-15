@@ -22,12 +22,26 @@
  *
  */
 
+
 #import <Foundation/Foundation.h>
 
 
-@interface NSString (DBCString_Utils)
+@interface DBCDatabaseTableColumnInfo : NSObject {
+    int         colIdx;
+    NSString    *colName;
+    NSString    *colType;
+    BOOL        colNotNull;
+    NSString    *colDefValue;
+    BOOL        colIsPartOfPK;
+}
+@property (nonatomic, readonly, getter = numberInSequence)int colIdx;
+@property (nonatomic, readonly, getter = name)NSString *colName;
+@property (nonatomic, readonly, getter = type)NSString *colType;
+@property (nonatomic, readonly, getter = isNotNull)BOOL colNotNull;
+@property (nonatomic, readonly, getter = defaultValue)NSString *colDefValue;
+@property (nonatomic, readonly, getter = isPartOfThePrimaryKey)BOOL colIsPartOfPK;
 
-- (NSString*)md5;
-- (NSString*)trimmedString;
++ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
+- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
 
 @end

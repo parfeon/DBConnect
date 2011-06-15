@@ -44,6 +44,12 @@
 - (int)intForColumn:(NSString*)columnName;
 - (int)intForColumnAtIndex:(int)columnIdx;
 
+- (NSInteger)integerForColumn:(NSString*)columnName;
+- (NSInteger)integerForColumnAtIndex:(int)columnIdx;
+
+- (NSUInteger)unsignedIntegerForColumn:(NSString*)columnName;
+- (NSUInteger)unsignedIntegerForColumnAtIndex:(int)columnIdx;
+
 - (long)longForColumn:(NSString*)columnName;
 - (long)longForColumnAtIndex:(int)columnIdx;
 

@@ -41,6 +41,8 @@ typedef enum _SQLStatementFromat {
     SQLStatementFromatNamedToken
 } SQLStatementFromat;
 
+@class DBCStatement;
+
 @interface DBCDatabase (private)
 
 #pragma mark DDL and DML methods
@@ -198,6 +200,55 @@ typedef enum _SQLStatementFromat {
     }
     return opened;
 }
+
+#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+/**
+ * Copy currently opened sqlite database file to provided location assuming what
+ * it is outside of application bundle and reopen connection with 'read-write' rights
+ * @parameters
+ *      NSString *mutableDatabaseStoreDestination - database file copy destination
+ */
+- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination {
+    if(mutableDatabaseStoreDestination == nil)
+        mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *dirCreationError = nil;
+    if(![fileManager fileExistsAtPath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent]
+                          isDirectory:NULL]){
+        [fileManager createDirectoryAtPath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent]
+               withIntermediateDirectories:YES attributes:nil 
+                                     error:&dirCreationError];
+        if(dirCreationError != nil){
+            recentErrorCode = DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE; 
+            DBCReleaseObject(recentError);
+            recentError = [[DBCError errorWithErrorCode:recentErrorCode 
+                                            forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
+                                  additionalInformation:[dirCreationError description]] retain];
+            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", recentError);
+            dirCreationError = nil;
+            return NO;
+        }
+    }
+    NSError *databaseCopyError = nil;
+    [fileManager copyItemAtPath:dbPath toPath:mutableDatabaseStoreDestination error:&databaseCopyError];
+    if(databaseCopyError != nil){
+        recentErrorCode = DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION;
+        DBCReleaseObject(recentError);
+        recentError = [[DBCError errorWithErrorCode:recentErrorCode 
+                                        forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
+                              additionalInformation:[databaseCopyError description]] retain];
+        DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", recentError);
+        databaseCopyError = nil;
+        return NO;
+    }
+    
+    if(![self close]) return NO;
+    DBCReleaseObject(dbPath);
+    dbPath = [mutableDatabaseStoreDestination copy];
+    
+    return [self open];
+}
+#endif
 
 /**
  * Close database connection to sqlite database file if it was opened
@@ -1218,317 +1269,6 @@ typedef enum _SQLStatementFromat {
     if([object respondsToSelector:@selector(initWithString:)]) class = [NSString class];
     va_end(parametersCopy);
     return class;
-}
-
-@end
-
-@implementation DBCStatement
-
-@synthesize sqlQuery;
-
-#pragma mark DBCStatement instance initialization
-
-/**
- * Initiate DBCStatement instance
- * @return initialized DBCStatement instance
- */
-- (id)init {
-    return [self initWithSQLQuery:nil];
-}
-
-/**
- * Initiate DBCStatement instance with SQL query request
- * @parameters
- *      NSString *sql - SQL query for statement
- * @return initialized DBCStatement instance
- */
-- (id)initWithSQLQuery:(NSString*)sql {
-    if((self = [super init])){
-        [self setSqlQuery:sql];
-        statement = NULL;
-    }
-    return self;
-}
-
-#pragma mark DBCStatement state manipulation
-
-/**
- * Reset prepared statement to it's initial state
- */
-- (void)reset {
-    if(statement == NULL) return;
-    sqlite3_reset(statement);
-    sqlite3_clear_bindings(statement);
-}
-
-/**
- * Close prepared statement and release it
- */
-- (void)close {
-    if(statement == NULL) return;
-    sqlite3_finalize(statement);
-    statement = NULL;
-}
-
-#pragma mark DBCStatement getter/setter
-
-/**
- * Set new prepared statement
- * @parameters
- *      sqlite3_stmt *newStatement - new statement to store
- */
-- (void)setStatement:(sqlite3_stmt*)newStatement {
-    if(statement != NULL) sqlite3_finalize(statement);
-    statement = newStatement;
-}
-
-/**
- * Get stored statement
- * @return stored statement
- */
-- (sqlite3_stmt*)statement {
-    return statement;
-}
-
-#pragma mark DBCStatement memory management
-
-/**
- * Deallocating DBCStatement instance and release all retained memory
- */
-- (void)dealloc {
-    [self close];
-    [self setSqlQuery:nil];
-    [super dealloc];
-}
-
-@end
-
-@implementation DBCDatabaseInfo
-
-@synthesize dbSeqNumber, dbName, dbFilePath;
-
-#pragma mark DBCStatement instance initialization
-
-/**
- * Initiate DBCDatabaseInfo instance
- * @parameters
- *      int sequenceNumber           - database sequence number in list of other databases
- *      NSString* databaseName       - database name
- *      NSString* pathToDatabaseFile - path to database file
- * @return autoreleased DBCDatabaseInfo instance
- */
-+ (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile {
-    return [[[[self class] alloc] initDatabaseInfoWithSequence:sequenceNumber name:databaseName filePath:pathToDatabaseFile] autorelease];
-}
-
-/**
- * Initiate DBCDatabaseInfo instance
- * @parameters
- *      int sequenceNumber           - database sequence number in list of other databases
- *      NSString* databaseName       - database name
- *      NSString* pathToDatabaseFile - path to database file
- * @return DBCDatabaseInfo instance
- */
-- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile {
-    if((self = [super init])){
-        dbSeqNumber = sequenceNumber;
-        dbName = [databaseName copy];
-        dbFilePath = [pathToDatabaseFile copy];
-    }
-    return self;
-}
-
-/**
- * Get formatted database connection description
- * @return formatted database connection description
- */
-- (NSString*)description {
-    return [NSString stringWithFormat:@"\nSequence number: %i\nDatabase name: %@\nDatabase file path: %@", dbSeqNumber, dbName, dbFilePath];
-}
-
-#pragma mark DBCDatabaseInfo memory management
-
-/**
- * Deallocate database information and release all retained memory
- */
-- (void)dealloc {
-    DBCReleaseObject(dbName);
-    DBCReleaseObject(dbFilePath);
-    [super dealloc];
-}
-
-@end
-
-@implementation DBCDatabaseIndexInfo
-
-@synthesize idxSeqNumber, idxName, idxUnique;
-
-#pragma mark DBCDatabaseIndexInfo instance initialization
-
-/**
- * Initiate DBCDatabaseIndexInfo instance
- * @parameters
- *      int sequenceNumber  - index sequence number in list of other indices
- *      NSString* indexName - index name
- *      BOOL isUnique       - unique
- * @return autoreleased DBCDatabaseIndexInfo instance
- */
-+ (id)indexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique {
-    return [[[[self class] alloc] initIndexInfoWithSequence:sequenceNumber name:indexName unique:isUnique] autorelease];
-}
-
-/**
- * Initiate DBCDatabaseIndexInfo instance
- * @parameters
- *      int sequenceNumber  - index sequence number in list of other indices
- *      NSString* indexName - index name
- *      BOOL isUnique       - unique
- * @return DBCDatabaseIndexInfo instance
- */
-- (id)initIndexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique {
-    if((self = [super init])){
-        idxSeqNumber = sequenceNumber;
-        idxName = [indexName copy];
-        idxUnique = isUnique;
-    }
-    return self;
-}
-
-/**
- * Get formatted index description
- * @return formatted index description
- */
-- (NSString*)description {
-    return [NSString stringWithFormat:@"\nSequence number: %i\nIndex name: %@\nIndex is unique: %@", idxSeqNumber, idxName, idxUnique?@"YES":@"NO"];
-}
-
-#pragma mark DBCDatabaseIndexInfo memory management
-
-/**
- * Deallocate index information and release all retained memory
- */
-- (void)dealloc {
-    DBCReleaseObject(idxName);
-    [super dealloc];
-}
-
-@end@implementation DBCDatabaseIndexedColumnInfo
-
-@synthesize colIdxInIndex, colIdxInTable, colName;
-
-#pragma mark DBCDatabaseIndexedColumnInfo instance initialization
-
-/**
- * Initiate DBCDatabaseIndexedColumnInfo instance
- * @parameters
- *      int columnIndexInIndex  - column index inside index
- *      int columnIndexInTable  - column index inside table
- *      NSString* columnName    - column name
- * @return autoreleased DBCDatabaseIndexedColumnInfo instance
- */
-+ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName {
-    return [[[[self class] alloc] initIndexedColumnInfoWithSequence:columnIndexInIndex inTableSequenceNumber:columnIndexInTable name:columnName] autorelease];
-}
-
-/**
- * Initiate DBCDatabaseIndexedColumnInfo instance
- * @parameters
- *      int columnIndexInIndex  - column index inside index
- *      int columnIndexInTable  - column index inside table
- *      NSString* columnName    - column name
- * @return DBCDatabaseIndexedColumnInfo instance
- */
-- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName {
-    if((self = [super init])){
-        colIdxInIndex = columnIndexInIndex;
-        colIdxInTable = columnIndexInTable;
-        colName = [columnName copy];
-    }
-    return self;
-}
-
-/**
- * Get formatted indexed column description
- * @return formatted indexed column description
- */
-- (NSString*)description {
-    return [NSString stringWithFormat:@"\nIn index column number: %i\nIn table column index: %i\nColumn name: %@", colIdxInIndex, colIdxInTable, colName];
-}
-
-#pragma mark DBCDatabaseIndexedColumnInfo memory management
-
-/**
- * Deallocate indexed column information and release all retained memory
- */
-- (void)dealloc {
-    DBCReleaseObject(colName);
-    [super dealloc];
-}
-
-@end
-
-@implementation DBCDatabaseTableColumnInfo
-
-@synthesize colIdx, colName, colType, colNotNull, colDefValue, colIsPartOfPK;
-
-#pragma mark DBCDatabaseTableColumnInfo instance initialization
-
-/**
- * Initiate DBCDatabaseTableColumnInfo instance
- * @parameters
- *      int columnNumber           - column number inside columns sequence
- *      NSString *columnName       - column name
- *      NSString *columnDataType   - column data type
- *      BOOL isNotNull             - whether column in NOT NULL
- *      NSString *defaultVallue    - default column value
- *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
- * @return autoreleased DBCDatabaseTableColumnInfo instance
- */
-+ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
-    return [[[[self class] alloc] initolumnInfoWithSequence:columnNumber columnName:columnName columnDataType:columnDataType isNotNull:isNotNull defaultValue:defaultVallue isPartOfThePrimaryKey:isPartOfThePrimaryKey] autorelease];
-}
-
-/**
- * Initiate DBCDatabaseTableColumnInfo instance
- * @parameters
- *      int columnNumber           - column number inside columns sequence
- *      NSString *columnName       - column name
- *      NSString *columnDataType   - column data type
- *      BOOL isNotNull             - whether column in NOT NULL
- *      NSString *defaultVallue    - default column value
- *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
- * @return DBCDatabaseTableColumnInfo instance
- */
-- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
-    if((self = [super init])){
-        colIdx = columnNumber;
-        colName = [columnName copy];
-        colType = [columnDataType copy];
-        colNotNull = isNotNull;
-        colDefValue = [defaultVallue copy];
-        colIsPartOfPK = isPartOfThePrimaryKey;
-    }
-    return self;
-}
-
-/**
- * Get formatted column description
- * @return formatted column description
- */
-- (NSString*)description {
-    return [NSString stringWithFormat:@"\nIn sequence column number: %i\nColumn name: %@\nColumn data type: %@\nColumn is NOT NULL: %@\nColumn default value: %@\nColumn is part of the primary key: %@", colIdx, colName, colType, colNotNull?@"YES":@"NO", colDefValue, colIsPartOfPK?@"YES":@"NO"];
-}
-
-#pragma mark DBCDatabaseIndexedColumnInfo memory management
-
-/**
- * Deallocate indexed column information and release all retained memory
- */
-- (void)dealloc {
-    DBCReleaseObject(colName);
-    DBCReleaseObject(colType);
-    DBCReleaseObject(colDefValue);
-    [super dealloc];
 }
 
 @end

@@ -24,20 +24,18 @@
 
 #import <Foundation/Foundation.h>
 #import <sqlite3.h>
-#import "sqlite3lib_ext.h"
 
-#define kSQLiteErrorDomain @"kSQLiteErrorDomain"
-#define DBCAdditionalErrorInformation @"DBCAdditionalErrorInformation"
-
-@interface DBCError : NSError {
-    
+@interface DBCStatement : NSObject {
+    NSString                *sqlQuery;
+    sqlite3_stmt            *statement;
 }
+@property (nonatomic, copy)NSString *sqlQuery;
 
-+ (NSString*)errorDescriptionByCode:(int)errorCode;
-+ (id)errorWithErrorCode:(NSInteger)code;
-+ (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
-+ (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
-- (id)initWithErrorCode:(NSInteger)code;
-- (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
-- (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
+- (id)initWithSQLQuery:(NSString*)sql;
+- (void)reset;
+- (void)close;
+
+- (void)setStatement:(sqlite3_stmt*)newStatement;
+- (sqlite3_stmt*)statement;
+
 @end

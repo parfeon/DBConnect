@@ -3,9 +3,20 @@
  */
 
 #include "sqlite3lib.h"
+#import "DBCAdditionalErrorCodes.h"
+
+#if !defined(HAVE_EDITLINE) && (!defined(HAVE_READLINE) || HAVE_READLINE!=1)
+# define readline(p) local_getline(p,stdin)
+# define add_history(X)
+# define read_history(X)
+# define write_history(X)
+# define stifle_history(X)
+#endif
 
 static char mainPrompt[20];    
 static char continuePrompt[20];
+
+#pragma mark SQL dump file import routine
 
 /**
  * Compute a string length that is limited to what can be stored in

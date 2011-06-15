@@ -22,12 +22,37 @@
  *
  */
 
-#import <Foundation/Foundation.h>
+// Supported sqlite database encodings
+typedef enum _DBCDatabaseEncoding {
+    DBCDatabaseEncodingUTF8,
+    DBCDatabaseEncodingUTF16
+} DBCDatabaseEncoding;
 
+// Supported sqlite database journaling modes
+typedef enum _DBCDatabaseJournalingMode {
+    DBCDatabaseJournalingModeDelete,
+    DBCDatabaseJournalingModeTruncate,
+    DBCDatabaseJournalingModePersist,
+    DBCDatabaseJournalingModeMemory,
+    DBCDatabaseJournalingModeOff
+} DBCDatabaseJournalingMode;
 
-@interface NSString (DBCString_Utils)
+// Supported sqlite database locking modes
+typedef enum _DBCDatabaseLockingMode {
+    DBCDatabaseLockingModeNormal,
+    DBCDatabaseLockingModeExclusive
+} DBCDatabaseLockingMode;
 
-- (NSString*)md5;
-- (NSString*)trimmedString;
+// Supported sqlite database transaction locks
+typedef enum _DBCDatabaseTransactionLock {
+    DBCDatabaseAutocommitModeDeferred,
+    DBCDatabaseAutocommitModeImmediate,
+    DBCDatabaseAutocommitModeExclusive
+} DBCDatabaseTransactionLock;
 
-@end
+// SQLite lib error structure
+struct sqlite3lib_error {
+    char    errorDescription[400];
+    int     errorLine;
+    int     errorCode;
+};

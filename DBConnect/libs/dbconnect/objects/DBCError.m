@@ -33,39 +33,41 @@
  * @return stringified error code value
  */
 + (NSString*)errorDescriptionByCode:(int)errorCode {
-    if(errorCode == SQLITE_ERROR)                       return @"SQL error or missing database.";
-    if(errorCode == SQLITE_INTERNAL)                    return @"Internal logic error in SQLite.";
-    if(errorCode == SQLITE_PERM)                        return @"Access permission denied.";
-    if(errorCode == SQLITE_ABORT)                       return @"Callback routine requested an abort.";
-    if(errorCode == SQLITE_BUSY)                        return @"The database file is locked.";
-    if(errorCode == SQLITE_LOCKED)                      return @"A table in the database is locked.";
-    if(errorCode == SQLITE_NOMEM)                       return @"A malloc() failed.";
-    if(errorCode == SQLITE_READONLY)                    return @"Attempt to write a readonly database.";
-    if(errorCode == SQLITE_INTERRUPT)                   return @"Operation terminated by sqlite3_interrupt().";
-    if(errorCode == SQLITE_IOERR)                       return @"Some kind of disk I/O error occurred.";
-    if(errorCode == SQLITE_CORRUPT)                     return @"The database disk image is malformed.";
-    if(errorCode == SQLITE_NOTFOUND)                    return @"Table or record not found.";
-    if(errorCode == SQLITE_FULL)                        return @"Insertion failed because database is full.";
-    if(errorCode == SQLITE_CANTOPEN)                    return @"Unable to open the database file.";
-    if(errorCode == SQLITE_PROTOCOL)                    return @"Database lock protocol error.";
-    if(errorCode == SQLITE_EMPTY)                       return @"Database is empty.";
-    if(errorCode == SQLITE_SCHEMA)                      return @"The database schema changed.";
-    if(errorCode == SQLITE_TOOBIG)                      return @"String or BLOB exceeds size limit.";
-    if(errorCode == SQLITE_CONSTRAINT)                  return @"Abort due to constraint violation.";
-    if(errorCode == SQLITE_MISMATCH)                    return @"Data type mismatch.";
-    if(errorCode == SQLITE_MISUSE)                      return @"Library used incorrectly.";
-    if(errorCode == SQLITE_NOLFS)                       return @"Uses OS features not supported on host.";
-    if(errorCode == SQLITE_AUTH)                        return @"Authorization denied.";
-    if(errorCode == SQLITE_FORMAT)                      return @"Auxiliary database format error.";
-    if(errorCode == SQLITE_RANGE)                       return @"2nd parameter to sqlite3_bind out of range.";
-    if(errorCode == SQLITE_NOTADB)                      return @"File opened that is not a database file.";
-    if(errorCode == SQLITE_OOM)                         return @"Out of memory.";
+    if(errorCode == SQLITE_ERROR)                                   return @"SQL error or missing database.";
+    if(errorCode == SQLITE_INTERNAL)                                return @"Internal logic error in SQLite.";
+    if(errorCode == SQLITE_PERM)                                    return @"Access permission denied.";
+    if(errorCode == SQLITE_ABORT)                                   return @"Callback routine requested an abort.";
+    if(errorCode == SQLITE_BUSY)                                    return @"The database file is locked.";
+    if(errorCode == SQLITE_LOCKED)                                  return @"A table in the database is locked.";
+    if(errorCode == SQLITE_NOMEM)                                   return @"A malloc() failed.";
+    if(errorCode == SQLITE_READONLY)                                return @"Attempt to write a readonly database.";
+    if(errorCode == SQLITE_INTERRUPT)                               return @"Operation terminated by sqlite3_interrupt().";
+    if(errorCode == SQLITE_IOERR)                                   return @"Some kind of disk I/O error occurred.";
+    if(errorCode == SQLITE_CORRUPT)                                 return @"The database disk image is malformed.";
+    if(errorCode == SQLITE_NOTFOUND)                                return @"Table or record not found.";
+    if(errorCode == SQLITE_FULL)                                    return @"Insertion failed because database is full.";
+    if(errorCode == SQLITE_CANTOPEN)                                return @"Unable to open the database file.";
+    if(errorCode == SQLITE_PROTOCOL)                                return @"Database lock protocol error.";
+    if(errorCode == SQLITE_EMPTY)                                   return @"Database is empty.";
+    if(errorCode == SQLITE_SCHEMA)                                  return @"The database schema changed.";
+    if(errorCode == SQLITE_TOOBIG)                                  return @"String or BLOB exceeds size limit.";
+    if(errorCode == SQLITE_CONSTRAINT)                              return @"Abort due to constraint violation.";
+    if(errorCode == SQLITE_MISMATCH)                                return @"Data type mismatch.";
+    if(errorCode == SQLITE_MISUSE)                                  return @"Library used incorrectly.";
+    if(errorCode == SQLITE_NOLFS)                                   return @"Uses OS features not supported on host.";
+    if(errorCode == SQLITE_AUTH)                                    return @"Authorization denied.";
+    if(errorCode == SQLITE_FORMAT)                                  return @"Auxiliary database format error.";
+    if(errorCode == SQLITE_RANGE)                                   return @"2nd parameter to sqlite3_bind out of range.";
+    if(errorCode == SQLITE_NOTADB)                                  return @"File opened that is not a database file.";
+    if(errorCode == SQLITE_OOM)                                     return @"Out of memory.";
     
-    if(errorCode == SQLITE_SYNTAX_ERROR)                return @"SQL syntax error.";
-    if(errorCode == SQLITE_INCOMPLETE_REQUEST)          return @"Incomplete SQL query.";
-    if(errorCode == SQLITE_GENERAL_PROCESSING_ERROR)    return @"SQL Error.";
-    if(errorCode == DBC_TARGET_FILE_MISSED)             return @"File not exists on provided path.";
-    if(errorCode == DBC_WRONG_BINDING_PARMETERS_COUNT)  return @"Not enough binding parameters was passed to statement";
+    if(errorCode == SQLITE_SYNTAX_ERROR)                            return @"SQL syntax error.";
+    if(errorCode == SQLITE_INCOMPLETE_REQUEST)                      return @"Incomplete SQL query.";
+    if(errorCode == SQLITE_GENERAL_PROCESSING_ERROR)                return @"SQL Error.";
+    if(errorCode == DBC_TARGET_FILE_MISSED)                         return @"File not exists on provided path.";
+    if(errorCode == DBC_WRONG_BINDING_PARMETERS_COUNT)              return @"Not enough binding parameters was passed to statement";
+    if(errorCode == DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE)    return @"Can't create folder for mutable database file storage";
+    if(errorCode == DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION)    return @"Can't copy database file to new location";
     
     return @"Unknown";
 }

@@ -23,10 +23,17 @@
  */
 
 #import <Foundation/Foundation.h>
-#import <sqlite3.h>
 
-@interface DBCDatabaseStatement : NSObject {
-    sqlite3_stmt    *statement;
+
+@interface DBCDatabaseIndexedColumnInfo : NSObject {
+    int         colIdxInIndex;
+    int         colIdxInTable;
+    NSString    *colName;
 }
+@property (nonatomic, readonly, getter = indexInIndex)int colIdxInIndex;
+@property (nonatomic, readonly, getter = indexInTable)int colIdxInTable;
+@property (nonatomic, readonly, getter = name)NSString *colName;
 
++ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName;
+- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName;
 @end

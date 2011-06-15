@@ -21,9 +21,11 @@
  * THE SOFTWARE.
  *
  */
+
 #import "DBCConfiguration.h"
 
 #define DBCReleaseObject(__OBJECT__) if(__OBJECT__!=nil){[__OBJECT__ release], __OBJECT__ = nil; }
+
 #define DBCDatabaseTransactionLockNameFromEnum(__LOCK_ENUM__) ({\
     NSString *lockName = nil;\
     if(__LOCK_ENUM__==DBCDatabaseAutocommitModeDeferred) lockName=@"DEFERRED";\

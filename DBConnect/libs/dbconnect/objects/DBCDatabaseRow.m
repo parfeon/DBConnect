@@ -153,6 +153,52 @@
 }
 
 /**
+ * Retrieve integer value from column
+ * @parameters
+ *      NSString *columnName - target column name
+ * @return integer value from object stored in column
+ */
+- (NSInteger)integerForColumn:(NSString*)columnName {
+    // This condition should not happen
+    if(dataStructureDelegate == nil) return -1;
+    return [self integerForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
+}
+
+/**
+ * Retrieve integer value from column
+ * @parameters
+ *      NSString *columnName - target column index
+ * @return integer value from object stored in column
+ */
+- (NSInteger)integerForColumnAtIndex:(int)columnIdx {
+    if(columnIdx >= [data count]) return -1;
+    return [[data objectAtIndex:columnIdx] integerValue];
+}
+
+/**
+ * Retrieve unsigned integer value from column
+ * @parameters
+ *      NSString *columnName - target column name
+ * @return unsigned integer value from object stored in column
+ */
+- (NSUInteger)unsignedIntegerForColumn:(NSString*)columnName {
+    // This condition should not happen
+    if(dataStructureDelegate == nil) return 0;
+    return [self unsignedIntegerForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
+}
+
+/**
+ * Retrieve unsigned integer value from column
+ * @parameters
+ *      NSString *columnName - target column index
+ * @return unsigned integer value from object stored in column
+ */
+- (NSUInteger)unsignedIntegerForColumnAtIndex:(int)columnIdx {
+    if(columnIdx >= [data count]) return 0;
+    return [[data objectAtIndex:columnIdx] unsignedIntegerValue];
+}
+
+/**
  * Retrieve long value from column
  * @parameters
  *      NSString *columnName - target column name

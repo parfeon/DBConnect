@@ -25,9 +25,16 @@
 #import <Foundation/Foundation.h>
 
 
-@interface NSString (DBCString_Utils)
+@interface DBCDatabaseIndexInfo : NSObject {
+    int         idxSeqNumber;
+    NSString    *idxName;
+    BOOL        idxUnique;
+}
+@property (nonatomic, readonly, getter = numberInSequence)int idxSeqNumber;
+@property (nonatomic, readonly, getter = name)NSString *idxName;
+@property (nonatomic, readonly, getter = isUnique)BOOL idxUnique;
 
-- (NSString*)md5;
-- (NSString*)trimmedString;
++ (id)indexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique;
+- (id)initIndexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique;
 
 @end

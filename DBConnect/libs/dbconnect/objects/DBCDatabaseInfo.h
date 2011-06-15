@@ -22,9 +22,19 @@
  *
  */
 
-#import "DBCDatabaseStatement.h"
+#import <Foundation/Foundation.h>
 
 
-@implementation DBCDatabaseStatement
+@interface DBCDatabaseInfo : NSObject {
+    int         dbSeqNumber;
+    NSString    *dbName;
+    NSString    *dbFilePath;
+}
+@property (nonatomic, readonly, getter = numberInSequence)int dbSeqNumber;
+@property (nonatomic, readonly, getter = name)NSString *dbName;
+@property (nonatomic, readonly, getter = filePath)NSString *dbFilePath;
+
++ (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
+- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
 
 @end
