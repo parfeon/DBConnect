@@ -31,7 +31,7 @@
 #define PARAMETERS_LIST @"parametersList"
 #define PARAMETERS_MAPPING_INFORMATION @"parametersMappingInformation"
 #define PREPARED_SQL_STATEMENT @"preparedSQLStatement"
-
+ 
 // SQL statement parameters token format
 typedef enum _SQLStatementFromat {
     SQLStatementFromatUnknown,

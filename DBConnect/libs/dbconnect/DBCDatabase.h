@@ -63,7 +63,7 @@
     
     NSArray                     *listOfPossibleTCLCommands;
     NSArray                     *listOfNSStringFormatSpecifiers;
-}
+} 
 @property (nonatomic, assign)int dbBusyRetryCount;
 @property (nonatomic, assign)DBCDatabaseTransactionLock defaultSQLSequencesTransactinoLock;
 @property (nonatomic, assign, getter = isStatementsCachingEnabled)BOOL statementsCachingEnabled;
