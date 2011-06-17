@@ -31,7 +31,7 @@
 #define PARAMETERS_LIST @"parametersList"
 #define PARAMETERS_MAPPING_INFORMATION @"parametersMappingInformation"
 #define PREPARED_SQL_STATEMENT @"preparedSQLStatement"
-
+ 
 // SQL statement parameters token format
 typedef enum _SQLStatementFromat {
     SQLStatementFromatUnknown,
@@ -77,8 +77,22 @@ typedef enum _SQLStatementFromat {
 
 /**
  * Create and initiate DBCDatabase by opening database, which exists at 'dbFilePath' 
+ * with default encoding (UTF-8)
  * @parameters
- *      NSString *dbFilePath - sqlite database file path
+ *      NSString *dbFilePath         - sqlite database file path
+ * @return autoreleased DBCDatabase instance
+ */
++ (id)databaseWithPath:(NSString*)dbFilePath {
+    return [DBCDatabase databaseWithPath:dbFilePath defaultEncoding:DBCDatabaseEncodingUTF8];
+}
+
+/**
+ * Create and initiate DBCDatabase by opening database, which exists at 'dbFilePath' 
+ * @parameters
+ *      NSString *dbFilePath         - sqlite database file path
+ *      DBCDatabaseEncoding encoding - default encoding which will be used, when 
+ *                                     exists ability to use differenc C API for 
+ *                                     different encodings
  * @return autoreleased DBCDatabase instance
  */
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding {
@@ -87,11 +101,29 @@ typedef enum _SQLStatementFromat {
 
 /**
  * Create and initiate DBCDatabase from sqlite database file, which will be created at
- * specified path and SQL statements list from provided file. Database will
- * be created only if this is new file
+ * specified path and SQL statements list from provided file. Will be used default encoding
  * @oarameters
  *      NSString* sqlStatementsListFilepath - path to file with list of SQL statements list
  *      NSString* databasePath              - sqlite database file target location
+ *      BOOL      continueOnEvaluateErrors  - should continue creation on evaluate 
+ *                                            update request error
+ * WARNING: databasePath can't be same as application bundle, use application
+ *          Documents folder instead
+ * @return autoreleased DBCDatabase instance
+ */
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
+    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:databasePath defaultEncoding:DBCDatabaseEncodingUTF8 continueOnEvaluateErrors:continueOnEvaluateErrors];
+}
+
+/**
+ * Create and initiate DBCDatabase from sqlite database file, which will be created at
+ * specified path and SQL statements list from provided file.
+ * @oarameters
+ *      NSString* sqlStatementsListFilepath - path to file with list of SQL statements list
+ *      NSString* databasePath              - sqlite database file target location
+ *      DBCDatabaseEncoding encoding        - default encoding which will be used, when 
+ *                                            exists ability to use differenc C API for 
+ *                                            different encodings
  *      BOOL      continueOnEvaluateErrors  - should continue creation on evaluate 
  *                                            update request error
  * WARNING: databasePath can't be same as application bundle, use application
@@ -107,7 +139,10 @@ typedef enum _SQLStatementFromat {
 /**
  * Initiate DBCDatabase by opening sqlite database file, which exists at 'dbFilePath' 
  * @parameters
- *      NSString *dbFilePath - sqlite database file path
+ *      NSString *dbFilePath         - sqlite database file path
+ *      DBCDatabaseEncoding encoding - default encoding which will be used, when 
+ *                                     exists ability to use differenc C API for 
+ *                                     different encodings
  * @return DBCDatabase instance
  */
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding {
@@ -121,7 +156,7 @@ typedef enum _SQLStatementFromat {
                                            @"%lld", @"%llu", @"%Lf",nil] retain];
         dbEncoding = encoding;
         statementsCachingEnabled = YES;
-        dbBusyRetryCount = 0;
+        dbBusyRetryCount = 5;
         recentError = nil;
         recentErrorCode = -1;
         dbConnection = NULL;
@@ -135,11 +170,13 @@ typedef enum _SQLStatementFromat {
 
 /**
  * Initiate DBCDatabase from sqlite database file, which will be created at
- * specified path and SQL query commands list from provided file. Database will
- * be created only if this is new file
+ * specified path and SQL query commands list from provided file.
  * @oarameters
  *      NSString* sqlQeryListPath          - path to file with list of SQL query commands list
  *      NSString* databasePath             - sqlite database file target location
+ *      DBCDatabaseEncoding encoding       - default encoding which will be used, when 
+ *                                           exists ability to use differenc C API for 
+ *                                           different encodings
  *      BOOL      continueOnEvaluateErrors - should continue creation on evaluate 
  *                                          update request error
  * WARNING: databasePath can't be same as application bundle, use application
@@ -201,7 +238,7 @@ typedef enum _SQLStatementFromat {
     return opened;
 }
 
-#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
+
 /**
  * Copy currently opened sqlite database file to provided location assuming what
  * it is outside of application bundle and reopen connection with 'read-write' rights
@@ -210,7 +247,11 @@ typedef enum _SQLStatementFromat {
  */
 - (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination {
     if(mutableDatabaseStoreDestination == nil)
+#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
         mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
+#else 
+    return NO;
+#endif
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *dirCreationError = nil;
     if(![fileManager fileExistsAtPath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent]
@@ -248,7 +289,6 @@ typedef enum _SQLStatementFromat {
     
     return [self open];
 }
-#endif
 
 /**
  * Close database connection to sqlite database file if it was opened

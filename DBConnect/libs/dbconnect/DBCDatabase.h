@@ -63,7 +63,7 @@
     
     NSArray                     *listOfPossibleTCLCommands;
     NSArray                     *listOfNSStringFormatSpecifiers;
-}
+} 
 @property (nonatomic, assign)int dbBusyRetryCount;
 @property (nonatomic, assign)DBCDatabaseTransactionLock defaultSQLSequencesTransactinoLock;
 @property (nonatomic, assign, getter = isStatementsCachingEnabled)BOOL statementsCachingEnabled;
@@ -74,7 +74,9 @@
 
 
 #pragma mark DBCDatabase instance initialization
++ (id)databaseWithPath:(NSString*)dbFilePath;
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
 + (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
 - (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
@@ -83,9 +85,7 @@
 
 - (BOOL)open;
 - (BOOL)openReadonly;
-#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
 - (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination;
-#endif
 - (BOOL)close;
 
 #pragma mark DDL and DML methods
