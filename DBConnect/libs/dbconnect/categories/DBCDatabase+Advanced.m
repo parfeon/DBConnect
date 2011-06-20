@@ -365,7 +365,7 @@
  *      NSString *databaseName - target database name
  * @return journaling mode for specified database connection
  */
-- (DBCDatabaseJournalingMode)journalModeForTable:(NSString*)databaseName {
+- (DBCDatabaseJournalingMode)journalModeForDatabase:(NSString*)databaseName {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
@@ -458,7 +458,7 @@
  *      NSString *databaseName - target database name
  * @return specified database locking mode
  */
-- (DBCDatabaseLockingMode)lockingModeForTable:(NSString*)databaseName {
+- (DBCDatabaseLockingMode)lockingModeForDatabase:(NSString*)databaseName {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];

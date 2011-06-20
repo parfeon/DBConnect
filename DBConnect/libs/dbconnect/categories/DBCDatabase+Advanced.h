@@ -58,7 +58,7 @@
 - (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode;
 - (DBCDatabaseJournalingMode)journalMode;
 - (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode forDatabase:(NSString*)databaseName;
-- (DBCDatabaseJournalingMode)journalModeForTable:(NSString*)databaseName;
+- (DBCDatabaseJournalingMode)journalModeForDatabase:(NSString*)databaseName;
 - (BOOL)setJournalSizeLimitForDatabase:(NSString*)databaseName size:(long long int)newJournalSizeLimit;
 - (long long int)journalSizeLimitForDatabase:(NSString*)databaseName;
 
@@ -67,7 +67,7 @@
 - (BOOL)setLockingMode:(DBCDatabaseLockingMode)lockingMode;
 - (DBCDatabaseLockingMode)lockingMode;
 - (BOOL)setLockingMode:(DBCDatabaseLockingMode)lockingMode forDatabase:(NSString*)databaseName;
-- (DBCDatabaseLockingMode)lockingModeForTable:(NSString*)databaseName;
+- (DBCDatabaseLockingMode)lockingModeForDatabase:(NSString*)databaseName;
 - (BOOL)setOmitReadlockLike:(BOOL)omit;
 - (BOOL)omitReadlock;
 
