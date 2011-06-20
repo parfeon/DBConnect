@@ -26,20 +26,12 @@
 #import "DBCString+Utils.h"
 #import "DBCDatabase+Advanced.h"
 #import "DBCDatabase+Aliases.h"
+#import "DBCTypesAndStructs.h"
 #import "DBCMacro.h"
 
 #define PARAMETERS_LIST @"parametersList"
 #define PARAMETERS_MAPPING_INFORMATION @"parametersMappingInformation"
 #define PREPARED_SQL_STATEMENT @"preparedSQLStatement"
- 
-// SQL statement parameters token format
-typedef enum _SQLStatementFromat {
-    SQLStatementFromatUnknown,
-    SQLStatementFromatNSStringFormat,
-    SQLStatementFromatAnonymousToken,
-    SQLStatementFromatIndexedToken,
-    SQLStatementFromatNamedToken
-} SQLStatementFromat;
 
 @class DBCStatement;
 
@@ -104,15 +96,15 @@ typedef enum _SQLStatementFromat {
  * specified path and SQL statements list from provided file. Will be used default encoding
  * @oarameters
  *      NSString* sqlStatementsListFilepath - path to file with list of SQL statements list
- *      NSString* databasePath              - sqlite database file target location
+ *      NSString* dbFilePath                - sqlite database file target location
  *      BOOL      continueOnEvaluateErrors  - should continue creation on evaluate 
  *                                            update request error
  * WARNING: databasePath can't be same as application bundle, use application
  *          Documents folder instead
  * @return autoreleased DBCDatabase instance
  */
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
-    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:databasePath defaultEncoding:DBCDatabaseEncodingUTF8 continueOnEvaluateErrors:continueOnEvaluateErrors];
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
+    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:DBCDatabaseEncodingUTF8 continueOnEvaluateErrors:continueOnEvaluateErrors];
 }
 
 /**
@@ -120,7 +112,7 @@ typedef enum _SQLStatementFromat {
  * specified path and SQL statements list from provided file.
  * @oarameters
  *      NSString* sqlStatementsListFilepath - path to file with list of SQL statements list
- *      NSString* databasePath              - sqlite database file target location
+ *      NSString* dbFilePath                - sqlite database file target location
  *      DBCDatabaseEncoding encoding        - default encoding which will be used, when 
  *                                            exists ability to use differenc C API for 
  *                                            different encodings
@@ -130,9 +122,9 @@ typedef enum _SQLStatementFromat {
  *          Documents folder instead
  * @return autoreleased DBCDatabase instance
  */
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding 
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding 
                                                                                    continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
-    return [[[[self class] alloc] createDatabaseFromFile:sqlStatementsListFilepath atPath:databasePath defaultEncoding:encoding
+    return [[[[self class] alloc] createDatabaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:encoding
                                  continueOnEvaluateErrors:continueOnEvaluateErrors] autorelease];
 }
 
@@ -147,6 +139,8 @@ typedef enum _SQLStatementFromat {
  */
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding {
     if((self = [super init])){
+        DBCReleaseObject(recentError);
+        recentErrorCode = SQLITE_OK;
         [self setCreateTransactionOnSQLSequences:YES];
         [self setRollbackSQLSequenceTransactionOnError:YES];
         [self setDefaultSQLSequencesTransactinoLock:DBCDatabaseAutocommitModeDeferred];
@@ -173,7 +167,7 @@ typedef enum _SQLStatementFromat {
  * specified path and SQL query commands list from provided file.
  * @oarameters
  *      NSString* sqlQeryListPath          - path to file with list of SQL query commands list
- *      NSString* databasePath             - sqlite database file target location
+ *      NSString* dbFilePath               - sqlite database file target location
  *      DBCDatabaseEncoding encoding       - default encoding which will be used, when 
  *                                           exists ability to use differenc C API for 
  *                                           different encodings
@@ -183,29 +177,30 @@ typedef enum _SQLStatementFromat {
  *          Documents folder instead
  * @return DBCDatabase instance
  */
-- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
-    if ((self = [self initWithPath:databasePath defaultEncoding:encoding])) {
-        [self open];
-        if(dbConnectionOpened && sqlQeryListPath != nil && [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
-            struct sqlite3lib_error execError = {"", -1, -1};
-            if(dbEncoding==DBCDatabaseEncodingUTF8) 
-                evaluateQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], continueOnEvaluateErrors, &execError);
-            else if(dbEncoding==DBCDatabaseEncodingUTF16)
-                evaluateQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], continueOnEvaluateErrors, &execError);
-            if(execError.errorCode != -1 && !continueOnEvaluateErrors){
-                if([[NSFileManager defaultManager] fileExistsAtPath:databasePath]){
-                    NSError *error = nil;
-                    [[NSFileManager defaultManager] removeItemAtPath:databasePath error:&error];
-                    if(error!=nil) DBCDebugLogger(@"[DBC:ERROR] %@", error);
+- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
+    if ((self = [self initWithPath:dbFilePath defaultEncoding:encoding])) {
+        if([self open]){
+            if(dbConnectionOpened && sqlQeryListPath != nil && [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
+                struct sqlite3lib_error execError = {"", -1, -1};
+                if(dbEncoding==DBCDatabaseEncodingUTF8) 
+                    evaluateQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], continueOnEvaluateErrors, &execError);
+                else if(dbEncoding==DBCDatabaseEncodingUTF16)
+                    evaluateQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], continueOnEvaluateErrors, &execError);
+                if(execError.errorCode != -1 && !continueOnEvaluateErrors){
+                    if([[NSFileManager defaultManager] fileExistsAtPath:dbFilePath]){
+                        NSError *error = nil;
+                        [[NSFileManager defaultManager] removeItemAtPath:dbFilePath error:&error];
+                        if(error!=nil) DBCDebugLogger(@"[DBC:ERROR] %@", error);
+                    }
+                    [self release];
+                    return nil;
+                } else if(execError.errorCode != -1){
+                    recentErrorCode = execError.errorCode;
+                    DBCReleaseObject(recentError);
+                    recentError = [[DBCError errorWithErrorCode:execError.errorCode forFilePath:sqlQeryListPath
+                                          additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                    DBCDebugLogger(@"[DBC:ERROR] %@", recentError);
                 }
-                [self release];
-                return nil;
-            } else if(execError.errorCode != -1){
-                recentErrorCode = execError.errorCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:execError.errorCode forFilePath:sqlQeryListPath
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                DBCDebugLogger(@"[DBC:ERROR] %@", recentError);
             }
         }
     }
@@ -246,11 +241,14 @@ typedef enum _SQLStatementFromat {
  *      NSString *mutableDatabaseStoreDestination - database file copy destination
  */
 - (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination {
+    DBCReleaseObject(recentError);
+    recentErrorCode = SQLITE_OK;
+    if(dbPath == nil) return NO;
     if(mutableDatabaseStoreDestination == nil)
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
         mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
 #else 
-    return NO;
+        return NO;
 #endif
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *dirCreationError = nil;
@@ -295,6 +293,8 @@ typedef enum _SQLStatementFromat {
  * @return whether database connection was successfully closed or not
  */
 - (BOOL)close {
+    DBCReleaseObject(recentError);
+    recentErrorCode = SQLITE_OK;
     DBCLockLogger(@"[DBC:close] Waiting for Lock (Line: %d)", __LINE__);
     [queryLock lock];
     DBCLockLogger(@"[DBC:close] Lock acquired (Line: %d)", __LINE__);
@@ -350,6 +350,8 @@ typedef enum _SQLStatementFromat {
  * @return whether update request was successfully evaluated or not
  */
 - (BOOL)evaluateUpdate:(NSString*)sqlUpdate, ... {
+    DBCReleaseObject(recentError);
+    recentErrorCode = SQLITE_OK;
     va_list parameters;
     va_start(parameters, sqlUpdate);
     NSDictionary *parametersBindingMap = [self getParametersBindingMapData:sqlUpdate vaList:parameters];
@@ -372,6 +374,8 @@ typedef enum _SQLStatementFromat {
  * @return query resultts if evaluated successfull or nil in case of error
  */
 - (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery, ... {
+    DBCReleaseObject(recentError);
+    recentErrorCode = SQLITE_OK;
     va_list parameters;
     va_start(parameters, sqlQuery);
     NSDictionary *parametersBindingMap = [self getParametersBindingMapData:sqlQuery vaList:parameters];
@@ -394,6 +398,8 @@ typedef enum _SQLStatementFromat {
  * @return whether eavluate was successfull or not (always YES if set continueOnEvaluateErrors)
  */
 - (BOOL)evaluateStatementsFromFile:(NSString*)statementsFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors {
+    DBCReleaseObject(recentError);
+    recentErrorCode = SQLITE_OK;
     if(statementsFilePath != nil && [[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
         struct sqlite3lib_error execError = {"", -1, -1};
         if(dbEncoding==DBCDatabaseEncodingUTF8) 
@@ -498,6 +504,14 @@ typedef enum _SQLStatementFromat {
 - (sqlite3*)database {
     if(!dbConnectionOpened) return NULL;
     return dbConnection;
+}
+
+/**
+ * Get whether last command was processed or failed due to error
+ * @return whether command was processed or failed due to error
+ */
+- (BOOL)commandProcessed {
+    return recentError==nil;
 }
 
 #pragma mark DBCDatabase memory management

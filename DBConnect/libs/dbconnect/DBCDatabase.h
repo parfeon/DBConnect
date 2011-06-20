@@ -74,6 +74,7 @@
 
 
 #pragma mark DBCDatabase instance initialization
+
 + (id)databaseWithPath:(NSString*)dbFilePath;
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
 + (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
@@ -106,5 +107,6 @@
 #pragma mark DBCDatabase getter/setter methods
 
 - (sqlite3*)database;
+- (BOOL)commandProcessed;
 
 @end

@@ -50,6 +50,15 @@ typedef enum _DBCDatabaseTransactionLock {
     DBCDatabaseAutocommitModeExclusive
 } DBCDatabaseTransactionLock;
 
+// SQL statement parameters token format
+typedef enum _SQLStatementFromat {
+    SQLStatementFromatUnknown,
+    SQLStatementFromatNSStringFormat,
+    SQLStatementFromatAnonymousToken,
+    SQLStatementFromatIndexedToken,
+    SQLStatementFromatNamedToken
+} SQLStatementFromat;
+
 // SQLite lib error structure
 struct sqlite3lib_error {
     char    errorDescription[400];
