@@ -39,8 +39,10 @@
  */
 - (BOOL)openWithFlags:(int)flags {
     if(dbConnectionOpened) return dbConnectionOpened;
+    DBCReleaseObject(recentError);
+    recentErrorCode = SQLITE_OK;
     dbFlags = flags;
-    int resultCode = sqlite3_open_v2([dbPath UTF8String], &dbConnection, dbFlags, NULL);
+    int resultCode = sqlite3_open_v2((dbPath==nil||[dbPath length]==0?NULL:[dbPath UTF8String]), &dbConnection, dbFlags, NULL);
     
     if(resultCode != SQLITE_OK){
         recentErrorCode = resultCode;
