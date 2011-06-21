@@ -77,32 +77,32 @@
 
 + (id)databaseWithPath:(NSString*)dbFilePath;
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
+- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
 
 #pragma mark Database open and close
 
-- (BOOL)open;
-- (BOOL)openReadonly;
-- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination;
-- (BOOL)close;
+- (BOOL)openError:(DBCError**)error;
+- (BOOL)openReadonlyError:(DBCError**)error;
+- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination error:(DBCError**)error;
+- (BOOL)closeError:(DBCError**)error;
 
 #pragma mark DDL and DML methods
 
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate, ... NS_REQUIRES_NIL_TERMINATION;
-- (BOOL)evaluateStatementsFromFile:(NSString*)statementsFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors;
-- (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery, ... NS_REQUIRES_NIL_TERMINATION;
+- (BOOL)evaluateUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
+- (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
+- (BOOL)evaluateStatementsFromFile:(NSString*)statementsFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
 
 #pragma mark TCL methods
 
-- (BOOL)beginTransaction;
-- (BOOL)beginDeferredTransaction;
-- (BOOL)beginImmediateTransaction;
-- (BOOL)beginExclusiveTransaction;
-- (BOOL)commitTransaction;
-- (BOOL)rollbackTransaction;
+- (BOOL)beginTransactionError:(DBCError**)error;
+- (BOOL)beginDeferredTransactionError:(DBCError**)error;
+- (BOOL)beginImmediateTransactionError:(DBCError**)error;
+- (BOOL)beginExclusiveTransactionError:(DBCError**)error;
+- (BOOL)commitTransactionError:(DBCError**)error;
+- (BOOL)rollbackTransactionError:(DBCError**)error;
 
 #pragma mark DBCDatabase getter/setter methods
 

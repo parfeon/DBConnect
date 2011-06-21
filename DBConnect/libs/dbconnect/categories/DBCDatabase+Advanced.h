@@ -29,7 +29,7 @@
 
 #pragma mark DBCDatabase instance initialization
 
-- (BOOL)openWithFlags:(int)flags;
+- (BOOL)openWithFlags:(int)flags error:(DBCError**)error;
 
 #pragma mark SQLite database file pages
 

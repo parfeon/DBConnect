@@ -27,6 +27,7 @@
 #import <sqlite3.h>
 
 #define kSQLiteErrorDomain @"kSQLiteErrorDomain"
+#define kDBCErrorDomain @"kDBCErrorDomain"
 #define DBCAdditionalErrorInformation @"DBCAdditionalErrorInformation"
 
 @interface DBCError : NSError {
@@ -40,4 +41,5 @@
 - (id)initWithErrorCode:(NSInteger)code;
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
+- (id)initWithErrorCode:(NSInteger)code errorDomain:(NSString*)errorDomain forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
 @end

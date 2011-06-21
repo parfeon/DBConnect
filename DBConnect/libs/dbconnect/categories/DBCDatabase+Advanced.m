@@ -34,22 +34,22 @@
  * Open new database connection to sqlite database file at path, provided in init
  * Connection will be opened with flags passed to SQLite API
  * @parameters
- *      int flags - database connection bit-field flags
+ *      int flags        - database connection bit-field flags
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * @return whether database connection was opened with provided flags or not
  */
-- (BOOL)openWithFlags:(int)flags {
+- (BOOL)openWithFlags:(int)flags error:(DBCError**)error {
     if(dbConnectionOpened) return dbConnectionOpened;
-    DBCReleaseObject(recentError);
-    recentErrorCode = SQLITE_OK;
     dbFlags = flags;
     int resultCode = sqlite3_open_v2((dbPath==nil||[dbPath length]==0?NULL:[dbPath UTF8String]), &dbConnection, dbFlags, NULL);
     
     if(resultCode != SQLITE_OK){
         recentErrorCode = resultCode;
-        DBCReleaseObject(recentError);
-        recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:(inMemoryDB?@"in memory":dbPath)] retain];
+        *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:(inMemoryDB?@"in memory":dbPath)] retain];
         dbConnectionOpened = NO;
-        DBCDebugLogger(@"[DBC:ERROR] %@", recentError);
+        DBCDebugLogger(@"[DBC:ERROR] %@", error);
         sqlite3_close(dbConnection);
     } else {
         sqlite3_busy_timeout(dbConnection, 250);
@@ -69,7 +69,7 @@
 - (BOOL)freeUnusedPages {
     if(!dbConnectionOpened) return -1;
     if([self freePagesCountInDatabase:@"main"] == 0) return YES;
-    return [self evaluateUpdate:@"VACUUM;", nil];
+    return [self evaluateUpdate:@"VACUUM;" error:NULL, nil, nil];
 }
 
 /**

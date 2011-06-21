@@ -68,6 +68,8 @@
     if(errorCode == DBC_WRONG_BINDING_PARMETERS_COUNT)              return @"Not enough binding parameters was passed to statement";
     if(errorCode == DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE)    return @"Can't create folder for mutable database file storage";
     if(errorCode == DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION)    return @"Can't copy database file to new location";
+    if(errorCode == DBC_CANT_REMOVE_CREATED_CORRUPTED_DATABASE_FILE)return @"Can't remove corrupted database file because of some file manager error";
+    if(errorCode == DBC_DATABASE_PATH_NOT_SPECIFIED)                return @"SQLite database filepath not specified";
     
     return @"Unknown";
 }
@@ -141,10 +143,25 @@
  * @return initialized DBCError instance
  */
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation {
+    if((self = [self initWithErrorCode:code errorDomain:kSQLiteErrorDomain forFilePath:filePath additionalInformation:additionalInformation])) {
+    }
+    return self;
+}
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code                  - error code
+ *      NSString *errorDomain           - error domain
+ *      NSString *filePath              - path to file, which was reason of the error
+ *      NSString *additionalInformation - additional error information
+ * @return initialized DBCError instance
+ */
+- (id)initWithErrorCode:(NSInteger)code errorDomain:(NSString*)errorDomain forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation {
     if(additionalInformation==nil) {
-        self = [super initWithDomain:kSQLiteErrorDomain code:code userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[DBCError errorDescriptionByCode:code], NSLocalizedDescriptionKey, filePath, NSFilePathErrorKey, nil]];
+        self = [super initWithDomain:errorDomain code:code userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[DBCError errorDescriptionByCode:code], NSLocalizedDescriptionKey, filePath, NSFilePathErrorKey, nil]];
     } else {
-        self = [super initWithDomain:kSQLiteErrorDomain code:code userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[DBCError errorDescriptionByCode:code], NSLocalizedDescriptionKey, additionalInformation, DBCAdditionalErrorInformation, filePath, NSFilePathErrorKey, nil]];
+        self = [super initWithDomain:errorDomain code:code userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[DBCError errorDescriptionByCode:code], NSLocalizedDescriptionKey, additionalInformation, DBCAdditionalErrorInformation, filePath, NSFilePathErrorKey, nil]];
     }
     return self;
 }
