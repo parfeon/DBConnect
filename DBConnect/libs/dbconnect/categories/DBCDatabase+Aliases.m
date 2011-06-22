@@ -35,41 +35,54 @@
  * @parameters
  *      NSString *dbFilePath    - slqite database file path
  *      NSString *dbAttachName  - name for attached database
+ *      DBCError **error        - if an error occurs, upon return contains an DBCError 
+ *                                object that describes the problem. Pass NULL if you 
+ *                                do not want error information.
  * @return whether attach was successfull or not
  */
-- (BOOL)attachDatabase:(NSString*)dbFilePath databaseAttachName:(NSString*)dbAttachName {
-    return [self evaluateUpdate:[NSString stringWithFormat:@"ATTACH DATABASE '%@' AS %@", dbFilePath, dbAttachName], nil];
+- (BOOL)attachDatabase:(NSString*)dbFilePath databaseAttachName:(NSString*)dbAttachName error:(DBCError**)error {
+    return [self evaluateUpdate:[NSString stringWithFormat:@"ATTACH DATABASE '%@' AS %@", dbFilePath, dbAttachName] error:error, nil];
 }
 
 /**
  * Detach sqlite database from current database connection
  * @parameters
  *      NSString *attachedDatabaseName  - name of attached database
+ *      DBCError **error                - if an error occurs, upon return contains an DBCError 
+ *                                        object that describes the problem. Pass NULL if you 
+ *                                        do not want error information.
  * @return whether detach was successfull or not
  */
-- (BOOL)detachDatabase:(NSString*)attachedDatabaseName {
-    return [self evaluateUpdate:[NSString stringWithFormat:@"DETACH DATABASE %@", attachedDatabaseName], nil];
+- (BOOL)detachDatabase:(NSString*)attachedDatabaseName error:(DBCError**)error {
+    return [self evaluateUpdate:[NSString stringWithFormat:@"DETACH DATABASE %@", attachedDatabaseName] error:error, nil];
 }
 
 /**
  * Set encoding which used by database for data encoding or store
  * @parameters
  *      NSString *dbEncoding - new encoding
+ *      DBCError **error     - if an error occurs, upon return contains an DBCError 
+ *                             object that describes the problem. Pass NULL if you 
+ *                             do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setDatabaseEncoding:(DBCDatabaseEncoding)encoding {
+- (BOOL)setDatabaseEncoding:(DBCDatabaseEncoding)encoding error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA encoding = '%@';", 
-                                 encoding==DBCDatabaseEncodingUTF8?@"UTF-8":encoding==DBCDatabaseEncodingUTF16?@"UTF-16":@"UTF-8"], nil];
+                                 encoding==DBCDatabaseEncodingUTF8?@"UTF-8":encoding==DBCDatabaseEncodingUTF16?@"UTF-16":@"UTF-8"] error:error, nil];
 }
 
 /**
  * Get current database connection encoding
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * @return current database connection encoding
  */
-- (DBCDatabaseEncoding)databaseEncoding {
+- (DBCDatabaseEncoding)databaseEncodingError:(DBCError**)error {
     if(!dbConnectionOpened) return DBCDatabaseEncodingUTF8;
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA encoding;", nil];
+    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA encoding;" error:error, nil];
     if([result count] > 0) {
         NSString *rowEncoding = [[[result rowAtIndex:0] stringForColumn:@"encoding"] lowercaseString];
         return [@"utf-8" isEqualToString:rowEncoding]?DBCDatabaseEncodingUTF8:DBCDatabaseEncodingUTF16;
@@ -80,26 +93,16 @@
 /**
  * Set whether use case-sensitive behaviour of built-in LIKE expression or not
  * @parameters
- *      BOOL use - condition flag
+ *      BOOL use         - condition flag
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * @default default state is set to NO
  * @return whether set was successfull or not
  */
-- (BOOL)setUseCaseSensitiveLike:(BOOL)use {
+- (BOOL)setUseCaseSensitiveLike:(BOOL)use error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    return [self evaluateUpdate:@"PRAGMA case_sensitive_like = %d;", (use?1:0), nil];
-}
-
-/**
- * Get whether should use case-sensitive behaviour of built-in LIKE expression or not
- * @return should use case-sensitive behaviour of built-in LIKE expression or not
- */
-- (BOOL)useCaseSensitiveLike {
-    if(!dbConnectionOpened) return NO;
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA case_sensitive_like;", nil];
-    if([result count] > 0){
-        return [[result rowAtIndex:0] boolForColumn:@"case_sensitive_like"];
-    }
-    return NO;
+    return [self evaluateUpdate:@"PRAGMA case_sensitive_like = %d;" error:error, (use?1:0), nil];
 }
 
 #pragma mark DDL and DML methods
@@ -109,22 +112,28 @@
  * @parameters
  *      NSString *tableName    - table which will be removed
  *      NSString *databaseName - target database
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * WARNING: ROWID values may be reset
  * @return whether table was dropped or not
  */
-- (BOOL)dropTable:(NSString*)tableName inDatabase:(NSString*)databaseName {
+- (BOOL)dropTable:(NSString*)tableName inDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@; VACUUM;", databaseName, tableName], nil];
+    return [self evaluateUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@; VACUUM;", databaseName, tableName] error:error, nil];
 }
 
 /**
  * Drop all tables in specified database
  * @parameters
  *      NSString *databaseName - target database
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * WARNING: ROWID values may be reset
  * @return whether tables was dropped or not
  */
-- (BOOL)dropAllTablesInDatabase:(NSString*)databaseName {
+- (BOOL)dropAllTablesInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     NSArray *listOfTables = [self tablesListForDatabase:databaseName];
     NSMutableString *sqlStatement = [NSMutableString string];
@@ -132,7 +141,7 @@
     if(count == 0) return YES;
     for (i = 0; i < count; i++) [sqlStatement appendFormat:@"DROP TABLE IF EXISTS %@.%@;", databaseName, [listOfTables objectAtIndex:i]];
     [sqlStatement appendString:@"VACUUM;"];
-    return [self evaluateUpdate:sqlStatement, nil];
+    return [self evaluateUpdate:sqlStatement error:error, nil];
 }
 
 #pragma mark Database information
@@ -152,7 +161,7 @@
          [dbInfo name], (i==(count-1)?@"":@"+ ")];
     }
     [selectStatement appendString:@"AS count;"];
-    DBCDatabaseResult *result = [self evaluateQuery:selectStatement, nil];
+    DBCDatabaseResult *result = [self evaluateQuery:selectStatement error:NULL, nil, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"count"];
     return -1;
 }

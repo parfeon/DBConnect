@@ -29,17 +29,16 @@
 
 #pragma mark SQLite database misc
 
-- (BOOL)attachDatabase:(NSString*)dbFilePath databaseAttachName:(NSString*)dbAttachName;
-- (BOOL)detachDatabase:(NSString*)attachedDatabaseName;
-- (BOOL)setDatabaseEncoding:(DBCDatabaseEncoding)encoding;
-- (DBCDatabaseEncoding)databaseEncoding;
-- (BOOL)setUseCaseSensitiveLike:(BOOL)use;
-- (BOOL)useCaseSensitiveLike;
+- (BOOL)attachDatabase:(NSString*)dbFilePath databaseAttachName:(NSString*)dbAttachName error:(DBCError**)error;
+- (BOOL)detachDatabase:(NSString*)attachedDatabaseName error:(DBCError**)error;
+- (BOOL)setDatabaseEncoding:(DBCDatabaseEncoding)encoding error:(DBCError**)error;
+- (DBCDatabaseEncoding)databaseEncodingError:(DBCError**)error;
+- (BOOL)setUseCaseSensitiveLike:(BOOL)use error:(DBCError**)error;
 
 #pragma mark DDL and DML methods
 
-- (BOOL)dropTable:(NSString*)tableName inDatabase:(NSString*)databaseName;
-- (BOOL)dropAllTablesInDatabase:(NSString*)databaseName;
+- (BOOL)dropTable:(NSString*)tableName inDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (BOOL)dropAllTablesInDatabase:(NSString*)databaseName error:(DBCError**)error;
 
 #pragma mark Database information
 
