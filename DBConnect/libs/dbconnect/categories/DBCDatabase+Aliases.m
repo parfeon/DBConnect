@@ -120,6 +120,7 @@
  */
 - (BOOL)dropTable:(NSString*)tableName inDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
+    if(databaseName == nil) databaseName = @"main";
     return [self evaluateUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@; VACUUM;", databaseName, tableName] error:error, nil];
 }
 
@@ -135,7 +136,8 @@
  */
 - (BOOL)dropAllTablesInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    NSArray *listOfTables = [self tablesListForDatabase:databaseName];
+    if(databaseName == nil) databaseName = @"main";
+    NSArray *listOfTables = [self tablesListForDatabase:databaseName error:error];
     NSMutableString *sqlStatement = [NSMutableString string];
     int i, count = [listOfTables count];
     if(count == 0) return YES;
@@ -148,20 +150,24 @@
 
 /**
  * Get number of tables in current and attached databases
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * @return number of tables in current and attached databases
  */
-- (int)tablesCount {
+- (int)tablesCountError:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     NSMutableString *selectStatement = [NSMutableString stringWithString:@"SELECT "];
-    NSArray *listOfDatabases = [self databasesList];
+    NSArray *listOfDatabases = [self databasesListError:error];
     int i, count = [listOfDatabases count];
     for (i = 0; i < count; i++) {
         DBCDatabaseInfo *dbInfo = [listOfDatabases objectAtIndex:i];
-        [selectStatement appendFormat:@"(SELECT count(*) FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%') %@", 
+        [selectStatement appendFormat:@"(SELECT count(*) AS count FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%') %@", 
          [dbInfo name], (i==(count-1)?@"":@"+ ")];
     }
     [selectStatement appendString:@"AS count;"];
-    DBCDatabaseResult *result = [self evaluateQuery:selectStatement error:NULL, nil, nil];
+    DBCDatabaseResult *result = [self evaluateQuery:selectStatement error:error, nil, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"count"];
     return -1;
 }
@@ -170,24 +176,31 @@
  * Get number of tables in database by it's name
  * @parameters
  *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return number of tables in provided database
  */
-- (int)tablesCountInDatabase:(NSString*)databaseName {
+- (int)tablesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"SELECT count(*) AS count FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"SELECT count(*) AS count FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"count"];
     return -1;
 }
 
 /**
  * Get list of tables for current database connection
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * @return list of tables stored in main database of current database connection
  */
-- (NSArray*)tablesList {
+- (NSArray*)tablesListError:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
     NSMutableArray *listOfTables = nil;
-    DBCDatabaseResult *result = [self evaluateQuery:@"SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", nil];
+    DBCDatabaseResult *result = [self evaluateQuery:@"SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';" error:error, nil];
     if(result != nil){
         listOfTables = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
@@ -202,12 +215,16 @@
  * Get list of tables in database by it's name
  * @parameters
  *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return list of tables stored in provided database
  */
-- (NSArray*)tablesListForDatabase:(NSString*)databaseName {
+- (NSArray*)tablesListForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
     NSMutableArray *listOfTables = nil;
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"SELECT name FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName], nil];
+    if(databaseName == nil) databaseName = @"main";
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"SELECT name FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName] error:error, nil];
     if(result != nil){
         listOfTables = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
@@ -222,25 +239,14 @@
  * Get list of columns information for specified table in current database connection
  * @parameters
  *      NSString *tableName - target table name
+ *      DBCError **error    - if an error occurs, upon return contains an DBCError 
+ *                            object that describes the problem. Pass NULL if you 
+ *                            do not want error information.
  * @return list of columns information for specified table in main database of 
  * current database connection
  */
-- (NSArray*)tableInformation:(NSString*)tableName {
-    if(!dbConnectionOpened) return nil;
-    NSMutableArray *listOfColumns = nil;
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA table_info(%@);", tableName], nil];
-    if(result != nil){
-        listOfColumns = [NSMutableArray arrayWithCapacity:[result count]];
-        for (DBCDatabaseRow *row in result) {
-            [listOfColumns addObject:[DBCDatabaseTableColumnInfo columnInfoWithSequence:[row intForColumn:@"cid"] 
-                                                                             columnName:[row stringForColumn:@"name"] 
-                                                                         columnDataType:[row stringForColumn:@"type"] 
-                                                                              isNotNull:[row boolForColumn:@"notnull"] 
-                                                                           defaultValue:[row stringForColumn:@"dflt_value"]
-                                                                  isPartOfThePrimaryKey:[row boolForColumn:@"pk"]]];
-        }
-    }
-    return listOfColumns;
+- (NSArray*)tableInformation:(NSString*)tableName error:(DBCError**)error {
+    return [self tableInformation:tableName forDatabase:nil error:error];
 }
 
 /**
@@ -248,12 +254,16 @@
  * @parameters
  *      NSString *tableName    - target table name
  *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return list of columns information for specified table in provided database
  */
-- (NSArray*)tableInformation:(NSString*)tableName forDatabase:(NSString*)databaseName {
+- (NSArray*)tableInformation:(NSString*)tableName forDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
+    if(databaseName == nil) databaseName = @"main";
     NSMutableArray *listOfColumns = nil;
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.table_info(%@);", databaseName, tableName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.table_info(%@);", databaseName, tableName] error:error, nil];
     if(result != nil){
         listOfColumns = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
@@ -270,11 +280,15 @@
 
 /**
  * Get databases list
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * @return array of databases
  */
-- (NSArray*)databasesList {
+- (NSArray*)databasesListError:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA database_list", nil];
+    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA database_list" error:error, nil];
     NSMutableArray *listOfDatabases = nil;
     if (result != nil) {
         listOfDatabases = [NSMutableArray arrayWithCapacity:[result count]];
@@ -292,13 +306,16 @@
  * @parameters
  *      NSString *databaseName - target database name
  *      NSString *tableName    - target table name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return array of indices for specified table
  */
-- (NSArray*)indicesList:(NSString*)databaseName forTable:(NSString*)tableName {
+- (NSArray*)indicesList:(NSString*)databaseName forTable:(NSString*)tableName error:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
     if(tableName == nil) return nil;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.index_list(%@)", databaseName, tableName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.index_list(%@)", databaseName, tableName] error:error, nil];
     NSMutableArray *listOfIndices = nil;
     if (result != nil) {
         listOfIndices = [NSMutableArray arrayWithCapacity:[result count]];
@@ -316,13 +333,16 @@
  * @parameters
  *      NSString *databaseName - target database name
  *      NSString *indexName    - target index name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return array of indexed columns for specified table
  */
-- (NSArray*)indexedColumnsList:(NSString*)databaseName index:(NSString*)indexName {
+- (NSArray*)indexedColumnsList:(NSString*)databaseName index:(NSString*)indexName error:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
     if(indexName == nil) return nil;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.index_info(%@)", databaseName, indexName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.index_info(%@)", databaseName, indexName] error:error, nil];
     NSMutableArray *listOfIndixedColumns = nil;
     if (result != nil) {
         listOfIndixedColumns = [NSMutableArray arrayWithCapacity:[result count]];

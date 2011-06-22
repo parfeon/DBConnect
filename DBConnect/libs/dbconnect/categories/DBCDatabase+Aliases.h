@@ -42,14 +42,14 @@
 
 #pragma mark Database information
 
-- (int)tablesCount;
-- (int)tablesCountInDatabase:(NSString*)databaseName;
-- (NSArray*)tablesList;
-- (NSArray*)tablesListForDatabase:(NSString*)databaseName;
-- (NSArray*)tableInformation:(NSString*)tableName;
-- (NSArray*)tableInformation:(NSString*)tableName forDatabase:(NSString*)databaseName;
-- (NSArray*)databasesList;
-- (NSArray*)indicesList:(NSString*)databaseName forTable:(NSString*)tableName;
-- (NSArray*)indexedColumnsList:(NSString*)databaseName index:(NSString*)indexName;
+- (int)tablesCountError:(DBCError**)error;
+- (int)tablesCountInDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (NSArray*)tablesListError:(DBCError**)error;
+- (NSArray*)tablesListForDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (NSArray*)tableInformation:(NSString*)tableName error:(DBCError**)error;
+- (NSArray*)tableInformation:(NSString*)tableName forDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (NSArray*)databasesListError:(DBCError**)error;
+- (NSArray*)indicesList:(NSString*)databaseName forTable:(NSString*)tableName error:(DBCError**)error;
+- (NSArray*)indexedColumnsList:(NSString*)databaseName index:(NSString*)indexName error:(DBCError**)error;
 
 @end

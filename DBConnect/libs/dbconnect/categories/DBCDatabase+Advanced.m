@@ -53,7 +53,7 @@
         sqlite3_close(dbConnection);
     } else {
         sqlite3_busy_timeout(dbConnection, 250);
-        [self setDatabaseEncoding:dbEncoding];
+        [self setDatabaseEncoding:dbEncoding error:error];
         dbConnectionOpened = YES;
     }
     return dbConnectionOpened;
