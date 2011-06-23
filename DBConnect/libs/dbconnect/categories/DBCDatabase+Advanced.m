@@ -63,25 +63,32 @@
 
 /**
  * Free unused database pages
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
  * WARNING: ROWID values may be reset
  * @return whether vacuum was successfull or not
  */
-- (BOOL)freeUnusedPages {
+- (BOOL)freeUnusedPagesError:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
-    if([self freePagesCountInDatabase:@"main"] == 0) return YES;
-    return [self evaluateUpdate:@"VACUUM;" error:NULL, nil, nil];
+    if([self freePagesCountInDatabase:@"main" error:error] == 0) return YES;
+    return [self evaluateUpdate:@"VACUUM;" error:error, nil, nil];
 }
 
 /**
  * Get free pages count in database
  * @parameters
  *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return free pages count in database
  */
-- (int)freePagesCountInDatabase:(NSString*)databaseName {
+- (int)freePagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.freelist_count;", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.freelist_count;", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"freelist_count"];
     return -1;
 }
@@ -90,12 +97,15 @@
  * Get pages count in database (including unused)
  * @parameters
  *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return pages count in database 
  */
-- (int)pagesCountInDatabase:(NSString*)databaseName {
+- (int)pagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.page_count;", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.page_count;", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"page_count"];
     return -1;
 }
@@ -105,26 +115,83 @@
  * @parameters
  *      NSString *databaseName - database name
  *      int newPageSize        - new page size in bytes (must be a power of two)
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * WARNING: ROWID values may be reset
  * @return whether set was successfull or not
  */
-- (BOOL)setPageSizeInDatabase:(NSString*)databaseName size:(int)newPageSize {
+- (BOOL)setPageSizeInDatabase:(NSString*)databaseName size:(int)newPageSize error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.page_size = %i; VACUUM;", databaseName, newPageSize], nil];
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.page_size = %i; VACUUM;", databaseName, newPageSize] error:error, nil];
 }
 
 /**
  * Get page size for specific database
  * @parameters
  *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
  * @return page size for specific database
  */
-- (int)pageSizeInDatabase:(NSString*)databaseName {
+- (int)pageSizeInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.page_size;", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.page_size;", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"page_size"];
+    return -1;
+}
+
+/**
+ * Set maximum pages count
+ * @parameters
+ *      NSString *databaseName    - target database name
+ *      long long int newPageSize - new maximum pages count
+ *      DBCError **error          - if an error occurs, upon return contains an DBCError 
+ *                                  object that describes the problem. Pass NULL if you 
+ *                                  do not want error information.
+ * @return whether set was successfull or not
+ */
+- (BOOL)setMaximumPageCountForDatabase:(NSString*)databaseName size:(int)newPageCount error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    if(databaseName == nil) databaseName = @"main";
+    if(newPageCount > 1073741823 || newPageCount < 0) return NO;
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = %d;", databaseName, newPageCount] error:error, nil];
+}
+
+/**
+ * Reset maximum pages count for spicified database to it's default value
+ * @parameters
+ *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
+ * @return whether set was successfull or not
+ */
+- (BOOL)resetMaximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    if(databaseName == nil) databaseName = @"main";
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = 1073741823;", databaseName] error:error, nil];
+}
+
+/**
+ * Get maximum pages count for specified database
+ * @parameters
+ *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
+ * @return maximum pages count for specified database
+ */
+- (int)maximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return -1;
+    if(databaseName == nil) databaseName = @"main";
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.max_page_count;", databaseName] error:error, nil];
+    if([result count] > 0){
+        return [[result rowAtIndex:0] intForColumn:@"max_page_count"];
+    }
     return -1;
 }
 
@@ -465,48 +532,6 @@
     DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.locking_mode;", databaseName], nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"locking_mode"] lowercaseString]];
-    }
-    return -1;
-}
-
-/**
- * Set maximum pages count
- * @parameters
- *      NSString *databaseName    - target database name
- *      long long int newPageSize - new maximum pages count
- * @return whether set was successfull or not
- */
-- (BOOL)setMaximumPageCountForDatabase:(NSString*)databaseName size:(int)newPageCount {
-    if(!dbConnectionOpened) return NO;
-    if(databaseName == nil) databaseName = @"main";
-    if(newPageCount > 1073741823 || newPageCount < 0) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = %d;", databaseName, newPageCount], nil];
-}
-
-/**
- * Reset maximum pages count for spicified database to it's default value
- * @parameters
- *      NSString *databaseName    - target database name
- * @return whether set was successfull or not
- */
-- (BOOL)resetMaximumPageCountForDatabase:(NSString*)databaseName {
-    if(!dbConnectionOpened) return NO;
-    if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = 1073741823;", databaseName], nil];
-}
-
-/**
- * Get maximum pages count for specified database
- * @parameters
- *      NSString *databaseName    - target database name
- * @return maximum pages count for specified database
- */
-- (int)maximumPageCountForDatabase:(NSString*)databaseName {
-    if(!dbConnectionOpened) return -1;
-    if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.max_page_count;", databaseName], nil];
-    if([result count] > 0){
-        return [[result rowAtIndex:0] intForColumn:@"max_page_count"];
     }
     return -1;
 }

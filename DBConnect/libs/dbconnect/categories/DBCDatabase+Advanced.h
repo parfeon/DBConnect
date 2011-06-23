@@ -33,14 +33,14 @@
 
 #pragma mark SQLite database file pages
 
-- (BOOL)freeUnusedPages;
-- (int)freePagesCountInDatabase:(NSString*)databaseName;
-- (int)pagesCountInDatabase:(NSString*)databaseName;
-- (BOOL)setPageSizeInDatabase:(NSString*)databaseName size:(int)newPageSize;
-- (int)pageSizeInDatabase:(NSString*)databaseName;
-- (BOOL)setMaximumPageCountForDatabase:(NSString*)databaseName size:(int)newPageCount;
-- (BOOL)resetMaximumPageCountForDatabase:(NSString*)databaseName;
-- (int)maximumPageCountForDatabase:(NSString*)databaseName;
+- (BOOL)freeUnusedPagesError:(DBCError**)error;
+- (int)freePagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (int)pagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (BOOL)setPageSizeInDatabase:(NSString*)databaseName size:(int)newPageSize error:(DBCError**)error;
+- (int)pageSizeInDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (BOOL)setMaximumPageCountForDatabase:(NSString*)databaseName size:(int)newPageCount error:(DBCError**)error;
+- (BOOL)resetMaximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (int)maximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error;
 
 #pragma mark Database backup/restore
 
