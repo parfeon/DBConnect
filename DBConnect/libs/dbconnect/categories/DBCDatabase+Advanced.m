@@ -406,14 +406,38 @@
         if(resultCode == SQLITE_OK){
             do {
                 shouldRetry = NO;
-                resultCode = sqlite3_step(sourcePageSizeStatement);
+                resultCode = sqlite3_step(dstPageSizeChangeStatement);
                 if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
                     if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     }
-                } else if(resultCode == SQLITE_ROW) sourcePageSize = sqlite3_column_int(sourcePageSizeStatement, 0);
+                }
             } while (shouldRetry);
+        }
+        if(resultCode == SQLITE_OK){
+            do {
+                shouldRetry = NO;
+                resultCode = sqlite3_prepare_v2(dstDatabase, dstVacuumSQL, -1, &dstVacuumStatement, NULL);
+                if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                        shouldRetry = YES;
+                        sqlite3_sleep(150);
+                    }
+                }
+            } while (shouldRetry);
+            if(resultCode == SQLITE_OK){
+                do {
+                    shouldRetry = NO;
+                    resultCode = sqlite3_step(dstVacuumStatement);
+                    if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+                        if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                            shouldRetry = YES;
+                            sqlite3_sleep(150);
+                        }
+                    }
+                } while (shouldRetry);
+            }
         }
     }
     
@@ -439,38 +463,48 @@
 
 /**
  * Turn off transaction journaling for current database connection
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return whether journaling turned off on current database connection or not
  */
-- (BOOL)turnOffJournaling {
-    return [self setJournalMode:DBCDatabaseJournalingModeOff];
+- (BOOL)turnOffJournalingError:(DBCError**)error {
+    return [self setJournalMode:DBCDatabaseJournalingModeOff error:error];
 }
 
 /**
  * Turn off transaction journaling for specified database connection
  * @parameters
  *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return whether journaling turned off on current database connection or not
  */
-- (BOOL)turnOffJournalingForDatabase:(NSString*)databaseName {
-    return [self setJournalMode:DBCDatabaseJournalingModeOff forDatabase:databaseName];
+- (BOOL)turnOffJournalingForDatabase:(NSString*)databaseName error:(DBCError**)error {
+    return [self setJournalMode:DBCDatabaseJournalingModeOff forDatabase:databaseName error:error];
 }
 
 /**
  * Turn on transaction journaling for current database connection
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return whether journaling turned on on current database connection or not
  */
-- (BOOL)turnOnJournaling {
-    return [self setJournalMode:DBCDatabaseJournalingModeDelete];
+- (BOOL)turnOnJournalingError:(DBCError**)error {
+    return [self setJournalMode:DBCDatabaseJournalingModeDelete error:error];
 }
 
 /**
  * Turn on transaction journaling for specified database connection
  * @parameters
  *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return whether journaling turned on on current database connection or not
  */
-- (BOOL)turnOnJournalingForDatabase:(NSString*)databaseName {
-    return [self setJournalMode:DBCDatabaseJournalingModeDelete forDatabase:databaseName];
+- (BOOL)turnOnJournalingForDatabase:(NSString*)databaseName error:(DBCError**)error {
+    return [self setJournalMode:DBCDatabaseJournalingModeDelete forDatabase:databaseName error:error];
 }
 
 /**
@@ -478,23 +512,28 @@
  * databases
  * @parameters
  *      NSString *journalMode - new journalig mode
+ *      DBCError **error      - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                              Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode {
+- (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
     if((int)journalMode < 0 || (int)journalMode >= [allowedModes count]) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA journal_mode = %@;", [allowedModes objectAtIndex:journalMode]], nil];
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA journal_mode = %@;", [allowedModes objectAtIndex:journalMode]] error:error, nil];
 }
 
 /**
  * Get current database connection journaling mode
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return journaling mode for current database connection
  */
-- (DBCDatabaseJournalingMode)journalMode {
+- (DBCDatabaseJournalingMode)journalModeError:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA journal_mode;", nil];
+    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA journal_mode;" error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"journal_mode"] lowercaseString]];
     }
@@ -506,25 +545,30 @@
  * @parameters
  *      NSString *journalMode  - new journalig mode
  *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode forDatabase:(NSString*)databaseName {
+- (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode forDatabase:(NSString*)databaseName error:(DBCError**)error {
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
     if((int)journalMode < 0 || (int)journalMode >= [allowedModes count]) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_mode = %@;", databaseName, [allowedModes objectAtIndex:journalMode]], nil];
+    if(databaseName == nil) databaseName = @"main";
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_mode = %@;", databaseName, [allowedModes objectAtIndex:journalMode]] error:error, nil];
 }
 
 /**
  * Get specified database connection journaling mode
  * @parameters
  *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return journaling mode for specified database connection
  */
-- (DBCDatabaseJournalingMode)journalModeForDatabase:(NSString*)databaseName {
+- (DBCDatabaseJournalingMode)journalModeForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_mode;", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_mode;", databaseName] error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"journal_mode"] lowercaseString]];
     }
@@ -536,24 +580,28 @@
  * @parameters
  *      NSString *databaseName            - target database name
  *      long long int newJournalSizeLimit - new journal size in bytes
+ *      DBCError **error                  - if an error occurs, upon return contains an DBCError object that describes the 
+ *                                          problem. Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setJournalSizeLimitForDatabase:(NSString*)databaseName size:(long long int)newJournalSizeLimit {
+- (BOOL)setJournalSizeLimitForDatabase:(NSString*)databaseName size:(long long int)newJournalSizeLimit error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit = %lld;", databaseName, newJournalSizeLimit], nil];
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit = %lld;", databaseName, newJournalSizeLimit] error:error, nil];
 }
 
 /**
  * Get journal size for specified database
  * @parameters
  *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return journal size in bytes for specified database
  */
-- (long long int)journalSizeLimitForDatabase:(NSString*)databaseName {
+- (long long int)journalSizeLimitForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit;", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit;", databaseName] error:error, nil];
     if(result != nil && [result count] > 0){
         return [[result rowAtIndex:0] longLongForColumn:@"journal_size_limit"];
     }
@@ -567,23 +615,28 @@
  * attached databases
  * @parameters
  *      DBCDatabaseLockingMode lockingMode - new locking mode
+ *      DBCError **error                   - if an error occurs, upon return contains an DBCError object that describes the 
+ *                                           problem. Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setLockingMode:(DBCDatabaseLockingMode)lockingMode {
+- (BOOL)setLockingMode:(DBCDatabaseLockingMode)lockingMode error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
     if((int)lockingMode < 0 || (int)lockingMode >= [allowedModes count]) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA locking_mode = %@;", [allowedModes objectAtIndex:lockingMode]], nil];
+    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA locking_mode = %@;", [allowedModes objectAtIndex:lockingMode]] error:error, nil];
 }
 
 /**
  * Get current database connection locking mode
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return current database connection locking mode
  */
-- (DBCDatabaseLockingMode)lockingMode {
+- (DBCDatabaseLockingMode)lockingModeError:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA locking_mode;", nil];
+    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA locking_mode;" error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"locking_mode"] lowercaseString]];
     }
@@ -596,28 +649,33 @@
  * @parameters
  *      NSString *databaseName             - target database name
  *      DBCDatabaseLockingMode lockingMode - new locking mode
+ *      DBCError **error                   - if an error occurs, upon return contains an DBCError object that describes the 
+ *                                           problem. 
+ *                                           Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setLockingMode:(DBCDatabaseLockingMode)lockingMode forDatabase:(NSString*)databaseName {
+- (BOOL)setLockingMode:(DBCDatabaseLockingMode)lockingMode forDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
     if((int)lockingMode < 0 || (int)lockingMode >= [allowedModes count]) return NO;
     return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.locking_mode = %@;", 
-                                 databaseName, [allowedModes objectAtIndex:lockingMode]], nil];
+                                 databaseName, [allowedModes objectAtIndex:lockingMode]] error:error, nil];
 }
 
 /**
  * Get specified database locking mode
  * @parameters
  *      NSString *databaseName - target database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return specified database locking mode
  */
-- (DBCDatabaseLockingMode)lockingModeForDatabase:(NSString*)databaseName {
+- (DBCDatabaseLockingMode)lockingModeForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.locking_mode;", databaseName], nil];
+    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.locking_mode;", databaseName] error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"locking_mode"] lowercaseString]];
     }
@@ -627,21 +685,26 @@
 /**
  * Set read locks state 
  * @parameters
- *      BOOL omit - should omit read lock or not
+ *      BOOL omit        - should omit read lock or not
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
-- (BOOL)setOmitReadlockLike:(BOOL)omit {
+- (BOOL)setOmitReadlockLike:(BOOL)omit error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    return [self evaluateUpdate:@"PRAGMA omit_readlock = %d;", (omit?1:0), nil];
+    return [self evaluateUpdate:@"PRAGMA omit_readlock = %d;" error:error, (omit?1:0), nil];
 }
 
 /**
  * Get whether omit read lock flag or not
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return whether omit read lock flag or not
  */
-- (BOOL)omitReadlock {
+- (BOOL)omitReadlockError:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA max_page_count;", nil];
+    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA max_page_count;" error:error, nil];
     if([result count] > 0){
         return [[result rowAtIndex:0] intForColumn:@"omit_readlock"]==1;
     }
@@ -657,14 +720,21 @@
  *      NSString *moduleName           - module name
  *      void *userData                 - user data passed to module
  *      void(*)(void*) cleanupFunction - cleanup function which used to free retained resources
+ *      DBCError **error               - if an error occurs, upon return contains an DBCError object that describes the 
+ *                                       problem. Pass NULL if you do not want error information.
  *  @return return code which indicate was module registered or not
  */
-- (int)registerModule:(const sqlite3_module*)module moduleName:(NSString*)moduleName userData:(void*)userData cleanupFunction:(void(*)(void*))cleanupFunction {
+- (BOOL)registerModule:(const sqlite3_module*)module moduleName:(NSString*)moduleName userData:(void*)userData cleanupFunction:(void(*)(void*))cleanupFunction error:(DBCError**)error{
     int returnCode = SQLITE_ERROR;
     if(!dbConnectionOpened) return returnCode;
     if(cleanupFunction != NULL) returnCode = sqlite3_create_module_v2(dbConnection, [moduleName UTF8String], module, userData, cleanupFunction);
     returnCode = sqlite3_create_module(dbConnection, [moduleName UTF8String], module, userData);
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 #pragma mark Database functions registration/unregistration
@@ -683,7 +753,7 @@
  *      void *fnUserData                                       - user data which will be passed to C function
  *  @return return code which indicate was function registered or not
  */
-- (int)registerScalarFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))function functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData {
+- (BOOL)registerScalarFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))function functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error {
     int returnCode = SQLITE_ERROR;
     if(!dbConnectionOpened) return returnCode;
     if(expectedTextValueRepresentation==SQLITE_UTF8||expectedTextValueRepresentation==SQLITE_ANY){
@@ -692,7 +762,12 @@
               expectedTextValueRepresentation==SQLITE_UTF16LE){
         returnCode = sqlite3_create_function16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], fnParametersCount, expectedTextValueRepresentation, fnUserData, function, NULL, NULL);
     }
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 /**
@@ -706,7 +781,7 @@
  *                                                               SQLITE_UTF16LE, or SQLITE_ANY
  *  @return return code which indicate was function unregistered or not
  */
-- (int)unRegisterScalarFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation {
+- (BOOL)unRegisterScalarFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error {
     int returnCode = SQLITE_ERROR;
     if(expectedTextValueRepresentation==SQLITE_UTF8||expectedTextValueRepresentation==SQLITE_ANY){
         returnCode = sqlite3_create_function(dbConnection, [fnName UTF8String], fnParametersCount, expectedTextValueRepresentation, NULL, NULL, NULL, NULL);
@@ -714,7 +789,12 @@
               expectedTextValueRepresentation==SQLITE_UTF16LE){
         returnCode = sqlite3_create_function16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], fnParametersCount, expectedTextValueRepresentation, NULL, NULL, NULL, NULL);
     }
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 /**
@@ -722,7 +802,7 @@
  * @parameters
  *      void(*)(sqlite3_context*, int, sqlite3_value) stepFunction - registered step function with defined
  *                                                                   signature
- *      void(*)(sqlite3_context*) finalyzeFunction                 - registered finalyzed function with defined
+ *      void(*)(sqlite3_context*) finalizeFunction                 - registered finalyzed function with defined
  *                                                                   signature
  *      NSString* fnName                                           - registered function name
  *      int fnParametersCount                                      - count of parameters, expected in
@@ -733,16 +813,21 @@
  *      void *fnUserData                                           - user data which will be passed to C function
  *  @return return code which indicate was function registered or not
  */
-- (int)registerAggregationFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))stepFunction finalyzeFunction:(void(*)(sqlite3_context*))finalyzeFunction functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData {
+- (BOOL)registerAggregationFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))stepFunction finalizeFunction:(void(*)(sqlite3_context*))finalizeFunction functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error {
     int returnCode = SQLITE_ERROR;
     if(!dbConnectionOpened) return returnCode;
     if(expectedTextValueRepresentation==SQLITE_UTF8||expectedTextValueRepresentation==SQLITE_ANY){
-        returnCode = sqlite3_create_function(dbConnection, [fnName UTF8String], fnParametersCount, expectedTextValueRepresentation, fnUserData, NULL, stepFunction, finalyzeFunction);
+        returnCode = sqlite3_create_function(dbConnection, [fnName UTF8String], fnParametersCount, expectedTextValueRepresentation, fnUserData, NULL, stepFunction, finalizeFunction);
     } else if(expectedTextValueRepresentation==SQLITE_UTF16||expectedTextValueRepresentation==SQLITE_UTF16BE||
               expectedTextValueRepresentation==SQLITE_UTF16LE){
-        returnCode = sqlite3_create_function16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], fnParametersCount, expectedTextValueRepresentation, fnUserData, NULL, stepFunction, finalyzeFunction);
+        returnCode = sqlite3_create_function16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], fnParametersCount, expectedTextValueRepresentation, fnUserData, NULL, stepFunction, finalizeFunction);
     }
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 /**
@@ -756,7 +841,7 @@
  *                                                               SQLITE_UTF16LE, or SQLITE_ANY
  *  @return return code which indicate was function unregistered or not
  */
-- (int)unRegisterAggregationFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation {
+- (BOOL)unRegisterAggregationFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error {
     int returnCode = SQLITE_ERROR;
     if(expectedTextValueRepresentation==SQLITE_UTF8||expectedTextValueRepresentation==SQLITE_ANY){
         returnCode = sqlite3_create_function(dbConnection, [fnName UTF8String], fnParametersCount, expectedTextValueRepresentation, NULL, NULL, NULL, NULL);
@@ -764,7 +849,12 @@
               expectedTextValueRepresentation==SQLITE_UTF16LE){
         returnCode = sqlite3_create_function16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], fnParametersCount, expectedTextValueRepresentation, NULL, NULL, NULL, NULL);
     }
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 /**
@@ -779,7 +869,7 @@
  *      void *fnUserData                                       - user data which will be passed to C function
  *  @return return code which indicate was function registered or not
  */
-- (int)registerCollationFunction:(int(*)(void*, int, const void*, int, const void*))function cleanupFunction:(void(*)(void*))cleanupFunction functionName:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData {
+- (BOOL)registerCollationFunction:(int(*)(void*, int, const void*, int, const void*))function cleanupFunction:(void(*)(void*))cleanupFunction functionName:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error {
     int returnCode = SQLITE_ERROR;
     if(!dbConnectionOpened) return returnCode;
     if(cleanupFunction!=NULL){
@@ -792,7 +882,12 @@
             returnCode = sqlite3_create_collation16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], expectedTextValueRepresentation, fnUserData, function);
         }
     }
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 /**
@@ -804,7 +899,7 @@
  *                                                               SQLITE_UTF16LE, SQLITE_UTF16_ALIGNED, or SQLITE_ANY
  *  @return return code which indicate was function unregistered or not
  */
-- (int)unRegisterCollationFunction:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation {
+- (BOOL)unRegisterCollationFunction:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error {
     int returnCode = SQLITE_ERROR;
     returnCode = sqlite3_create_collation_v2(dbConnection, [fnName UTF8String], expectedTextValueRepresentation, NULL, NULL, NULL);
     if(returnCode != SQLITE_OK){
@@ -815,7 +910,12 @@
             returnCode = sqlite3_create_collation16(dbConnection, [fnName cStringUsingEncoding:NSUTF16StringEncoding], expectedTextValueRepresentation, NULL, NULL);
         }
     }
-    return returnCode;
+    if(returnCode != SQLITE_OK){
+        recentErrorCode = returnCode;
+        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+    }
+    return returnCode==SQLITE_OK;
 }
 
 @end
