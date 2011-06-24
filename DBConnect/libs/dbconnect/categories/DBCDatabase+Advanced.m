@@ -35,15 +35,15 @@
  * Connection will be opened with flags passed to SQLite API
  * @parameters
  *      int flags        - database connection bit-field flags
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
+ *      DBCError **error - if an error occurs, upon return contains an DBCError  bject that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * @return whether database connection was opened with provided flags or not
  */
 - (BOOL)openWithFlags:(int)flags error:(DBCError**)error {
     if(dbConnectionOpened) return dbConnectionOpened;
     dbFlags = flags;
-    int resultCode = sqlite3_open_v2((dbPath==nil||[dbPath length]==0?NULL:[dbPath UTF8String]), &dbConnection, dbFlags, NULL);
+    const char *targetDatabase = (dbPath==nil||[dbPath length]==0?NULL:[dbPath UTF8String]);
+    int resultCode = sqlite3_open_v2(targetDatabase, &dbConnection, dbFlags, NULL);
     
     if(resultCode != SQLITE_OK){
         recentErrorCode = resultCode;
@@ -64,9 +64,8 @@
 /**
  * Free unused database pages
  * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
  * WARNING: ROWID values may be reset
  * @return whether vacuum was successfull or not
  */
@@ -80,9 +79,8 @@
  * Get free pages count in database
  * @parameters
  *      NSString *databaseName - database name
- *      DBCError **error       - if an error occurs, upon return contains an DBCError 
- *                               object that describes the problem. Pass NULL if you 
- *                               do not want error information.
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return free pages count in database
  */
 - (int)freePagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
@@ -97,9 +95,8 @@
  * Get pages count in database (including unused)
  * @parameters
  *      NSString *databaseName - database name
- *      DBCError **error       - if an error occurs, upon return contains an DBCError 
- *                               object that describes the problem. Pass NULL if you 
- *                               do not want error information.
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return pages count in database 
  */
 - (int)pagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
@@ -115,9 +112,8 @@
  * @parameters
  *      NSString *databaseName - database name
  *      int newPageSize        - new page size in bytes (must be a power of two)
- *      DBCError **error       - if an error occurs, upon return contains an DBCError 
- *                               object that describes the problem. Pass NULL if you 
- *                               do not want error information.
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * WARNING: ROWID values may be reset
  * @return whether set was successfull or not
  */
@@ -131,9 +127,8 @@
  * Get page size for specific database
  * @parameters
  *      NSString *databaseName - database name
- *      DBCError **error       - if an error occurs, upon return contains an DBCError 
- *                               object that describes the problem. Pass NULL if you 
- *                               do not want error information.
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return page size for specific database
  */
 - (int)pageSizeInDatabase:(NSString*)databaseName error:(DBCError**)error {
@@ -149,9 +144,8 @@
  * @parameters
  *      NSString *databaseName    - target database name
  *      long long int newPageSize - new maximum pages count
- *      DBCError **error          - if an error occurs, upon return contains an DBCError 
- *                                  object that describes the problem. Pass NULL if you 
- *                                  do not want error information.
+ *      DBCError **error          - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                                  Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
 - (BOOL)setMaximumPageCountForDatabase:(NSString*)databaseName size:(int)newPageCount error:(DBCError**)error {
@@ -165,9 +159,8 @@
  * Reset maximum pages count for spicified database to it's default value
  * @parameters
  *      NSString *databaseName - target database name
- *      DBCError **error       - if an error occurs, upon return contains an DBCError 
- *                               object that describes the problem. Pass NULL if you 
- *                               do not want error information.
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return whether set was successfull or not
  */
 - (BOOL)resetMaximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error {
@@ -180,9 +173,8 @@
  * Get maximum pages count for specified database
  * @parameters
  *      NSString *databaseName - target database name
- *      DBCError **error       - if an error occurs, upon return contains an DBCError 
- *                               object that describes the problem. Pass NULL if you 
- *                               do not want error information.
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
  * @return maximum pages count for specified database
  */
 - (int)maximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error {
@@ -198,23 +190,16 @@
 #pragma mark Database backup/restore
 
 /**
- * Restore database from file into current database connection
+ * Restore destination database from current connection with source database file and specified source database name
  * @parameters
- *      NSString *dbFilePath - sqlite database file path
- * @retuen whether restore was successfull or not
+ *      NSString *dstDatabaseName - destination database name in current database connection for restore
+ *      NSString *srcDatabaseFile - source database file from which database restore will be performed
+ *      NSString *srcDatabaseName - source database name, which will be used to restore destination database
+ *      DBCError **error          - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                                  Pass NULL if you do not want error information.
+ * @return whether restore was successfull or not
  */
-- (BOOL)restoreDatabaseFromFile:(NSString*)dbFilePath {
-    return [self restoreDatabaseFromFile:dbFilePath database:nil];
-}
-
-/**
- * Restore database from file into provided database by it's name
- * @parameters
- *      NSString *dbFilePath   - sqlite database file path
- *      NSString *databaseName - target database
- * @retuen whether restore was successfull or not
- */
-- (BOOL)restoreDatabaseFromFile:(NSString*)dbFilePath database:(NSString*)databaseName {
+- (BOOL)restore:(NSString*)dstDatabaseName fromFile:(NSString*)srcDatabaseFile database:(NSString*)srcDatabaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     int resultCode = SQLITE_OK;
     DBCLockLogger(@"[DBC:Restore] Waiting for Lock (Line: %d)", __LINE__);
@@ -223,19 +208,19 @@
     sqlite3 *sourceDBConnection = NULL;
     int retryCount = 0;
     BOOL shouldRetry = NO;
+    const char *targetDatabase = (srcDatabaseFile==nil||[srcDatabaseFile length]==0?NULL:[srcDatabaseFile UTF8String]);
     do {
         shouldRetry = NO;
-        resultCode = sqlite3_open_v2([dbFilePath UTF8String], &sourceDBConnection, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
+        resultCode = sqlite3_open_v2(targetDatabase, &sourceDBConnection, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
         if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
             if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             } else {
                 recentErrorCode = resultCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", recentError);
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", error);
                 sqlite3_close(sourceDBConnection);
                 sourceDBConnection = NULL;
                 [queryLock unlock];
@@ -245,8 +230,65 @@
         }
     } while (shouldRetry);
     
-    if (databaseName == nil) databaseName = @"main";
-    sqlite3_backup *backup = sqlite3_backup_init(dbConnection, [databaseName UTF8String], sourceDBConnection, "main");
+    BOOL restoreSuccessfull = [self restore:dstDatabaseName from:sourceDBConnection database:srcDatabaseName error:error];
+    
+    sqlite3_close(sourceDBConnection);
+    sourceDBConnection = NULL;
+    [queryLock unlock];
+    DBCLockLogger(@"[DBC:Restore] Relinquished from previously acquired lock (Line: %d)", __LINE__);
+    
+    return restoreSuccessfull;
+}
+
+/**
+ * Restore destination database from current connection with source database connection and specified source database name
+ * @parameters
+ *      NSString *dstDatabaseName       - destination database name in current database connection for restore
+ *      NSString *srcDatabaseConnection - source database connection from which database restore will be performed
+ *      NSString *srcDatabaseName       - source database name, which will be used to restore destination database
+ *      DBCError **error                - if an error occurs, upon return contains an DBCError object that describes the 
+ *                                        problem. Pass NULL if you do not want error information.
+ * @return whether restore was successfull or not
+ */
+- (BOOL)restore:(NSString*)dstDatabaseName from:(sqlite3*)srcDatabaseConnection database:(NSString*)srcDatabaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    int resultCode = SQLITE_OK;
+    DBCLockLogger(@"[DBC:Restore] Waiting for Lock (Line: %d)", __LINE__);
+    [queryLock lock];
+    DBCLockLogger(@"[DBC:Restore] Lock acquired (Line: %d)", __LINE__);
+    int retryCount = 0;
+    BOOL shouldRetry = NO;
+    
+    int sourcePageSize = -1;
+    sqlite3_stmt *sourcePageSizeStatement = NULL;
+    const char *sourcePageSizeSQL =  [[NSString stringWithFormat:@"PRAGMA %@.page_size;", srcDatabaseName] UTF8String];
+    do {
+        shouldRetry = NO;
+        resultCode = sqlite3_prepare_v2(srcDatabaseConnection, sourcePageSizeSQL, -1, &sourcePageSizeStatement, NULL);
+        if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+            if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                shouldRetry = YES;
+                sqlite3_sleep(150);
+            }
+        }
+    } while (shouldRetry);
+    if(resultCode == SQLITE_OK){
+        do {
+            shouldRetry = NO;
+            resultCode = sqlite3_step(sourcePageSizeStatement);
+            if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+                if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    shouldRetry = YES;
+                    sqlite3_sleep(150);
+                }
+            } else if(resultCode == SQLITE_ROW) sourcePageSize = sqlite3_column_int(sourcePageSizeStatement, 0);
+        } while (shouldRetry);
+    }
+    if(sourcePageSize > 0) [self setPageSizeInDatabase:dstDatabaseName size:sourcePageSize error:NULL];
+    
+    if (dstDatabaseName == nil) dstDatabaseName = @"main";
+    if (srcDatabaseName == nil) srcDatabaseName = @"main";
+    sqlite3_backup *backup = sqlite3_backup_init(dbConnection, [dstDatabaseName UTF8String], srcDatabaseConnection, [srcDatabaseName UTF8String]);
     if(backup){
         retryCount = 0;
         shouldRetry = NO;
@@ -259,12 +301,9 @@
             } else {
                 sqlite3_backup_finish(backup);
                 recentErrorCode = resultCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                       additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", recentError);
-                sqlite3_close(sourceDBConnection);
-                sourceDBConnection = NULL;
+                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", error);
                 [queryLock unlock];
                 DBCLockLogger(@"[DBC:Restore] Relinquished from previously acquired lock (Line: %d)", __LINE__);
                 return NO;
@@ -272,55 +311,45 @@
         } while (shouldRetry);
         sqlite3_backup_finish(backup);
     }
-    sqlite3_close(sourceDBConnection);
-    sourceDBConnection = NULL;
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Restore] Relinquished from previously acquired lock (Line: %d)", __LINE__);
     return resultCode==SQLITE_OK;
 }
 
-
 /**
- * Backup database to file from current database connection
+ * Backup source database from current connection to destination database file and specified destination database name
  * @parameters
- *      NSString *dbFileStorePath - sqlite database store file path
- * @retuen whether backup was successfull or not
+ *      NSString *srcDatabaseName - source database name in current database connection for backup
+ *      NSString *dstDatabaseFile - destination database file to which database backup will be performed
+ *      NSString *dstDatabaseName - destination database name, which will be used to backup source database
+ *      DBCError **error          - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                                  Pass NULL if you do not want error information.
+ * @return whether backup was successfull or not
  */
-- (BOOL)backupDatabaseToFile:(NSString*)dbFileStorePath {
-    return [self backupDatabaseToFile:dbFileStorePath fromDatabase:nil];
-}
-
-/**
- * Backup database to file from provided database by it's name
- * @parameters
- *      NSString *dbFilePath   - sqlite database store file path
- *      NSString *databaseName - target database
- * @retuen whether backup was successfull or not
- */
-- (BOOL)backupDatabaseToFile:(NSString*)dbFileStorePath fromDatabase:(NSString*)databaseName {
+- (BOOL)backup:(NSString*)srcDatabaseName toFile:(NSString*)dstDatabaseFile database:(NSString*)dstDatabaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     int resultCode = SQLITE_OK;
     DBCLockLogger(@"[DBC:Backup] Waiting for Lock (Line: %d)", __LINE__);
     [queryLock lock];
     DBCLockLogger(@"[DBC:Backup] Lock acquired (Line: %d)", __LINE__);
-    sqlite3 *sourceDBConnection = NULL;
+    sqlite3 *dstDBConnection = NULL;
     int retryCount = 0;
     BOOL shouldRetry = NO;
+    const char *targetDatabase = (dstDatabaseFile==nil||[dstDatabaseFile length]==0?NULL:[dstDatabaseFile UTF8String]);
     do {
         shouldRetry = NO;
-        resultCode = sqlite3_open_v2([dbFileStorePath UTF8String], &sourceDBConnection, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
+        resultCode = sqlite3_open_v2(targetDatabase, &dstDBConnection, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
         if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
             if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             } else {
                 recentErrorCode = resultCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                       additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                DBCDebugLogger(@"[DBC:Backup] Can't restore database due to error: %@", recentError);
-                sqlite3_close(sourceDBConnection);
-                sourceDBConnection = NULL;
+                DBCDebugLogger(@"[DBC:Backup] Can't restore database due to error: %@", error);
+                sqlite3_close(dstDBConnection);
+                dstDBConnection = NULL;
                 [queryLock unlock];
                 DBCLockLogger(@"[DBC:Backup] Relinquished from previously acquired lock (Line: %d)", __LINE__);
                 return NO;
@@ -328,8 +357,69 @@
         }
     } while (shouldRetry);
     
-    if (databaseName == nil) databaseName = @"main";
-    sqlite3_backup *backup = sqlite3_backup_init(dbConnection, [databaseName UTF8String], sourceDBConnection, "main");
+    BOOL backupSuccessfull = [self backup:srcDatabaseName to:dstDBConnection database:dstDatabaseName error:error];
+    
+    sqlite3_close(dstDBConnection);
+    dstDBConnection = NULL;
+    [queryLock unlock];
+    DBCLockLogger(@"[DBC:Restore] Relinquished from previously acquired lock (Line: %d)", __LINE__);
+    
+    return backupSuccessfull;
+}
+
+/**
+ * Backup source database from current connection to destination database connection and specified destination 
+ * database name
+ * @parameters
+ *      NSString *srcDatabaseName - source database name in current database connection for backup
+ *      NSString *dstDatabase     - destination database connection to which database backup will be performed
+ *      NSString *dstDatabaseName - destination database name, which will be used to backup source database
+ *      DBCError **error          - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                                  Pass NULL if you do not want error information.
+ * @return whether backup was successfull or not
+ */
+- (BOOL)backup:(NSString*)srcDatabaseName to:(sqlite3*)dstDatabase database:(NSString*)dstDatabaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    int resultCode = SQLITE_OK;
+    DBCLockLogger(@"[DBC:Backup] Waiting for Lock (Line: %d)", __LINE__);
+    [queryLock lock];
+    DBCLockLogger(@"[DBC:Backup] Lock acquired (Line: %d)", __LINE__);
+    int retryCount = 0;
+    BOOL shouldRetry = NO;
+    
+    int sourcePageSize = [self pageSizeInDatabase:srcDatabaseName error:NULL];
+    if(sourcePageSize > 0){
+        sqlite3_stmt *dstPageSizeChangeStatement = NULL;
+        sqlite3_stmt *dstVacuumStatement = NULL;
+        const char *dstPageSizeChangeSQL = [[NSString stringWithFormat:@"PRAGMA %@.page_size = %i;", dstDatabase, sourcePageSize] UTF8String];
+        const char *dstVacuumSQL = "VACUUM;";
+        do {
+            shouldRetry = NO;
+            resultCode = sqlite3_prepare_v2(dstDatabase, dstPageSizeChangeSQL, -1, &dstPageSizeChangeStatement, NULL);
+            if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+                if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    shouldRetry = YES;
+                    sqlite3_sleep(150);
+                }
+            }
+        } while (shouldRetry);
+        if(resultCode == SQLITE_OK){
+            do {
+                shouldRetry = NO;
+                resultCode = sqlite3_step(sourcePageSizeStatement);
+                if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                        shouldRetry = YES;
+                        sqlite3_sleep(150);
+                    }
+                } else if(resultCode == SQLITE_ROW) sourcePageSize = sqlite3_column_int(sourcePageSizeStatement, 0);
+            } while (shouldRetry);
+        }
+    }
+    
+    if (dstDatabaseName == nil) dstDatabaseName = @"main";
+    if (srcDatabaseName == nil) srcDatabaseName = @"main";
+    sqlite3_backup *backup = sqlite3_backup_init(dstDatabase, [dstDatabaseName UTF8String], dbConnection, [srcDatabaseName UTF8String]);
     if(backup){
         do {
             shouldRetry = NO;
@@ -340,8 +430,6 @@
         } while (resultCode==SQLITE_OK || resultCode==SQLITE_BUSY || resultCode==SQLITE_LOCKED);
         sqlite3_backup_finish(backup);
     }
-    sqlite3_close(sourceDBConnection);
-    sourceDBConnection = NULL;
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Backup] Relinquished from previously acquired lock (Line: %d)", __LINE__);
     return resultCode==SQLITE_OK;

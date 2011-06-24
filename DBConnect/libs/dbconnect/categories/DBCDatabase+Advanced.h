@@ -44,10 +44,10 @@
 
 #pragma mark Database backup/restore
 
-- (BOOL)restoreDatabaseFromFile:(NSString*)dbFilePath;
-- (BOOL)restoreDatabaseFromFile:(NSString*)dbFilePath database:(NSString*)databaseName;
-- (BOOL)backupDatabaseToFile:(NSString*)dbFileStorePath;
-- (BOOL)backupDatabaseToFile:(NSString*)dbFileStorePath fromDatabase:(NSString*)databaseName;
+- (BOOL)restore:(NSString*)dstDatabaseName fromFile:(NSString*)srcDatabaseFile database:(NSString*)srcDatabaseName error:(DBCError**)error;
+- (BOOL)restore:(NSString*)dstDatabaseName from:(sqlite3*)srcDatabaseConnection database:(NSString*)srcDatabaseName error:(DBCError**)error;
+- (BOOL)backup:(NSString*)srcDatabaseName toFile:(NSString*)dstDatabaseFile database:(NSString*)dstDatabaseName error:(DBCError**)error;
+- (BOOL)backup:(NSString*)srcDatabaseName to:(sqlite3*)dstDatabase database:(NSString*)dstDatabaseName error:(DBCError**)error;
 
 #pragma mark Transaction journal
 
