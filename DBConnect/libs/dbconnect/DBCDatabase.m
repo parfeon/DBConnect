@@ -202,7 +202,7 @@
                         if(fmError!=nil) {
                             recentErrorCode = DBC_CANT_REMOVE_CREATED_CORRUPTED_DATABASE_FILE;
                             *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:sqlQeryListPath additionalInformation:[fmError description]] autorelease];
-                            DBCDebugLogger(@"[DBC:ERROR] %@", error);
+                            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
                         }
                     }
                     [self release];
@@ -211,7 +211,7 @@
                     recentErrorCode = execError.errorCode;
                     *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:sqlQeryListPath
                                           additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                    DBCDebugLogger(@"[DBC:ERROR] %@", error);
+                    DBCDebugLogger(@"[DBC:ERROR] %@", *error);
                 }
             }
         } else {
@@ -251,7 +251,7 @@
 - (BOOL)openReadonlyError:(DBCError**)error {
     BOOL opened = [self openWithFlags:SQLITE_OPEN_READONLY error:error];
     if(opened){
-        [self setJournalMode:DBCDatabaseJournalingModeOff];
+        [self setJournalMode:DBCDatabaseJournalingModeOff error:error];
     }
     return opened;
 }
@@ -293,7 +293,7 @@
             *error = [DBCError errorWithErrorCode:recentErrorCode 
                                       forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
                             additionalInformation:[dirCreationError description]];
-            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", error);
+            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
             dirCreationError = nil;
             return NO;
         }
@@ -306,7 +306,7 @@
             *error = [DBCError errorWithErrorCode:recentErrorCode 
                                        forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
                              additionalInformation:[databaseCopyError description]];
-            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", error);
+            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
             databaseCopyError = nil;
             return NO;
         }
@@ -350,7 +350,7 @@
                 recentErrorCode = returnCode;
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", error);
+                DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", *error);
             }
         }
     } while (shouldRetry);
@@ -362,7 +362,7 @@
         recentErrorCode = returnCode;
         *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                               additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-        DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", error);
+        DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", *error);
     }
     [queryLock unlock];
     DBCLockLogger(@"[DBC:close] Relinquished from previously acquired lock (Line: %d)", __LINE__);
@@ -382,7 +382,6 @@
  * @return whether update request was successfully evaluated or not
  */
 - (BOOL)evaluateUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... {
-    DBCReleaseObject(recentError);
     recentErrorCode = SQLITE_OK;
     va_list parameters;
     va_start(parameters, error);
@@ -391,7 +390,7 @@
     if(parametersBindingMap == nil) {
         recentErrorCode = DBC_WRONG_BINDING_PARMETERS_COUNT;
         *error = [DBCError errorWithErrorCode:recentErrorCode];
-        DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", error);
+        DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
         return NO;
     }
     return [self evaluateUpdate:sqlUpdate withBindingMapData:parametersBindingMap error:error];
@@ -408,7 +407,6 @@
  * @return query resultts if evaluated successfull or nil in case of error
  */
 - (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery error:(DBCError**)error, ... {
-    DBCReleaseObject(recentError);
     recentErrorCode = SQLITE_OK;
     va_list parameters;
     va_start(parameters, error);
@@ -417,7 +415,7 @@
     if(parametersBindingMap == nil) {
         recentErrorCode = DBC_WRONG_BINDING_PARMETERS_COUNT;
         *error = [DBCError errorWithErrorCode:recentErrorCode];
-        DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", error);
+        DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
         return nil;
     }
     return [self evaluateQuery:sqlQuery withBindingMapData:parametersBindingMap error:error];
@@ -434,7 +432,6 @@
  * @return whether eavluate was successfull or not (always YES if set continueOnEvaluateErrors)
  */
 - (BOOL)evaluateStatementsFromFile:(NSString*)statementsFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error {
-    DBCReleaseObject(recentError);
     recentErrorCode = SQLITE_OK;
     if(statementsFilePath != nil && [[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
         struct sqlite3lib_error execError = {"", -1, -1};
@@ -444,18 +441,17 @@
             evaluateQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding], continueOnEvaluateErrors, &execError);
         if(execError.errorCode != -1 && !continueOnEvaluateErrors){
             if([[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
-                NSError *error = nil;
-                [[NSFileManager defaultManager] removeItemAtPath:statementsFilePath error:&error];
-                if(error!=nil) DBCDebugLogger(@"[DBC:ERROR] %@", error);
+                NSError *fmError = nil;
+                [[NSFileManager defaultManager] removeItemAtPath:statementsFilePath error:&fmError];
+                if(fmError!=nil) DBCDebugLogger(@"[DBC:ERROR] %@", fmError);
             }
             [self release];
             return NO;
         } else if(execError.errorCode != -1){
             recentErrorCode = execError.errorCode;
-            DBCReleaseObject(recentError);
-            recentError = [[DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
-                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-            DBCDebugLogger(@"[DBC:ERROR] %@", recentError);
+            *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
+                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
         }
         return continueOnEvaluateErrors||execError.errorCode==-1&&!continueOnEvaluateErrors;
     }
@@ -601,7 +597,12 @@
  */
 - (BOOL)evaluateUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
     DBCDebugLogger(@"[DBC:Update] Binding map data: %@", bindingMapData);
-    if([self isDatabaseConnectionForReadOnlyMode]) return NO;
+    if([self isDatabaseConnectionForReadOnlyMode]) {
+        recentErrorCode = SQLITE_READONLY;
+        *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil additionalInformation:nil];
+        DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
+        return NO;
+    }
     DBCLockLogger(@"[DBC:Update] Waiting for Lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
     [queryLock lock];
     DBCLockLogger(@"[DBC:Update] Lock acquired: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
@@ -670,9 +671,9 @@
             } while (shouldRetry);
             if(sqlError){
                 recentErrorCode = returnCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
@@ -680,12 +681,13 @@
                 return NO;
             }
         }
+        
         returnCode = [self bindStatement:statement accordingToBindingMapData:bindingMapData parametersOffset:&bindedParametersOffset];
         if(returnCode != SQLITE_OK){
             recentErrorCode = returnCode;
-            DBCReleaseObject(recentError);
-            recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                            additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+            DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
@@ -711,9 +713,9 @@
             } while (shouldRetry);
             if(sqlError){
                 recentErrorCode = returnCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
@@ -883,9 +885,10 @@
         if(sql) statementBindParametersCount = [self getSQLStatementParametersCount:sql];
     }
     for (int i = 0; i < statementBindParametersCount; i++) {
-        int bindingIndex = *offset;
-        id bindingValue = [[bindingMapData valueForKey:PARAMETERS_LIST] objectAtIndex:[[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] objectAtIndex:bindingIndex] intValue]];
-        returnCode = [self bindObject:bindingValue atIndex:(i+1) inStatement:statement];
+        int bindingValueIndex = *offset;
+        int balueBindingTokenIndex = [[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] objectAtIndex:bindingValueIndex] intValue];
+        id bindingValue = [[bindingMapData valueForKey:PARAMETERS_LIST] objectAtIndex:[[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] objectAtIndex:bindingValueIndex] intValue]];
+        returnCode = [self bindObject:bindingValue atIndex:(balueBindingTokenIndex+1) inStatement:statement];
         if(returnCode == SQLITE_OK) *offset = *offset+1;
         else return returnCode;
     }

@@ -49,7 +49,7 @@
         recentErrorCode = resultCode;
         *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:(inMemoryDB?@"in memory":dbPath)] retain];
         dbConnectionOpened = NO;
-        DBCDebugLogger(@"[DBC:ERROR] %@", error);
+        DBCDebugLogger(@"[DBC:ERROR] %@", *error);
         sqlite3_close(dbConnection);
     } else {
         sqlite3_busy_timeout(dbConnection, 250);
@@ -220,7 +220,7 @@
                 recentErrorCode = resultCode;
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", error);
+                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", *error);
                 sqlite3_close(sourceDBConnection);
                 sourceDBConnection = NULL;
                 [queryLock unlock];
@@ -303,7 +303,7 @@
                 recentErrorCode = resultCode;
                 *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                       additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", error);
+                DBCDebugLogger(@"[DBC:Restore] Can't restore database due to error: %@", *error);
                 [queryLock unlock];
                 DBCLockLogger(@"[DBC:Restore] Relinquished from previously acquired lock (Line: %d)", __LINE__);
                 return NO;
@@ -347,7 +347,7 @@
                 recentErrorCode = resultCode;
                 *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                       additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
-                DBCDebugLogger(@"[DBC:Backup] Can't restore database due to error: %@", error);
+                DBCDebugLogger(@"[DBC:Backup] Can't restore database due to error: %@", *error);
                 sqlite3_close(dstDBConnection);
                 dstDBConnection = NULL;
                 [queryLock unlock];
@@ -732,7 +732,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }
@@ -765,7 +765,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }
@@ -792,7 +792,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }
@@ -825,7 +825,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }
@@ -852,7 +852,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }
@@ -885,7 +885,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }
@@ -913,7 +913,7 @@
     if(returnCode != SQLITE_OK){
         recentErrorCode = returnCode;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
-        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", error);
+        DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
     return returnCode==SQLITE_OK;
 }

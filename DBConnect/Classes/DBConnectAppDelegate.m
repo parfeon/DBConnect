@@ -14,10 +14,29 @@
 @implementation DBConnectAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    DBCDatabase *db = [[DBCDatabase alloc] initWithPath:@":memory:" defaultEncoding:DBCDatabaseEncodingUTF8];
     DBCError *error = nil;
-    [db openError:&error];
-    [db setUseCaseSensitiveLike:YES];
+    DBCDatabase *db = [DBCDatabase databaseWithPath:@":memory:"];
+    if([db openError:&error]){
+        error = nil;
+        [db evaluateUpdate:@"CREATE TABLE IF NOT EXISTS test (pid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, pType TEXT NOT NULL, pTitle TEXT, loc_lat FLOAT NOT NULL, loc_lon FLOAT NOT NULL); CREATE UNIQUE INDEX locationIndex ON test (loc_lat, loc_lon); INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( ?1, ?2, ?3, ?4 ); INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( ?1, ?5, ?6, ?7 ); INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( ?1, ?8, ?9, ?10 ); INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( ?1, ?11, ?12, ?13 );"
+                     error:&error, 
+                           @"City", @"Cupertino", [NSNumber numberWithFloat:37.3261f],
+                           [NSNumber numberWithFloat:-122.0320f], @"New York", [NSNumber numberWithFloat:40.724],
+                           [NSNumber numberWithFloat:-74.006], @"Dnepropetrovsk", [NSNumber numberWithFloat:48.472],
+                           [NSNumber numberWithFloat:35.050], @"Kiev", [NSNumber numberWithFloat:50.457],
+                           [NSNumber numberWithFloat:30.525],
+         nil];
+        if(error != nil){
+            // Hmm, something went wrong, try to log out error to find out something useful. Or you can set flag for DBCUseDebugLogger in DBCConfiguration.h, than DBConnect will log out all debug information.
+                NSLog(@"Occurred an error: %@", error);
+        }
+    } else {
+        // In some rare cases an error may occur, just log it out to find out what gone wrong. Or you can set flag for DBCUseDebugLogger in DBCConfiguration.h, than DBConnect will log out all debug information.  
+            NSLog(@"Occurred an error: %@", error);
+    }
+    [db evaluateUpdate:@"INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( ?1, ?2, ?3, ?3 );"
+                 error:&error, @"City", @"Denver", [NSNumber numberWithFloat:40.2338f], nil];
+    /*[db setUseCaseSensitiveLike:YES];
     [db evaluateUpdate:@"CREATE TABLE test (room_number INTEGER, building_number INTEGER, client_name TEXT, nullField NULL)" error:&error, nil];
     
     //[db evaluateUpdate:@"SELECT * FROM sqlite_master WHERE type='table' NOT LIKE 'sqlite_%@' %@ %lld, %lld, %lld, %@ , %@, %@, %@, %c, %d, %f, %lld, %lld, %lld;", @"hi", 1657687685465793, 1657687685465793, 1657687685465793, @"BOOOOO", [NSNumber numberWithFloat:116.0f], @"test", [NSNumber numberWithFloat:16.0f], 'a', 23, 35.7f, 1657687685465768, 1657687685465768, 16576876854657687];
@@ -45,7 +64,7 @@
     long long dbJournalSize = [db journalSizeLimitForDatabase:nil];
     NSLog(@"main database journal size %lld bytes", dbJournalSize);
     NSArray *tablesList = [db tablesList];
-    NSLog(@"LIST OF TABLES: %@", tablesList);
+    NSLog(@"LIST OF TABLES: %@", tablesList);*/
     BOOL closed = [db closeError:&error];
     NSLog(@"DATABASE CLOSED? %@", closed?@"YES":@"NO");
     window = [[UIWindow alloc] init];
