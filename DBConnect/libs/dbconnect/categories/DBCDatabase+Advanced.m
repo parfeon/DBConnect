@@ -70,9 +70,10 @@
  * @return whether vacuum was successfull or not
  */
 - (BOOL)freeUnusedPagesError:(DBCError**)error {
-    if(!dbConnectionOpened) return -1;
+    if(!dbConnectionOpened) return NO;
     if([self freePagesCountInDatabase:@"main" error:error] == 0) return YES;
-    return [self evaluateUpdate:@"VACUUM;" error:error, nil, nil];
+    if(inMemoryDB) return YES;
+    return [self executeUpdate:@"VACUUM;" error:error, nil, nil];
 }
 
 /**
@@ -86,7 +87,7 @@
 - (int)freePagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.freelist_count;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.freelist_count;", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"freelist_count"];
     return -1;
 }
@@ -102,7 +103,7 @@
 - (int)pagesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.page_count;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.page_count;", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"page_count"];
     return -1;
 }
@@ -120,7 +121,8 @@
 - (BOOL)setPageSizeInDatabase:(NSString*)databaseName size:(int)newPageSize error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.page_size = %i; VACUUM;", databaseName, newPageSize] error:error, nil];
+    if(inMemoryDB) [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.page_size = %i;", databaseName, newPageSize] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.page_size = %i; VACUUM;", databaseName, newPageSize] error:error, nil];
 }
 
 /**
@@ -134,7 +136,7 @@
 - (int)pageSizeInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.page_size;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.page_size;", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"page_size"];
     return -1;
 }
@@ -152,7 +154,7 @@
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
     if(newPageCount > 1073741823 || newPageCount < 0) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = %d;", databaseName, newPageCount] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = %d;", databaseName, newPageCount] error:error, nil];
 }
 
 /**
@@ -166,7 +168,7 @@
 - (BOOL)resetMaximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = 1073741823;", databaseName] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.max_page_count = 1073741823;", databaseName] error:error, nil];
 }
 
 /**
@@ -180,7 +182,7 @@
 - (int)maximumPageCountForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.max_page_count;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.max_page_count;", databaseName] error:error, nil];
     if([result count] > 0){
         return [[result rowAtIndex:0] intForColumn:@"max_page_count"];
     }
@@ -213,7 +215,7 @@
         shouldRetry = NO;
         resultCode = sqlite3_open_v2(targetDatabase, &sourceDBConnection, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
         if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-            if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
+            if(executionRetryCount && retryCount < executionRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             } else {
@@ -266,7 +268,7 @@
         shouldRetry = NO;
         resultCode = sqlite3_prepare_v2(srcDatabaseConnection, sourcePageSizeSQL, -1, &sourcePageSizeStatement, NULL);
         if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-            if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+            if(executionRetryCount && retryCount++ < executionRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             }
@@ -277,14 +279,18 @@
             shouldRetry = NO;
             resultCode = sqlite3_step(sourcePageSizeStatement);
             if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-                if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                if(executionRetryCount && retryCount++ < executionRetryCount){
                     shouldRetry = YES;
                     sqlite3_sleep(150);
                 }
             } else if(resultCode == SQLITE_ROW) sourcePageSize = sqlite3_column_int(sourcePageSizeStatement, 0);
         } while (shouldRetry);
     }
-    if(sourcePageSize > 0) [self setPageSizeInDatabase:dstDatabaseName size:sourcePageSize error:NULL];
+    if(sourcePageSize > 0) {
+        int destinationPageSize = [self pageSizeInDatabase:dstDatabaseName error:NULL];
+        if(sourcePageSize != destinationPageSize && destinationPageSize > 0)
+            [self setPageSizeInDatabase:dstDatabaseName size:sourcePageSize error:NULL];
+    }
     
     if (dstDatabaseName == nil) dstDatabaseName = @"main";
     if (srcDatabaseName == nil) srcDatabaseName = @"main";
@@ -340,7 +346,7 @@
         shouldRetry = NO;
         resultCode = sqlite3_open_v2(targetDatabase, &dstDBConnection, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
         if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-            if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
+            if(executionRetryCount && retryCount < executionRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             } else {
@@ -397,7 +403,7 @@
             shouldRetry = NO;
             resultCode = sqlite3_prepare_v2(dstDatabase, dstPageSizeChangeSQL, -1, &dstPageSizeChangeStatement, NULL);
             if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-                if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                if(executionRetryCount && retryCount++ < executionRetryCount){
                     shouldRetry = YES;
                     sqlite3_sleep(150);
                 }
@@ -408,7 +414,7 @@
                 shouldRetry = NO;
                 resultCode = sqlite3_step(dstPageSizeChangeStatement);
                 if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     }
@@ -420,7 +426,7 @@
                 shouldRetry = NO;
                 resultCode = sqlite3_prepare_v2(dstDatabase, dstVacuumSQL, -1, &dstVacuumStatement, NULL);
                 if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     }
@@ -431,7 +437,7 @@
                     shouldRetry = NO;
                     resultCode = sqlite3_step(dstVacuumStatement);
                     if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
-                        if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                        if(executionRetryCount && retryCount++ < executionRetryCount){
                             shouldRetry = YES;
                             sqlite3_sleep(150);
                         }
@@ -520,7 +526,7 @@
     if(!dbConnectionOpened) return NO;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
     if((int)journalMode < 0 || (int)journalMode >= [allowedModes count]) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA journal_mode = %@;", [allowedModes objectAtIndex:journalMode]] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA journal_mode = %@;", [allowedModes objectAtIndex:journalMode]] error:error, nil];
 }
 
 /**
@@ -533,7 +539,7 @@
 - (DBCDatabaseJournalingMode)journalModeError:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA journal_mode;" error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:@"PRAGMA journal_mode;" error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"journal_mode"] lowercaseString]];
     }
@@ -553,7 +559,7 @@
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
     if((int)journalMode < 0 || (int)journalMode >= [allowedModes count]) return NO;
     if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_mode = %@;", databaseName, [allowedModes objectAtIndex:journalMode]] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_mode = %@;", databaseName, [allowedModes objectAtIndex:journalMode]] error:error, nil];
 }
 
 /**
@@ -568,7 +574,7 @@
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"delete", @"truncate", @"persist", @"memory", @"off", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_mode;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_mode;", databaseName] error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"journal_mode"] lowercaseString]];
     }
@@ -587,7 +593,7 @@
 - (BOOL)setJournalSizeLimitForDatabase:(NSString*)databaseName size:(long long int)newJournalSizeLimit error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit = %lld;", databaseName, newJournalSizeLimit] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit = %lld;", databaseName, newJournalSizeLimit] error:error, nil];
 }
 
 /**
@@ -601,7 +607,7 @@
 - (long long int)journalSizeLimitForDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.journal_size_limit;", databaseName] error:error, nil];
     if(result != nil && [result count] > 0){
         return [[result rowAtIndex:0] longLongForColumn:@"journal_size_limit"];
     }
@@ -623,7 +629,7 @@
     if(!dbConnectionOpened) return NO;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
     if((int)lockingMode < 0 || (int)lockingMode >= [allowedModes count]) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA locking_mode = %@;", [allowedModes objectAtIndex:lockingMode]] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA locking_mode = %@;", [allowedModes objectAtIndex:lockingMode]] error:error, nil];
 }
 
 /**
@@ -636,7 +642,7 @@
 - (DBCDatabaseLockingMode)lockingModeError:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA locking_mode;" error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:@"PRAGMA locking_mode;" error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"locking_mode"] lowercaseString]];
     }
@@ -659,7 +665,7 @@
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
     if((int)lockingMode < 0 || (int)lockingMode >= [allowedModes count]) return NO;
-    return [self evaluateUpdate:[NSString stringWithFormat:@"PRAGMA %@.locking_mode = %@;", 
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.locking_mode = %@;", 
                                  databaseName, [allowedModes objectAtIndex:lockingMode]] error:error, nil];
 }
 
@@ -675,7 +681,7 @@
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
     NSArray *allowedModes = [NSArray arrayWithObjects:@"normal", @"exclusive", nil];
-    DBCDatabaseResult *result = [self evaluateQuery:[NSString stringWithFormat:@"PRAGMA %@.locking_mode;", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.locking_mode;", databaseName] error:error, nil];
     if([result count] > 0){
         return [allowedModes indexOfObject:[[[result rowAtIndex:0] stringForColumn:@"locking_mode"] lowercaseString]];
     }
@@ -692,7 +698,7 @@
  */
 - (BOOL)setOmitReadlockLike:(BOOL)omit error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    return [self evaluateUpdate:@"PRAGMA omit_readlock = %d;" error:error, (omit?1:0), nil];
+    return [self executeUpdate:@"PRAGMA omit_readlock = %d;" error:error, (omit?1:0), nil];
 }
 
 /**
@@ -704,7 +710,7 @@
  */
 - (BOOL)omitReadlockError:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    DBCDatabaseResult *result = [self evaluateQuery:@"PRAGMA max_page_count;" error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:@"PRAGMA max_page_count;" error:error, nil];
     if([result count] > 0){
         return [[result rowAtIndex:0] intForColumn:@"omit_readlock"]==1;
     }

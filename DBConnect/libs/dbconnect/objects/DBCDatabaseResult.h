@@ -45,11 +45,14 @@
 
 @interface DBCDatabaseResult : NSObject <NSFastEnumeration, DBCDatabaseResultStructure> {
 @private
+    NSString            *querySQL;
     NSMutableArray      *colNames;
     NSMutableArray      *colTypes;
     NSMutableArray      *rows;
+    NSTimeInterval      queryExecutionDuration;
     DBCDatabaseEncoding dbEncoding;
 }
+@property (nonatomic, assign)NSTimeInterval queryExecutionDuration;
 
 +(id)resultWithPreparedStatement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding;
 - (id)initWidthPreparedSatetement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding;

@@ -195,7 +195,7 @@ static char *save_err_msg(sqlite3 *targetDB){
  * and callback data argument.
  * @parameters
  *      sqlite3 *targetDB - opened database connection handler
- *      const char *sql  - SQL to be evaluated
+ *      const char *sql  - SQL to be executed
  *      char **pzErrMsg   - Error message will be written here
  * @return SQL request execution result code
  */
@@ -234,13 +234,13 @@ static int sql_exec(sqlite3 *targetDB, const char *sql, char **pzErrMsg){
 }
 
 /**
- * Evaluate SQL update commands list from file on opened database connection
+ * Execute SQL update commands list from file on opened database connection
  * @prameters
  *     sqlite3 *targetDB      - opened database connection handler
  *     const char *pathToFile - full path to file with SQL update commands list
  * @return sqlite exec result code and error information via structure
  */
-int evaluateQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error) {
+int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error) {
     FILE *dumpFile = fopen(pathToFile, "rb");
     char *line = 0;
     char *sql = 0;

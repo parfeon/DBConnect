@@ -28,6 +28,7 @@
 #import "DBCMacro.h"
 
 @implementation DBCDatabaseResult
+@synthesize queryExecutionDuration;
 
 #pragma mark DBCDatabaseResult instance creation/initialization
 
@@ -53,7 +54,13 @@
  */
 - (id)initWidthPreparedSatetement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding {
     if ((self = [super init])) {
+        [self setQueryExecutionDuration:-1.0f];
         dbEncoding = databaseEncoding;
+        const char *querySQLC = sqlite3_sql(statement);
+        if(querySQLC != NULL){
+            NSStringEncoding enc = dbEncoding==DBCDatabaseEncodingUTF16?NSUTF16StringEncoding:NSUTF8StringEncoding;
+            querySQL = [[NSString stringWithCString:querySQLC encoding:enc] copy];
+        }
         int i, columnsCount = sqlite3_column_count(statement);
         rows = [[NSMutableArray alloc] init];
         colNames = [[NSMutableArray alloc] initWithCapacity:columnsCount];
@@ -138,6 +145,17 @@
  */
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len {
     return [rows countByEnumeratingWithState:state objects:stackbuf count:len];
+}
+
+#pragma mark Description for NSLog
+
+/**
+ * Return formated DBCDatabaseResults instance description
+ * @return formated DBCDatabaseResults instance description
+ */
+- (NSString *)description {
+    NSString *executionDuration = queryExecutionDuration==-1.0f?@"":[NSString stringWithFormat:@"Query execution done in %fs\n", queryExecutionDuration];
+    return [NSString stringWithFormat:@"\nResult for: %@\n%@Found: %i records\nColumn names: %@\nResult rows: %@", querySQL, executionDuration, [self count], [colNames componentsJoinedByString:@" | "], rows];
 }
 
 #pragma mark DBCDatabaseResultStructure protocol support 
@@ -232,6 +250,7 @@
  * Deallocating result instance and release all retained memory
  */
 - (void)dealloc {
+    DBCReleaseObject(querySQL);
     DBCReleaseObject(rows);
     DBCReleaseObject(colNames);
     DBCReleaseObject(colTypes);

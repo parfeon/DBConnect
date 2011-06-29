@@ -19,4 +19,4 @@
 
 #pragma mark SQL dump file import routine
 
-int evaluateQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error);
+int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error);

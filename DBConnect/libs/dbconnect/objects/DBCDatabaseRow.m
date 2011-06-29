@@ -90,6 +90,16 @@
     return self;
 }
 
+#pragma mark DBCDatabaseRow for NSLog
+
+/**
+ * Return formated DBCDatabaseRow instance description
+ * @return formated DBCDatabaseRow instance description
+ */
+- (NSString *)description {
+    return [data componentsJoinedByString:@" | "];
+}
+
 #pragma mark DBCDatabaseRow setters/getters
 
 

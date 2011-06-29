@@ -22,7 +22,12 @@
  *
  */
 
-// Should log out debug messages or not
-#define DBCUseDebugLogger 1
-// Should log out thread lock messages or not
-#define DBCUseLockLogger 1
+#ifndef DBC_CONFIGURATION_H_
+    #define DBC_CONFIGURATION_H_ 1
+    // Should log out debug messages or not
+    #define DBCUseDebugLogger 1
+    // Should log out thread lock messages or not
+    #define DBCUseLockLogger 1
+    // Should DBConnect profile query request time
+    #define DBCShouldProfileQuery 1
+#endif //DBC_CONFIGURATION_H_

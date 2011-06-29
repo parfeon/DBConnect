@@ -1,0 +1,15 @@
+DROP TABLE IF EXISTS test;
+CREATE TABLE test (
+    pid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+    pType TEXT NOT NULL, 
+    pTitle TEXT, 
+    loc_lat FLOAT NOT NULL,
+    loc_lon FLOAT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS locationIndex ON test (loc_lat, loc_lon);
+BEGIN;
+INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( 'City', 'Cupertino', 37.3261, -122.0320 );
+INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( 'City', 'New York', 40.724, -74.06 );
+INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( 'City', 'Dnepropetrovsk', 48.47, 35.050 );
+INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( 'City', 'Kiev', 50.457, 30.525 );
+COMMIT;

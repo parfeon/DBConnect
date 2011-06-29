@@ -39,8 +39,8 @@
 
 #pragma mark DDL and DML methods
 
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
-- (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
+- (BOOL)executeUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
+- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
 
 - (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData parametersOffset:(int*)offset;
 - (int)bindObject:(id)object atIndex:(int)index inStatement:(sqlite3_stmt*)statement;
@@ -50,6 +50,7 @@
 
 #pragma mark DBCDatabase private getter/setter methods
 
+- (BOOL)nonDMLStatement:(NSString*)sqlQuery;
 - (BOOL)isDatabaseConnectionForReadOnlyMode;
 - (SQLStatementFromat)getSQLStatementType:(NSString*)sqlStatement;
 - (NSArray*)getSQLStatementsSequence:(NSString*)sql;
@@ -62,8 +63,8 @@
 
 @implementation DBCDatabase
 
-@synthesize dbBusyRetryCount, statementsCachingEnabled, createTransactionOnSQLSequences;
-@synthesize rollbackSQLSequenceTransactionOnError, defaultSQLSequencesTransactinoLock, recentErrorCode, recentError;
+@synthesize executionRetryCount, statementsCachingEnabled, createTransactionOnSQLSequences;
+@synthesize rollbackSQLSequenceTransactionOnError, defaultSQLSequencesTransactionLock;
 
 #pragma mark DBCDatabase instance initialization
 
@@ -97,7 +98,7 @@
  * @oarameters
  *      NSString *sqlStatementsListFilepath - path to file with list of SQL statements list
  *      NSString *dbFilePath                - sqlite database file target location
- *      BOOL      continueOnEvaluateErrors  - should continue creation on evaluate 
+ *      BOOL      continueOnExecutionErrors - should continue creation on execution 
  *                                            update request error
  *      DBCError **error                    - if an error occurs, upon return contains an DBCError 
  *                                            object that describes the problem. Pass NULL if you 
@@ -107,8 +108,8 @@
  * @return autoreleased DBCDatabase instance
  */
 + (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath 
-                                          continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error {
-    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:DBCDatabaseEncodingUTF8 continueOnEvaluateErrors:continueOnEvaluateErrors error:error];
+                                          continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
+    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:DBCDatabaseEncodingUTF8 continueOnExecutionErrors:continueOnExecutionErrors error:error];
 }
 
 /**
@@ -120,7 +121,7 @@
  *      DBCDatabaseEncoding encoding        - default encoding which will be used, when 
  *                                            exists ability to use differenc C API for 
  *                                            different encodings
- *      BOOL     continueOnEvaluateErrors   - should continue creation on evaluate 
+ *      BOOL     continueOnExecutionErrors  - should continue creation on execution 
  *                                            update request error
  *      DBCError **error                    - if an error occurs, upon return contains an DBCError 
  *                                            object that describes the problem. Pass NULL if you 
@@ -131,9 +132,9 @@
  */
 + (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath 
                                                    defaultEncoding:(DBCDatabaseEncoding)encoding 
-                                          continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error {
+                                          continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
     return [[[[self class] alloc] createDatabaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:encoding
-                                continueOnEvaluateErrors:continueOnEvaluateErrors error:error] autorelease];
+                                continueOnExecutionErrors:continueOnExecutionErrors error:error] autorelease];
 }
 
 /**
@@ -149,15 +150,15 @@
     if((self = [super init])){
         [self setCreateTransactionOnSQLSequences:YES];
         [self setRollbackSQLSequenceTransactionOnError:YES];
-        [self setDefaultSQLSequencesTransactinoLock:DBCDatabaseAutocommitModeDeferred];
+        [self setStatementsCachingEnabled:YES];
+        [self setExecutionRetryCount:5];
+        [self setDefaultSQLSequencesTransactionLock:DBCDatabaseAutocommitModeDeferred];
         listOfPossibleTCLCommands = [[NSArray arrayWithObjects:@"begin", @"begin transaction", @"begin deferred transaction", @"begin immediate transaction", 
                                       @"begin exclusive transaction", @"commit", @"commit transaction",  @"end", @"end transaction",nil] retain];
+        listOfDMLCommands = [[NSArray arrayWithObjects:@"analyze", @"create", @"delete", @"drop", @"insert", @"reindex", @"release", @"replace", @"savepoint", @"update", @"vacuum", nil] retain];
         listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", @"%S",@"%c", @"%C", 
                                            @"%lld", @"%llu", @"%Lf",nil] retain];
         dbEncoding = encoding;
-        statementsCachingEnabled = YES;
-        dbBusyRetryCount = 5;
-        recentError = nil;
         recentErrorCode = -1;
         dbConnection = NULL;
         dbPath = [dbFilePath copy];
@@ -172,30 +173,30 @@
  * Initiate DBCDatabase from sqlite database file, which will be created at
  * specified path and SQL query commands list from provided file.
  * @oarameters
- *      NSString *sqlQeryListPath         - path to file with list of SQL query commands list
- *      NSString *dbFilePath              - sqlite database file target location
- *      DBCDatabaseEncoding encoding      - default encoding which will be used, when 
- *                                          exists ability to use differenc C API for 
- *                                          different encodings
- *      BOOL     continueOnEvaluateErrors - should continue creation on evaluate 
- *                                          update request error
- *      DBCError **error                  - if an error occurs, upon return contains an DBCError 
- *                                          object that describes the problem. Pass NULL if you 
- *                                          do not want error information.
+ *      NSString *sqlQeryListPath          - path to file with list of SQL query commands list
+ *      NSString *dbFilePath               - sqlite database file target location
+ *      DBCDatabaseEncoding encoding       - default encoding which will be used, when 
+ *                                           exists ability to use differenc C API for 
+ *                                           different encodings
+ *      BOOL     continueOnExecutionErrors - should continue creation on execution 
+ *                                           update request error
+ *      DBCError **error                   - if an error occurs, upon return contains an DBCError 
+ *                                           object that describes the problem. Pass NULL if you 
+ *                                           do not want error information.
  * WARNING: databasePath can't be same as application bundle, use application
  *          Documents folder instead
  * @return DBCDatabase instance
  */
-- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error {
+- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
     if ((self = [self initWithPath:dbFilePath defaultEncoding:encoding])) {
         if([self openError:error]){
             if(dbConnectionOpened && sqlQeryListPath != nil && [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
                 struct sqlite3lib_error execError = {"", -1, -1};
                 if(dbEncoding==DBCDatabaseEncodingUTF8) 
-                    evaluateQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], continueOnEvaluateErrors, &execError);
+                    executeQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], continueOnExecutionErrors, &execError);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16)
-                    evaluateQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], continueOnEvaluateErrors, &execError);
-                if(execError.errorCode != -1 && !continueOnEvaluateErrors){
+                    executeQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], continueOnExecutionErrors, &execError);
+                if(execError.errorCode != -1 && !continueOnExecutionErrors){
                     if([[NSFileManager defaultManager] fileExistsAtPath:dbFilePath]){
                         NSError *fmError = nil;
                         [[NSFileManager defaultManager] removeItemAtPath:dbFilePath error:&fmError];
@@ -343,7 +344,7 @@
         shouldRetry = NO;
         returnCode = sqlite3_close(dbConnection);
         if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-            if(dbBusyRetryCount && retryCount < dbBusyRetryCount){
+            if(executionRetryCount && retryCount < executionRetryCount){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
             } else {
@@ -372,16 +373,16 @@
 #pragma mark DDL and DML methods
 
 /**
- * Evaluate prepared SQL statement on current database connection
+ * Execute prepared SQL statement on current database connection
  * @parameters
  *      NSString *sqlUpdate - SQL query command
  *      DBCError **error    - if an error occurs, upon return contains an DBCError 
  *                            object that describes the problem. Pass NULL if you 
  *                            do not want error information.
  *               ...        - list of binding parameters
- * @return whether update request was successfully evaluated or not
+ * @return whether update request was successfully execution or not
  */
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... {
+- (BOOL)executeUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... {
     recentErrorCode = SQLITE_OK;
     va_list parameters;
     va_start(parameters, error);
@@ -393,20 +394,20 @@
         DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
         return NO;
     }
-    return [self evaluateUpdate:sqlUpdate withBindingMapData:parametersBindingMap error:error];
+    return [self executeUpdate:sqlUpdate withBindingMapData:parametersBindingMap error:error];
 }
 
 /**
- * Evaluate prepared SQL statement on current database connection
+ * Execute prepared SQL statement on current database connection
  * @parameters
  *      NSString *sqlQuery  - SQL query command
  *      DBCError **error    - if an error occurs, upon return contains an DBCError 
  *                            object that describes the problem. Pass NULL if you 
  *                            do not want error information.
  *               ...        - list of binding parameters
- * @return query resultts if evaluated successfull or nil in case of error
+ * @return query resultts if execution successfull or nil in case of error
  */
-- (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery error:(DBCError**)error, ... {
+- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery error:(DBCError**)error, ... {
     recentErrorCode = SQLITE_OK;
     va_list parameters;
     va_start(parameters, error);
@@ -418,34 +419,38 @@
         DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
         return nil;
     }
-    return [self evaluateQuery:sqlQuery withBindingMapData:parametersBindingMap error:error];
+    return [self executeQuery:sqlQuery withBindingMapData:parametersBindingMap error:error];
 }
 
 /**
- * Evaluate statements list from external file on current database connection
+ * Execute statements list from external file on current database connection
  * @parameters
- *      NSString *statementsFilePath  - sqlite database file path
- *      BOOL continueOnEvaluateErrors - should continue statements evaluation on errors
- *      DBCError **error              - if an error occurs, upon return contains an DBCError 
- *                                      object that describes the problem. Pass NULL if you 
- *                                      do not want error information.
- * @return whether eavluate was successfull or not (always YES if set continueOnEvaluateErrors)
+ *      NSString *statementsFilePath   - sqlite database file path
+ *      BOOL continueOnExecutionErrors - should continue statements execution on errors
+ *      DBCError **error               - if an error occurs, upon return contains an DBCError 
+ *                                       object that describes the problem. Pass NULL if you 
+ *                                       do not want error information.
+ * @return whether eavluate was successfull or not (always YES if set continueOnExecutionErrors)
  */
-- (BOOL)evaluateStatementsFromFile:(NSString*)statementsFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error {
+- (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
     recentErrorCode = SQLITE_OK;
+    NSLog(@"FILE PATH: %@", statementsFilePath);
     if(statementsFilePath != nil && [[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
         struct sqlite3lib_error execError = {"", -1, -1};
         if(dbEncoding==DBCDatabaseEncodingUTF8) 
-            evaluateQueryFromFile(dbConnection, [statementsFilePath UTF8String], continueOnEvaluateErrors, &execError);
+            executeQueryFromFile(dbConnection, [statementsFilePath UTF8String], continueOnExecutionErrors, &execError);
         else if(dbEncoding==DBCDatabaseEncodingUTF16)
-            evaluateQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding], continueOnEvaluateErrors, &execError);
-        if(execError.errorCode != -1 && !continueOnEvaluateErrors){
+            executeQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding], continueOnExecutionErrors, &execError);
+        if(execError.errorCode != -1 && !continueOnExecutionErrors){
             if([[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
                 NSError *fmError = nil;
                 [[NSFileManager defaultManager] removeItemAtPath:statementsFilePath error:&fmError];
                 if(fmError!=nil) DBCDebugLogger(@"[DBC:ERROR] %@", fmError);
             }
-            [self release];
+            recentErrorCode = execError.errorCode;
+            *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
+                            additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
             return NO;
         } else if(execError.errorCode != -1){
             recentErrorCode = execError.errorCode;
@@ -453,7 +458,12 @@
                                   additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
             DBCDebugLogger(@"[DBC:ERROR] %@", *error);
         }
-        return continueOnEvaluateErrors||execError.errorCode==-1&&!continueOnEvaluateErrors;
+        return continueOnExecutionErrors||execError.errorCode==-1&&!continueOnExecutionErrors;
+    } else {
+        recentErrorCode = DBC_SPECIFIED_FILE_NOT_FOUND;
+        *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:statementsFilePath
+                        additionalInformation:nil];
+        DBCDebugLogger(@"[DBC:ERROR] %@", *error);
     }
     return NO;
 }
@@ -465,8 +475,8 @@
  * @return whether transaction was started or not
  */
 - (BOOL)beginTransactionError:(DBCError**)error {
-    return [self evaluateUpdate:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                 (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock):@"DEFERRED")] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
+                                 (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock):@"DEFERRED")] error:error, nil];
 }
 
 /**
@@ -478,7 +488,7 @@
  * @return whether transaction was started or not
  */
 - (BOOL)beginDeferredTransactionError:(DBCError**)error {
-    return [self evaluateUpdate:@"BEGIN DEFERRED TRANSACTION;" error:error, nil];
+    return [self executeUpdate:@"BEGIN DEFERRED TRANSACTION;" error:error, nil];
 }
 
 /**
@@ -490,7 +500,7 @@
  * @return whether transaction was started or not
  */
 - (BOOL)beginImmediateTransactionError:(DBCError**)error {
-    return [self evaluateUpdate:@"BEGIN IMMEDIATE TRANSACTION;" error:error, nil];
+    return [self executeUpdate:@"BEGIN IMMEDIATE TRANSACTION;" error:error, nil];
 }
 
 /**
@@ -502,7 +512,7 @@
  * @return whether transaction was started or not
  */
 - (BOOL)beginExclusiveTransactionError:(DBCError**)error {
-    return [self evaluateUpdate:@"BEGIN EXCLUSIVE TRANSACTION;" error:error, nil];
+    return [self executeUpdate:@"BEGIN EXCLUSIVE TRANSACTION;" error:error, nil];
 }
 
 /**
@@ -515,7 +525,7 @@
  * @return whether transactoin changes commit was successfull or not
  */
 - (BOOL)commitTransactionError:(DBCError**)error {
-    return [self evaluateUpdate:@"COMMIT TRANSACTION;" error:error, nil];
+    return [self executeUpdate:@"COMMIT TRANSACTION;" error:error, nil];
 }
 
 /**
@@ -527,7 +537,7 @@
  * @return whether rollback was successfull or not
  */
 - (BOOL)rollbackTransactionError:(DBCError**)error {
-    return [self evaluateUpdate:@"ROLLBACK TRANSACTION;" error:error, nil];
+    return [self executeUpdate:@"ROLLBACK TRANSACTION;" error:error, nil];
 }
 
 #pragma mark DBCDatabase getter/setter methods
@@ -558,14 +568,6 @@
     return dbConnection;
 }
 
-/**
- * Get whether last command was processed or failed due to error
- * @return whether command was processed or failed due to error
- */
-- (BOOL)commandProcessed {
-    return recentError==nil;
-}
-
 #pragma mark DBCDatabase memory management
 
 - (void)dealloc {
@@ -573,9 +575,9 @@
     dbConnection = NULL;
     DBCReleaseObject(dbPath);
     DBCReleaseObject(queryLock);
-    DBCReleaseObject(recentError);
     DBCReleaseObject(cachedStatementsList);
     DBCReleaseObject(listOfPossibleTCLCommands);
+    DBCReleaseObject(listOfDMLCommands);
     DBCReleaseObject(listOfNSStringFormatSpecifiers);
     [super dealloc];
 }
@@ -589,18 +591,18 @@
 #pragma mark DDL and DML methods
 
 /**
- * Evaluate prepared update SQL statement on current database connection
+ * Execute prepared update SQL statement on current database connection
  * @parameters
  *      NSString *sqlUpdate - SQL udpdate command
  *      NSArray *parameters - list of binding parameters
- * @return update request evaluate result
+ * @return update request execution result
  */
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
+- (BOOL)executeUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
     DBCDebugLogger(@"[DBC:Update] Binding map data: %@", bindingMapData);
-    if([self isDatabaseConnectionForReadOnlyMode]) {
+    if([self isDatabaseConnectionForReadOnlyMode] && ![self nonDMLStatement:sqlUpdate]) {
         recentErrorCode = SQLITE_READONLY;
         *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil additionalInformation:nil];
-        DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
+        DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
         return NO;
     }
     DBCLockLogger(@"[DBC:Update] Waiting for Lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
@@ -630,10 +632,10 @@
         transactionUsed = YES;
         if (![self SQLStatementsSequenceContainsTCL:updateCommandsList]) {
             [preparedCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                                (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock):@"DEFERRED")] 
+                                                (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock):@"DEFERRED")] 
                                        atIndex:0];
             [updateCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                              (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactinoLock):@"DEFERRED")] 
+                                              (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock):@"DEFERRED")] 
                                      atIndex:0];
             [preparedCommandsList addObject:@"COMMIT TRANSACTION;"];
             [updateCommandsList addObject:@"COMMIT TRANSACTION;"];
@@ -652,12 +654,11 @@
         if(statement==NULL){
             do {
                 shouldRetry = NO;
-                if (dbEncoding==DBCDatabaseEncodingUTF8) 
-                    returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
+                if (dbEncoding==DBCDatabaseEncodingUTF8) returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
                     returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, &statement, NULL);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     } else {
@@ -673,7 +674,7 @@
                 recentErrorCode = returnCode;
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
+                DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
@@ -687,7 +688,7 @@
             recentErrorCode = returnCode;
             *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                             additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-            DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
+            DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
@@ -699,7 +700,7 @@
                 shouldRetry = NO;
                 returnCode = sqlite3_step(statement);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     } else {
@@ -715,7 +716,7 @@
                 recentErrorCode = returnCode;
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                       additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Update] Can't evaluate update due to error: %@", *error);
+                DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
@@ -732,17 +733,17 @@
     }
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 /**
- * Evaluate prepared query SQL statement on current database connection
+ * Execute prepared query SQL statement on current database connection
  * @parameters
  *      NSString *sqlUpdate - SQL query command
  *      NSArray *parameters - list of binding parameters
- * @return query resultts if evaluated successfull or nil in case of error
+ * @return query resultts if execution successfull or nil in case of error
  */
-- (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
+- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
     DBCDebugLogger(@"[DBC:Query] Binding map data: %@", bindingMapData);
     DBCDatabaseResult *result = nil;
     DBCLockLogger(@"[DBC:Query] Waiting for Lock: %@ (Line: %d)", [sqlQuery md5], __LINE__);
@@ -768,6 +769,10 @@
     NSMutableArray *updateCommandsList = [NSMutableArray arrayWithArray:[self getSQLStatementsSequence:sqlQuery]];
     NSMutableArray *preparedCommandsList = [NSMutableArray arrayWithArray:[self getSQLStatementsSequence:[bindingMapData valueForKey:PREPARED_SQL_STATEMENT]]];
     int i, count = [preparedCommandsList count];
+#if DBCShouldProfileQuery
+    NSDate *requestProfile = [NSDate date];
+    NSTimeInterval queryStartTime = [requestProfile timeIntervalSince1970];
+#endif
     for (i = 0; i < count; i++) {
         NSString *sql = [preparedCommandsList objectAtIndex:i];
         if(statementsCachingEnabled){
@@ -784,7 +789,7 @@
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
                     returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, &statement, NULL);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     } else {
@@ -798,9 +803,9 @@
             } while (shouldRetry);
             if(sqlError){
                 recentErrorCode = returnCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
@@ -811,9 +816,9 @@
         returnCode = [self bindStatement:statement accordingToBindingMapData:bindingMapData parametersOffset:&bindedParametersOffset];
         if(returnCode != SQLITE_OK){
             recentErrorCode = returnCode;
-            DBCReleaseObject(recentError);
-            recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                             additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+            DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
@@ -828,7 +833,7 @@
                 shouldRetry = NO;
                 returnCode = sqlite3_step(statement);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
-                    if(dbBusyRetryCount && retryCount++ < dbBusyRetryCount){
+                    if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
                         sqlite3_sleep(150);
                     } else {
@@ -845,9 +850,9 @@
             } while (shouldRetry || shouldStep);
             if(sqlError){
                 recentErrorCode = returnCode;
-                DBCReleaseObject(recentError);
-                recentError = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] retain];
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
@@ -862,9 +867,12 @@
             DBCReleaseObject(dbcStatement);
         } else if(!statementsCachingEnabled) sqlite3_finalize(statement);
     }
+#if DBCShouldProfileQuery
+    NSTimeInterval queryEndTime = [requestProfile timeIntervalSince1970];
+    [result setQueryExecutionDuration:(queryEndTime-queryStartTime)];
+#endif
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], __LINE__);
-    DBCDebugLogger(@"[DBC:Query] Total result count: %i", [result count]);
     return result;
 }
 
@@ -991,6 +999,8 @@
 
 /**
  * Retrieve cached statement for specific SQL query
+ * @parameters
+ *      NSString *sqlRequest - SQL statement for which need to find coresponding compiled statement
  * @return cached DBCStatement if it was added before
  */
 - (DBCStatement*)getCachedStatementFor:(NSString*)sqlRequest {
@@ -1005,6 +1015,44 @@
 }
 
 #pragma mark DBCDatabase private getter/setter methods
+
+/**
+ * Get whether provided statement won't modify data or not
+ * @parameters
+ *      NSString *sqlQuery - SQL statements which will be examined
+ * @return YES if statement won't change data, otherwise NO
+ */
+- (BOOL)nonDMLStatement:(NSString*)sqlQuery {
+    NSArray *statementsList = [self getSQLStatementsSequence:sqlQuery];
+    int i, count1 = [statementsList count];
+    int k, count2 = [listOfDMLCommands count];
+    BOOL isDML = NO;
+    isDML = [self SQLStatementsSequenceContainsTCL:statementsList];
+    if(!isDML){
+        for (i = 0; i < count1; i++) {
+            NSString *statement = [[statementsList objectAtIndex:i] lowercaseString];
+            NSRange dmlCommandRange = NSMakeRange(NSNotFound, -1);
+            for (k = 0; k < count2; k++) {
+                dmlCommandRange = [statement rangeOfString:[listOfDMLCommands objectAtIndex:k]];
+                if(dmlCommandRange.location != NSNotFound && dmlCommandRange.location == 0) isDML = YES;
+                if(isDML) break;
+            }
+            dmlCommandRange = [statement rangeOfString:@"pragma"];
+            if(dmlCommandRange.location != NSNotFound && dmlCommandRange.location == 0){
+                dmlCommandRange = [statement rangeOfString:@"="];
+                if(dmlCommandRange.location != NSNotFound) {
+                    dmlCommandRange = [statement rangeOfString:@"journal_mode"];
+                    if([statement rangeOfString:@"journal_mode"].location == NSNotFound &&
+                       [statement rangeOfString:@"locking_mode"].location == NSNotFound &&
+                       [statement rangeOfString:@"case_sensitive_like"].location == NSNotFound &&
+                       [statement rangeOfString:@"omit_readlock"].location == NSNotFound) isDML = YES;
+                }
+            }
+            if(isDML) break;
+        }
+    }
+    return !isDML;
+}
 
 /**
  * Get whether current database connection opened in read-only mode or not
@@ -1222,7 +1270,7 @@
                 tokensCount++;
                 NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", tokensCount];
                 [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
-                NSNumber *index = [NSNumber numberWithInt:[parsedParameters indexOfObject:[parsedParameters lastObject]]];
+                NSNumber *index = [NSNumber numberWithInt:(tokensCount-1)];
                 if (![parsedParametersMap containsObject:index]) countOfRequiredBindingParameters++;
                 [parsedParametersMap addObject:index];
             } else {

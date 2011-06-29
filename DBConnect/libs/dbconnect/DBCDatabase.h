@@ -42,15 +42,12 @@
     NSString                    *dbPath;
     NSRecursiveLock             *queryLock;
     
-    int                         dbBusyRetryCount;
+    int                         executionRetryCount;
     BOOL                        statementsCachingEnabled;
     
     BOOL                        createTransactionOnSQLSequences;
     BOOL                        rollbackSQLSequenceTransactionOnError;
-    DBCDatabaseTransactionLock  defaultSQLSequencesTransactinoLock;
-    
-    int                         recentErrorCode;
-    DBCError                    *recentError;
+    DBCDatabaseTransactionLock  defaultSQLSequencesTransactionLock;
 @private
     sqlite3                     *dbConnection;
     BOOL                        dbConnectionOpened;
@@ -62,25 +59,27 @@
     NSMutableDictionary         *cachedStatementsList;
     
     NSArray                     *listOfPossibleTCLCommands;
+    NSArray                     *listOfDMLCommands;
     NSArray                     *listOfNSStringFormatSpecifiers;
+    
+    int                         recentErrorCode;
 } 
-@property (nonatomic, assign)int dbBusyRetryCount;
-@property (nonatomic, assign)DBCDatabaseTransactionLock defaultSQLSequencesTransactinoLock;
-@property (nonatomic, assign, getter = isStatementsCachingEnabled)BOOL statementsCachingEnabled;
-@property (nonatomic, assign)BOOL rollbackSQLSequenceTransactionOnError;
-@property (nonatomic, assign)BOOL createTransactionOnSQLSequences;
-@property (nonatomic, readonly)int recentErrorCode;
-@property (nonatomic, readonly)DBCError *recentError;
+@property (nonatomic)int executionRetryCount;
+@property (nonatomic)DBCDatabaseTransactionLock defaultSQLSequencesTransactionLock;
+@property (nonatomic, getter = isStatementsCachingEnabled)BOOL statementsCachingEnabled;
+@property (nonatomic)BOOL rollbackSQLSequenceTransactionOnError;
+@property (nonatomic)BOOL createTransactionOnSQLSequences;
+@property (nonatomic, readonly, getter = database)sqlite3 *dbConnection;
 
 
 #pragma mark DBCDatabase instance initialization
 
 + (id)databaseWithPath:(NSString*)dbFilePath;
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
+- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
 
 #pragma mark Database open and close
 
@@ -91,9 +90,9 @@
 
 #pragma mark DDL and DML methods
 
-- (BOOL)evaluateUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
-- (DBCDatabaseResult*)evaluateQuery:(NSString*)sqlQuery error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
-- (BOOL)evaluateStatementsFromFile:(NSString*)statementsFilePath continueOnEvaluateErrors:(BOOL)continueOnEvaluateErrors error:(DBCError**)error;
+- (BOOL)executeUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
+- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
+- (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
 
 #pragma mark TCL methods
 
@@ -103,10 +102,5 @@
 - (BOOL)beginExclusiveTransactionError:(DBCError**)error;
 - (BOOL)commitTransactionError:(DBCError**)error;
 - (BOOL)rollbackTransactionError:(DBCError**)error;
-
-#pragma mark DBCDatabase getter/setter methods
-
-- (sqlite3*)database;
-- (BOOL)commandProcessed;
 
 @end
