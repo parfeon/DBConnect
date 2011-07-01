@@ -261,6 +261,9 @@
     int retryCount = 0;
     BOOL shouldRetry = NO;
     
+    if (dstDatabaseName == nil) dstDatabaseName = @"main";
+    if (srcDatabaseName == nil) srcDatabaseName = @"main";
+    
     int sourcePageSize = -1;
     sqlite3_stmt *sourcePageSizeStatement = NULL;
     const char *sourcePageSizeSQL =  [[NSString stringWithFormat:@"PRAGMA %@.page_size;", srcDatabaseName] UTF8String];
@@ -291,9 +294,6 @@
         if(sourcePageSize != destinationPageSize && destinationPageSize > 0)
             [self setPageSizeInDatabase:dstDatabaseName size:sourcePageSize error:NULL];
     }
-    
-    if (dstDatabaseName == nil) dstDatabaseName = @"main";
-    if (srcDatabaseName == nil) srcDatabaseName = @"main";
     sqlite3_backup *backup = sqlite3_backup_init(dbConnection, [dstDatabaseName UTF8String], srcDatabaseConnection, [srcDatabaseName UTF8String]);
     if(backup){
         retryCount = 0;
@@ -393,11 +393,40 @@
     int retryCount = 0;
     BOOL shouldRetry = NO;
     
+    if (dstDatabaseName == nil) dstDatabaseName = @"main";
+    if (srcDatabaseName == nil) srcDatabaseName = @"main";
+    
+    int destinationPageSize = -1;
     int sourcePageSize = [self pageSizeInDatabase:srcDatabaseName error:NULL];
-    if(sourcePageSize > 0){
+    sqlite3_stmt *dstPageSizeStatement = NULL;
+    const char *dstPageSizeSQL =  [[NSString stringWithFormat:@"PRAGMA %@.page_size;", dstDatabaseName] UTF8String];
+    do {
+        shouldRetry = NO;
+        resultCode = sqlite3_prepare_v2(dstDatabase, dstPageSizeSQL, -1, &dstPageSizeStatement, NULL);
+        if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+            if(executionRetryCount && retryCount++ < executionRetryCount){
+                shouldRetry = YES;
+                sqlite3_sleep(150);
+            }
+        }
+    } while (shouldRetry);
+    if(resultCode == SQLITE_OK){
+        do {
+            shouldRetry = NO;
+            resultCode = sqlite3_step(dstPageSizeStatement);
+            if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
+                if(executionRetryCount && retryCount++ < executionRetryCount){
+                    shouldRetry = YES;
+                    sqlite3_sleep(150);
+                }
+            } else if(resultCode == SQLITE_ROW) destinationPageSize = sqlite3_column_int(dstPageSizeStatement, 0);
+        } while (shouldRetry);
+    }
+    
+    if(sourcePageSize > 0 && sourcePageSize != destinationPageSize && destinationPageSize > 0){
         sqlite3_stmt *dstPageSizeChangeStatement = NULL;
         sqlite3_stmt *dstVacuumStatement = NULL;
-        const char *dstPageSizeChangeSQL = [[NSString stringWithFormat:@"PRAGMA %@.page_size = %i;", dstDatabase, sourcePageSize] UTF8String];
+        const char *dstPageSizeChangeSQL = [[NSString stringWithFormat:@"PRAGMA %@.page_size = %i;", dstDatabaseName, sourcePageSize] UTF8String];
         const char *dstVacuumSQL = "VACUUM;";
         do {
             shouldRetry = NO;
@@ -447,8 +476,6 @@
         }
     }
     
-    if (dstDatabaseName == nil) dstDatabaseName = @"main";
-    if (srcDatabaseName == nil) srcDatabaseName = @"main";
     sqlite3_backup *backup = sqlite3_backup_init(dstDatabase, [dstDatabaseName UTF8String], dbConnection, [srcDatabaseName UTF8String]);
     if(backup){
         do {

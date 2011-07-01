@@ -15,6 +15,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     DBCError *error = nil;
+    NSString *docDir = nil;
     DBCDatabase *db = [DBCDatabase databaseWithPath:@":memory:"];
     if([db openError:&error]){
         error = nil;
@@ -30,11 +31,9 @@
             // Hmm, something went wrong, try to log out error to find out something useful. Or you can set flag for DBCUseDebugLogger in DBCConfiguration.h, than DBConnect will log out all debug information.
                 NSLog(@"Occurred an error: %@", error);
         }
-        //[db attachDatabase:@"test.sqlite" databaseAttachName:@"aTest" error:&error];
         NSError *fmError = nil;
         NSFileManager *fileManager = [NSFileManager defaultManager];
-        NSString *docDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)
-                            objectAtIndex:0];
+        docDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
         if (![fileManager fileExistsAtPath:[docDir stringByAppendingPathComponent:@"test.sqlite"]]) {
             [fileManager copyItemAtPath:[[NSBundle mainBundle] pathForResource:@"test" ofType:@"sqlite"] 
                                  toPath:[docDir stringByAppendingPathComponent:@"test.sqlite"] error:&fmError];
@@ -52,27 +51,29 @@
     //DBCDatabaseResult *result = [db executeQuery:@"SELECT * FROM test WHERE loc_lat > %d AND loc_lat < %d" error:&error, 37, 41, nil];
     //DBCDatabaseResult *result = [db executeQuery:@"SELECT * FROM aTest.test" error:&error, nil];
     error = nil;
-    [db setUseCaseSensitiveLike:YES error:&error];
-    DBCDatabaseResult *result = [db executeQuery:@"SELECT * FROM test WHERE pTitle LIKE ?1;" error:&error, @"cupertino", nil];
+    NSString *backupPath = [docDir stringByAppendingPathComponent:@"test_backup.sqlite"];
+    [db backup:nil toFile:backupPath database:nil error:&error];
+    if(error != nil){
+        // In some rare cases an error may occur, just log it out to find out what gone wrong. Or you can set flag
+        NSLog(@"Occurred an error: %@", error);
+    }
+    
+    error = nil;
+    DBCDatabase *db2 = [DBCDatabase databaseWithPath:backupPath];
+    if([db2 openError:&error]){
+    }
+    //DBCDatabaseResult *result = [db2 executeQuery:@"SELECT * FROM test WHERE pTitle LIKE ?1;" error:&error, @"cupertino", nil];
+    DBCDatabaseResult *result = [db2 executeQuery:@"SELECT * FROM test" error:&error, nil];
+    if(error != nil){
+        // In some rare cases an error may occur, just log it out to find out what gone wrong. Or you can set flag
+        NSLog(@"Occurred an error: %@", error);
+    }
     /*NSLog(@"%@", [[result columnNames] componentsJoinedByString:@" | "]);
     for (DBCDatabaseRow *row in result) {
         NSLog(@"%@", row);
     }*/
-    //NSLog(@"%@", result);
+    NSLog(@"%@", result);
     //[db dropTable:@"test" inDatabase:nil error:&error];
-    error = nil;
-    NSArray *indicedColumnsList = [db indexedColumnsList:nil index:@"locationIndex" error:&error];
-    if(error != nil){
-        // In some rare cases an error may occur, just log it out to find out what gone wrong. Or you can set flag
-            NSLog(@"Occurred an error: %@", error);
-    } else {
-        for(DBCDatabaseIndexedColumnInfo *indexColInfo in indicedColumnsList) NSLog(@"%@", indexColInfo);
-    }
-    //NSLog(@"Columns information: %@", );
-    if(error != nil){
-        // Hmm, something went wrong, try to log out error to find out something useful. Or you can set flag for DBCUseDebugLogger in DBCConfiguration.h, than DBConnect will log out all debug information.
-        NSLog(@"Occurred an error: %@", error);
-    }
     /*[db evaluateUpdate:@"INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( :placeType, @placeTitle, $placeLatitude, :placeLatitude );"
                  error:&error, [NSDictionary dictionaryWithObjectsAndKeys:@"City", @"placeType", @"Denver", @"placeTitle", [NSNumber numberWithFloat:40.2338f], @"placeLatitude", nil] , nil];*/
 /*    [db evaluateUpdate:@"INSERT INTO test (pType, pTitle, loc_lat, loc_lon) VALUES ( ?1, ?2, ?3, ?3 );"
