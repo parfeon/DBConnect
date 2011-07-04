@@ -41,7 +41,8 @@
  * @return whether attach was successfull or not
  */
 - (BOOL)attachDatabase:(NSString*)dbFilePath databaseAttachName:(NSString*)dbAttachName error:(DBCError**)error {
-    return [self executeUpdate:[NSString stringWithFormat:@"ATTACH DATABASE '%@' AS %@", dbFilePath, dbAttachName] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"ATTACH DATABASE '%@' AS %@", dbFilePath, dbAttachName] 
+                         error:error, nil];
 }
 
 /**
@@ -68,8 +69,8 @@
  */
 - (BOOL)setDatabaseEncoding:(DBCDatabaseEncoding)encoding error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA encoding = '%@';", 
-                                 encoding==DBCDatabaseEncodingUTF8?@"UTF-8":encoding==DBCDatabaseEncodingUTF16?@"UTF-16":@"UTF-8"] error:error, nil];
+    NSString *enc = encoding==DBCDatabaseEncodingUTF8?@"UTF-8":encoding==DBCDatabaseEncodingUTF16?@"UTF-16":@"UTF-8";
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA encoding = '%@';", enc] error:error, nil];
 }
 
 /**
@@ -102,7 +103,8 @@
  */
 - (BOOL)setUseCaseSensitiveLike:(BOOL)use error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
-    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA case_sensitive_like = %d;", (use?1:0)] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA case_sensitive_like = %d;", (use?1:0)] 
+                         error:error, nil];
 }
 
 #pragma mark DDL and DML methods
@@ -121,8 +123,10 @@
 - (BOOL)dropTable:(NSString*)tableName inDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
-    if(inMemoryDB) return [self executeUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@;", databaseName, tableName] error:error, nil];
-    return [self executeUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@; VACUUM;", databaseName, tableName] error:error, nil];
+    if(inMemoryDB) return [self executeUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@;", databaseName, 
+                                               tableName] error:error, nil];
+    return [self executeUpdate:[NSString stringWithFormat:@"DROP TABLE IF EXISTS %@.%@; VACUUM;", databaseName, tableName]
+                         error:error, nil];
 }
 
 /**
@@ -142,7 +146,8 @@
     NSMutableString *sqlStatement = [NSMutableString string];
     int i, count = [listOfTables count];
     if(count == 0) return YES;
-    for (i = 0; i < count; i++) [sqlStatement appendFormat:@"DROP TABLE IF EXISTS %@.%@;", databaseName, [listOfTables objectAtIndex:i]];
+    for (i = 0; i < count; i++) [sqlStatement appendFormat:@"DROP TABLE IF EXISTS %@.%@;", databaseName, 
+                                 [listOfTables objectAtIndex:i]];
     BOOL dropped = [self executeUpdate:sqlStatement error:error, nil];
     if(!inMemoryDB && [self freePagesCountInDatabase:databaseName error:error] > 0) [self freeUnusedPagesError:NULL];
     return dropped;
@@ -165,7 +170,8 @@
     int i, count = [listOfDatabases count];
     for (i = 0; i < count; i++) {
         DBCDatabaseInfo *dbInfo = [listOfDatabases objectAtIndex:i];
-        [selectStatement appendFormat:@"(SELECT count(*) AS count FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%') %@", 
+        [selectStatement appendFormat:@"(SELECT count(*) AS count FROM %@.sqlite_master WHERE type IN ('table','view') \
+AND name NOT LIKE 'sqlite_%%') %@", 
          [dbInfo name], (i==(count-1)?@"":@"+ ")];
     }
     [selectStatement appendString:@"AS count;"];
@@ -186,7 +192,8 @@
 - (int)tablesCountInDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return -1;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"SELECT count(*) AS count FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"SELECT count(*) AS count FROM \
+%@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName] error:error, nil];
     if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"count"];
     return -1;
 }
@@ -202,7 +209,8 @@
 - (NSArray*)tablesListError:(DBCError**)error {
     if(!dbConnectionOpened) return nil;
     NSMutableArray *listOfTables = nil;
-    DBCDatabaseResult *result = [self executeQuery:@"SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';" error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:@"SELECT name FROM sqlite_master WHERE type IN ('table','view') AND \
+name NOT LIKE 'sqlite_%%';" error:error, nil];
     if(result != nil){
         listOfTables = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
@@ -226,7 +234,8 @@
     if(!dbConnectionOpened) return nil;
     NSMutableArray *listOfTables = nil;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"SELECT name FROM %@.sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"SELECT name FROM %@.sqlite_master WHERE \
+type IN ('table','view') AND name NOT LIKE 'sqlite_%%';", databaseName] error:error, nil];
     if(result != nil){
         listOfTables = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
@@ -265,16 +274,17 @@
     if(!dbConnectionOpened) return nil;
     if(databaseName == nil) databaseName = @"main";
     NSMutableArray *listOfColumns = nil;
-    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.table_info(%@);", databaseName, tableName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.table_info(%@);", databaseName, 
+                                                    tableName] error:error, nil];
     if(result != nil){
         listOfColumns = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
-            [listOfColumns addObject:[DBCDatabaseTableColumnInfo columnInfoWithSequence:[row intForColumn:@"cid"] 
-                                                                             columnName:[row stringForColumn:@"name"] 
-                                                                         columnDataType:[row stringForColumn:@"type"] 
-                                                                              isNotNull:[row boolForColumn:@"notnull"]
-                                                                           defaultValue:[row stringForColumn:@"dflt_value"] 
-                                                                  isPartOfThePrimaryKey:[row boolForColumn:@"pk"]]];
+           [listOfColumns addObject:[DBCDatabaseTableColumnInfo columnInfoWithSequence:[row intForColumn:@"cid"]
+                                                                            columnName:[row stringForColumn:@"name"]
+                                                                        columnDataType:[row stringForColumn:@"type"]
+                                                                             isNotNull:[row boolForColumn:@"notnull"]
+                                                                          defaultValue:[row stringForColumn:@"dflt_value"]
+                                                                 isPartOfThePrimaryKey:[row boolForColumn:@"pk"]]];
         }
     }
     return listOfColumns;
@@ -317,7 +327,8 @@
     if(!dbConnectionOpened) return nil;
     if(tableName == nil) return nil;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.index_list(%@)", databaseName, tableName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.index_list(%@)", databaseName, 
+                                                    tableName] error:error, nil];
     NSMutableArray *listOfIndices = nil;
     if (result != nil) {
         listOfIndices = [NSMutableArray arrayWithCapacity:[result count]];
@@ -344,14 +355,16 @@
     if(!dbConnectionOpened) return nil;
     if(indexName == nil) return nil;
     if(databaseName == nil) databaseName = @"main";
-    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.index_info(%@)", databaseName, indexName] error:error, nil];
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.index_info(%@)", databaseName, 
+                                                    indexName] error:error, nil];
     NSMutableArray *listOfIndixedColumns = nil;
     if (result != nil) {
         listOfIndixedColumns = [NSMutableArray arrayWithCapacity:[result count]];
         for (DBCDatabaseRow *row in result) {
-            [listOfIndixedColumns addObject:[DBCDatabaseIndexedColumnInfo indexedColumnInfoWithSequence:[row intForColumn:@"seqno"] 
-                                                                                  inTableSequenceNumber:[row intForColumn:@"cid"] 
-                                                                                                   name:[row stringForColumn:@"name"]]];
+            [listOfIndixedColumns addObject:[DBCDatabaseIndexedColumnInfo 
+                                             indexedColumnInfoWithSequence:[row intForColumn:@"seqno"]
+                                             inTableSequenceNumber:[row intForColumn:@"cid"]
+                                             name:[row stringForColumn:@"name"]]];
         }
     }
     return listOfIndixedColumns;

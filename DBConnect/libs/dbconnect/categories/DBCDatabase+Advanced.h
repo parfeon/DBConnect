@@ -44,10 +44,14 @@
 
 #pragma mark Database backup/restore
 
-- (BOOL)restore:(NSString*)dstDatabaseName fromFile:(NSString*)srcDatabaseFile database:(NSString*)srcDatabaseName error:(DBCError**)error;
-- (BOOL)restore:(NSString*)dstDatabaseName from:(sqlite3*)srcDatabaseConnection database:(NSString*)srcDatabaseName error:(DBCError**)error;
-- (BOOL)backup:(NSString*)srcDatabaseName toFile:(NSString*)dstDatabaseFile database:(NSString*)dstDatabaseName error:(DBCError**)error;
-- (BOOL)backup:(NSString*)srcDatabaseName to:(sqlite3*)dstDatabase database:(NSString*)dstDatabaseName error:(DBCError**)error;
+- (BOOL)restore:(NSString*)dstDatabaseName fromFile:(NSString*)srcDatabaseFile database:(NSString*)srcDatabaseName 
+          error:(DBCError**)error;
+- (BOOL)restore:(NSString*)dstDatabaseName from:(sqlite3*)srcDatabaseConnection database:(NSString*)srcDatabaseName 
+          error:(DBCError**)error;
+- (BOOL)backup:(NSString*)srcDatabaseName toFile:(NSString*)dstDatabaseFile database:(NSString*)dstDatabaseName 
+         error:(DBCError**)error;
+- (BOOL)backup:(NSString*)srcDatabaseName to:(sqlite3*)dstDatabase database:(NSString*)dstDatabaseName 
+         error:(DBCError**)error;
 
 #pragma mark Transaction journal
 
@@ -59,7 +63,8 @@
 - (DBCDatabaseJournalingMode)journalModeError:(DBCError**)error;
 - (BOOL)setJournalMode:(DBCDatabaseJournalingMode)journalMode forDatabase:(NSString*)databaseName error:(DBCError**)error;
 - (DBCDatabaseJournalingMode)journalModeForDatabase:(NSString*)databaseName error:(DBCError**)error;
-- (BOOL)setJournalSizeLimitForDatabase:(NSString*)databaseName size:(long long int)newJournalSizeLimit error:(DBCError**)error;
+- (BOOL)setJournalSizeLimitForDatabase:(NSString*)databaseName size:(long long int)newJournalSizeLimit 
+                                 error:(DBCError**)error;
 - (long long int)journalSizeLimitForDatabase:(NSString*)databaseName error:(DBCError**)error;
 
 #pragma mark Database locking
@@ -73,15 +78,26 @@
 
 #pragma mark Database virtual table (module) registration
 
-- (BOOL)registerModule:(const sqlite3_module*)module moduleName:(NSString*)moduleName userData:(void*)userData cleanupFunction:(void(*)(void*))cleanupFunction error:(DBCError**)error;
+- (BOOL)registerModule:(const sqlite3_module*)module moduleName:(NSString*)moduleName userData:(void*)userData 
+       cleanupFunction:(void(*)(void*))cleanupFunction error:(DBCError**)error;
 
 #pragma mark Database functions registration/unregistration
 
-- (BOOL)registerScalarFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))function functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error;
-- (BOOL)unRegisterScalarFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error;
-- (BOOL)registerAggregationFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))stepFunction finalizeFunction:(void(*)(sqlite3_context*))finalizeFunction functionName:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error;
-- (BOOL)unRegisterAggregationFunction:(NSString*)fnName parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error;
-- (BOOL)registerCollationFunction:(int(*)(void*, int, const void*, int, const void*))function cleanupFunction:(void(*)(void*))cleanupFunction functionName:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error;
-- (BOOL)unRegisterCollationFunction:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error;
+- (BOOL)registerScalarFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))function functionName:(NSString*)fnName 
+               parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation 
+                      userData:(void*)fnUserData error:(DBCError**)error;
+- (BOOL)unRegisterScalarFunction:(NSString*)fnName parametersCount:(int)fnParametersCount 
+         textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error;
+- (BOOL)registerAggregationFunction:(void(*)(sqlite3_context*, int, sqlite3_value**))stepFunction 
+                   finalizeFunction:(void(*)(sqlite3_context*))finalizeFunction functionName:(NSString*)fnName 
+                    parametersCount:(int)fnParametersCount textValueRepresentation:(int)expectedTextValueRepresentation 
+                           userData:(void*)fnUserData error:(DBCError**)error;
+- (BOOL)unRegisterAggregationFunction:(NSString*)fnName parametersCount:(int)fnParametersCount 
+              textValueRepresentation:(int)expectedTextValueRepresentation error:(DBCError**)error;
+- (BOOL)registerCollationFunction:(int(*)(void*, int, const void*, int, const void*))function 
+                  cleanupFunction:(void(*)(void*))cleanupFunction functionName:(NSString*)fnName 
+          textValueRepresentation:(int)expectedTextValueRepresentation userData:(void*)fnUserData error:(DBCError**)error;
+- (BOOL)unRegisterCollationFunction:(NSString*)fnName textValueRepresentation:(int)expectedTextValueRepresentation 
+                              error:(DBCError**)error;
 
 @end
