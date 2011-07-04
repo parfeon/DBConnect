@@ -162,10 +162,10 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                                       @"begin deferred transaction", @"begin immediate transaction", 
                                       @"begin exclusive transaction", @"commit", @"commit transaction",  
                                       @"end", @"end transaction",nil] retain];
-        listOfDMLCommands = [[NSArray arrayWithObjects:@"analyze", @"create", @"delete", @"drop", @"insert", @"reindex", 
+        listOfDMLCommands = [[NSArray arrayWithObjects:@"analyze", @"create", @"delete", @"drop", @"insert", @"reindex",
                               @"release", @"replace", @"savepoint", @"update", @"vacuum", nil] retain];
-        listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", @"%S",
-                                           @"%c", @"%C", @"%lld", @"%llu", @"%Lf",nil] retain];
+        listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", 
+                                           @"%S", @"%c", @"%C", @"%lld", @"%llu", @"%Lf",nil] retain];
         dbEncoding = encoding;
         recentErrorCode = -1;
         dbConnection = NULL;
@@ -292,8 +292,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     }
     if(mutableDatabaseStoreDestination == nil)
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
-        mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) 
-                                            objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
+       mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) 
+                                           objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
 #else 
         return NO;
 #endif
@@ -683,7 +683,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 if (dbEncoding==DBCDatabaseEncodingUTF8) 
                     returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, 
+                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1,
                                                       &statement, NULL);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
                     if(executionRetryCount && retryCount++ < executionRetryCount){
@@ -703,10 +703,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
                 DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
-                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
+                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
+                    [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], 
+                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5],
                               errorLine);
                 return NO;
             }
@@ -748,10 +749,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                       additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
                 DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
-                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
+                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
+                    [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], 
+                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5],
                               errorLine);
                 return NO;
             }
@@ -825,7 +827,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 if (dbEncoding==DBCDatabaseEncodingUTF8) 
                     returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, 
+                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1,
                                                       &statement, NULL);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
                     if(executionRetryCount && retryCount++ < executionRetryCount){
@@ -845,10 +847,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
                 DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
-                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
+                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
+                    [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], 
+                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5],
                               errorLine);
                 return NO;
             }
@@ -895,10 +898,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
                 DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
-                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
+                if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
+                    [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], 
+                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5],
                               errorLine);
                 return NO;
             }
@@ -981,18 +985,20 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         if(strcmp(dataType, @encode(BOOL)) == 0){
             if(isdigit([object charValue]==0)) {
                 if(dbEncoding==DBCDatabaseEncodingUTF8)
-                    returnCode = sqlite3_bind_text(statement, index, [[object stringValue] UTF8String], -1, SQLITE_STATIC);
+                    returnCode = sqlite3_bind_text(statement, index, [[object stringValue] UTF8String], -1, 
+                                                   SQLITE_STATIC);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
                     returnCode = sqlite3_bind_text16(statement, index, 
-                                                     [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], -1,
-                                                     SQLITE_STATIC);
+                                                     [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding],
+                                                     -1, SQLITE_STATIC);
             } else if([object intValue] > 1) {
                 if(dbEncoding==DBCDatabaseEncodingUTF8)
-                    returnCode = sqlite3_bind_text(statement, index, [[object stringValue] UTF8String], -1, SQLITE_STATIC);
+                    returnCode = sqlite3_bind_text(statement, index, [[object stringValue] UTF8String], -1, 
+                                                   SQLITE_STATIC);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
                     returnCode = sqlite3_bind_text16(statement, index, 
-                                                     [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], -1,
-                                                     SQLITE_STATIC);
+                                                     [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], 
+                                                     -1, SQLITE_STATIC);
             } else returnCode = sqlite3_bind_int(statement, index, [object boolValue]?1:0);
         } else if(strcmp(dataType, @encode(double)) == 0){
             returnCode = sqlite3_bind_double(statement, index, [object doubleValue]);
@@ -1288,7 +1294,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                     } else if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='u'){
                         foundToken = YES;
                         if(shouldParseValues) 
-                          [parsedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
+                          [parsedParameters addObject:[NSNumber 
+                                                       numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
                     }
                 } else if(currentChar=='l'){
                     if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='i'){
@@ -1304,8 +1311,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                               [sqlStatement characterAtIndex:(i+2)]=='u') {
                         foundToken = YES;
                         if(shouldParseValues) 
-                          [parsedParameters addObject:[NSNumber 
-                                                       numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
+                         [parsedParameters addObject:[NSNumber 
+                                                      numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
                     }
                 }
                 if(foundToken){
