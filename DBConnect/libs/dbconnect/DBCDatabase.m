@@ -204,7 +204,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
                 struct sqlite3lib_error execError = {"", -1, -1};
                 if(dbEncoding==DBCDatabaseEncodingUTF8) 
-                    executeQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], continueOnExecutionErrors, &execError);
+                    executeQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], 
+                                         continueOnExecutionErrors, &execError);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16)
                     executeQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], 
                                          continueOnExecutionErrors, &execError);
@@ -631,7 +632,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     DBCLockLogger(@"[DBC:Update] Lock acquired: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
     
     if(![self openError:error]){
-        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+        DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5],
+                      __LINE__);
         [queryLock unlock];
         return NO;
     }
@@ -1138,8 +1140,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         if(!isLiteral && currentChar=='\'') isLiteral = YES;
         else if(isLiteral && currentChar=='\'') isLiteral = NO;
         if (!isLiteral && lastChar == '%') {
-            if(currentChar=='@'||currentChar=='d'||currentChar=='i'||currentChar=='u'||currentChar=='f'||currentChar=='g'||
-               currentChar=='s'||currentChar=='S'||currentChar=='c'||currentChar=='C') {
+            if(currentChar=='@'||currentChar=='d'||currentChar=='i'||currentChar=='u'||currentChar=='f'||
+               currentChar=='g'||currentChar=='s'||currentChar=='S'||currentChar=='c'||currentChar=='C') {
                 format = SQLStatementFromatNSStringFormat;
             } else if(currentChar=='l') {
                 if(i+2<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='l' && 
@@ -1286,7 +1288,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                     } else if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='u'){
                         foundToken = YES;
                         if(shouldParseValues) 
-                           [parsedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
+                          [parsedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
                     }
                 } else if(currentChar=='l'){
                     if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='i'){
@@ -1302,8 +1304,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                               [sqlStatement characterAtIndex:(i+2)]=='u') {
                         foundToken = YES;
                         if(shouldParseValues) 
-                           [parsedParameters addObject:[NSNumber 
-                                                        numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
+                          [parsedParameters addObject:[NSNumber 
+                                                       numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
                     }
                 }
                 if(foundToken){
