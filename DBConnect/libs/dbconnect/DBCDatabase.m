@@ -40,9 +40,11 @@
 #pragma mark DDL and DML methods
 
 - (BOOL)executeUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
-- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
+- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData 
+                             error:(DBCError**)error;
 
-- (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData parametersOffset:(int*)offset;
+- (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData 
+    parametersOffset:(int*)offset;
 - (int)bindObject:(id)object atIndex:(int)index inStatement:(sqlite3_stmt*)statement;
 - (void)addStatementToCache:(DBCStatement*)statement;
 - (void)removeStatementFromChache:(DBCStatement*)statement;
@@ -107,9 +109,11 @@
  *          Documents folder instead
  * @return autoreleased DBCDatabase instance
  */
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath 
-                                          continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
-    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:DBCDatabaseEncodingUTF8 continueOnExecutionErrors:continueOnExecutionErrors error:error];
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath
+continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
+    return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:dbFilePath 
+                         defaultEncoding:DBCDatabaseEncodingUTF8 continueOnExecutionErrors:continueOnExecutionErrors 
+                                   error:error];
 }
 
 /**
@@ -130,11 +134,12 @@
  *          Documents folder instead
  * @return autoreleased DBCDatabase instance
  */
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath 
-                                                   defaultEncoding:(DBCDatabaseEncoding)encoding 
-                                          continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
-    return [[[[self class] alloc] createDatabaseFromFile:sqlStatementsListFilepath atPath:dbFilePath defaultEncoding:encoding
-                                continueOnExecutionErrors:continueOnExecutionErrors error:error] autorelease];
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath
+       defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
+                 error:(DBCError**)error {
+    return [[[[self class] alloc] createDatabaseFromFile:sqlStatementsListFilepath atPath:dbFilePath 
+                                         defaultEncoding:encoding continueOnExecutionErrors:continueOnExecutionErrors 
+                                                   error:error] autorelease];
 }
 
 /**
@@ -153,11 +158,14 @@
         [self setStatementsCachingEnabled:YES];
         [self setExecutionRetryCount:5];
         [self setDefaultSQLSequencesTransactionLock:DBCDatabaseAutocommitModeDeferred];
-        listOfPossibleTCLCommands = [[NSArray arrayWithObjects:@"begin", @"begin transaction", @"begin deferred transaction", @"begin immediate transaction", 
-                                      @"begin exclusive transaction", @"commit", @"commit transaction",  @"end", @"end transaction",nil] retain];
-        listOfDMLCommands = [[NSArray arrayWithObjects:@"analyze", @"create", @"delete", @"drop", @"insert", @"reindex", @"release", @"replace", @"savepoint", @"update", @"vacuum", nil] retain];
-        listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", @"%S",@"%c", @"%C", 
-                                           @"%lld", @"%llu", @"%Lf",nil] retain];
+        listOfPossibleTCLCommands = [[NSArray arrayWithObjects:@"begin", @"begin transaction", 
+                                      @"begin deferred transaction", @"begin immediate transaction", 
+                                      @"begin exclusive transaction", @"commit", @"commit transaction",  
+                                      @"end", @"end transaction",nil] retain];
+        listOfDMLCommands = [[NSArray arrayWithObjects:@"analyze", @"create", @"delete", @"drop", @"insert", @"reindex", 
+                              @"release", @"replace", @"savepoint", @"update", @"vacuum", nil] retain];
+        listOfNSStringFormatSpecifiers = [[NSArray arrayWithObjects:@"%@", @"%d", @"%i", @"%u", @"%f", @"%g", @"%s", @"%S",
+                                           @"%c", @"%C", @"%lld", @"%llu", @"%Lf",nil] retain];
         dbEncoding = encoding;
         recentErrorCode = -1;
         dbConnection = NULL;
@@ -187,22 +195,28 @@
  *          Documents folder instead
  * @return DBCDatabase instance
  */
-- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
+- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)dbFilePath 
+             defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
+                       error:(DBCError**)error {
     if ((self = [self initWithPath:dbFilePath defaultEncoding:encoding])) {
         if([self openError:error]){
-            if(dbConnectionOpened && sqlQeryListPath != nil && [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
+            if(dbConnectionOpened && sqlQeryListPath != nil && 
+               [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
                 struct sqlite3lib_error execError = {"", -1, -1};
                 if(dbEncoding==DBCDatabaseEncodingUTF8) 
                     executeQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], continueOnExecutionErrors, &execError);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16)
-                    executeQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], continueOnExecutionErrors, &execError);
+                    executeQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], 
+                                         continueOnExecutionErrors, &execError);
                 if(execError.errorCode != -1 && !continueOnExecutionErrors){
                     if([[NSFileManager defaultManager] fileExistsAtPath:dbFilePath]){
                         NSError *fmError = nil;
                         [[NSFileManager defaultManager] removeItemAtPath:dbFilePath error:&fmError];
                         if(fmError!=nil) {
                             recentErrorCode = DBC_CANT_REMOVE_CREATED_CORRUPTED_DATABASE_FILE;
-                            *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:sqlQeryListPath additionalInformation:[fmError description]] autorelease];
+                            *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain 
+                                                              forFilePath:sqlQeryListPath 
+                                                    additionalInformation:[fmError description]] autorelease];
                             DBCDebugLogger(@"[DBC:ERROR] %@", *error);
                         }
                     }
@@ -277,7 +291,8 @@
     }
     if(mutableDatabaseStoreDestination == nil)
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
-        mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
+        mutableDatabaseStoreDestination = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) 
+                                            objectAtIndex:0] stringByAppendingPathComponent:[dbPath lastPathComponent]];
 #else 
         return NO;
 #endif
@@ -433,7 +448,8 @@
  *                                       do not want error information.
  * @return whether eavluate was successfull or not (always YES if set continueOnExecutionErrors)
  */
-- (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
+- (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
+                            error:(DBCError**)error {
     recentErrorCode = SQLITE_OK;
     NSLog(@"FILE PATH: %@", statementsFilePath);
     if(statementsFilePath != nil && [[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
@@ -441,7 +457,8 @@
         if(dbEncoding==DBCDatabaseEncodingUTF8) 
             executeQueryFromFile(dbConnection, [statementsFilePath UTF8String], continueOnExecutionErrors, &execError);
         else if(dbEncoding==DBCDatabaseEncodingUTF16)
-            executeQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding], continueOnExecutionErrors, &execError);
+            executeQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding], 
+                                 continueOnExecutionErrors, &execError);
         if(execError.errorCode != -1 && !continueOnExecutionErrors){
             if([[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
                 NSError *fmError = nil;
@@ -476,8 +493,11 @@
  * @return whether transaction was started or not
  */
 - (BOOL)beginTransactionError:(DBCError**)error {
-    return [self executeUpdate:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                 (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock):@"DEFERRED")] error:error, nil];
+    NSString *lock = nil;
+    if(DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil) 
+        lock = DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock);
+    else lock = @"DEFERRED";
+    return [self executeUpdate:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;", lock] error:error, nil];
 }
 
 /**
@@ -626,22 +646,25 @@
     DBCStatement *dbcStatement = nil;
     NSString *statementCacheKey = nil;
     sqlite3_stmt *statement = NULL;
+    NSString *preparedSQLStatement = [bindingMapData valueForKey:PREPARED_SQL_STATEMENT];
     NSMutableArray *updateCommandsList = [NSMutableArray arrayWithArray:[self getSQLStatementsSequence:sqlUpdate]];
-    NSMutableArray *preparedCommandsList = [NSMutableArray arrayWithArray:[self getSQLStatementsSequence:[bindingMapData valueForKey:PREPARED_SQL_STATEMENT]]];
+    NSMutableArray *preparedCommandsList = [NSMutableArray 
+                                            arrayWithArray:[self getSQLStatementsSequence:preparedSQLStatement]];
     // Injecting TRANSACTION if required by flag
     if(createTransactionOnSQLSequences && [updateCommandsList count] > 1){
         transactionUsed = YES;
         if (![self SQLStatementsSequenceContainsTCL:updateCommandsList]) {
-            [preparedCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                                (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock):@"DEFERRED")] 
-                                       atIndex:0];
-            [updateCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;",
-                                              (DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil?DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock):@"DEFERRED")] 
-                                     atIndex:0];
+            NSString *lock = nil;
+            if(DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil) 
+                lock = DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock);
+            else lock = @"DEFERRED";
+            [preparedCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;", lock] atIndex:0];
+            [updateCommandsList insertObject:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;", lock] atIndex:0];
             [preparedCommandsList addObject:@"COMMIT TRANSACTION;"];
             [updateCommandsList addObject:@"COMMIT TRANSACTION;"];
         }
-    } else if ([self SQLStatementsSequenceContainsTCL:updateCommandsList] && [updateCommandsList count] > 1) transactionUsed = YES;
+    } else if ([self SQLStatementsSequenceContainsTCL:updateCommandsList] && [updateCommandsList count] > 1) 
+        transactionUsed = YES;
     int i, count = [preparedCommandsList count];
     for (i = 0; i < count; i++) {
         NSString *sql = [preparedCommandsList objectAtIndex:i];
@@ -655,9 +678,11 @@
         if(statement==NULL){
             do {
                 shouldRetry = NO;
-                if (dbEncoding==DBCDatabaseEncodingUTF8) returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
+                if (dbEncoding==DBCDatabaseEncodingUTF8) 
+                    returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, &statement, NULL);
+                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, 
+                                                      &statement, NULL);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
                     if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
@@ -679,12 +704,14 @@
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], errorLine);
+                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], 
+                              errorLine);
                 return NO;
             }
         }
         
-        returnCode = [self bindStatement:statement accordingToBindingMapData:bindingMapData parametersOffset:&bindedParametersOffset];
+        returnCode = [self bindStatement:statement accordingToBindingMapData:bindingMapData 
+                        parametersOffset:&bindedParametersOffset];
         if(returnCode != SQLITE_OK){
             recentErrorCode = returnCode;
             *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
@@ -693,7 +720,8 @@
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
-            DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
+            DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], 
+                          __LINE__);
             return NO;
         } else {
             retryCount = 0;
@@ -721,7 +749,8 @@
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], errorLine);
+                DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], 
+                              errorLine);
                 return NO;
             }
         }
@@ -747,7 +776,8 @@
  *      NSArray *parameters - list of binding parameters
  * @return query resultts if execution successfull or nil in case of error
  */
-- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
+- (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData 
+                             error:(DBCError**)error {
     DBCDebugLogger(@"[DBC:Query] Binding map data: %@", bindingMapData);
     DBCDatabaseResult *result = nil;
     DBCLockLogger(@"[DBC:Query] Waiting for Lock: %@ (Line: %d)", [sqlQuery md5], __LINE__);
@@ -770,8 +800,10 @@
     DBCStatement *dbcStatement = nil;
     NSString *statementCacheKey = nil;
     sqlite3_stmt *statement = NULL;
+    NSString *preparedSQLStatement = [bindingMapData valueForKey:PREPARED_SQL_STATEMENT];
     NSMutableArray *updateCommandsList = [NSMutableArray arrayWithArray:[self getSQLStatementsSequence:sqlQuery]];
-    NSMutableArray *preparedCommandsList = [NSMutableArray arrayWithArray:[self getSQLStatementsSequence:[bindingMapData valueForKey:PREPARED_SQL_STATEMENT]]];
+    NSMutableArray *preparedCommandsList = [NSMutableArray 
+                                            arrayWithArray:[self getSQLStatementsSequence:preparedSQLStatement]];
     int i, count = [preparedCommandsList count];
 #if DBCShouldProfileQuery
     NSDate *requestProfile = [NSDate date];
@@ -791,7 +823,8 @@
                 if (dbEncoding==DBCDatabaseEncodingUTF8) 
                     returnCode = sqlite3_prepare_v2(dbConnection, [sql UTF8String], -1, &statement, NULL);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, &statement, NULL);
+                    returnCode = sqlite3_prepare16_v2(dbConnection, [sql cStringUsingEncoding:NSUTF16StringEncoding], -1, 
+                                                      &statement, NULL);
                 if(returnCode == SQLITE_LOCKED || returnCode == SQLITE_BUSY){
                     if(executionRetryCount && retryCount++ < executionRetryCount){
                         shouldRetry = YES;
@@ -813,11 +846,13 @@
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], errorLine);
+                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], 
+                              errorLine);
                 return NO;
             }
         }
-        returnCode = [self bindStatement:statement accordingToBindingMapData:bindingMapData parametersOffset:&bindedParametersOffset];
+        returnCode = [self bindStatement:statement accordingToBindingMapData:bindingMapData 
+                        parametersOffset:&bindedParametersOffset];
         if(returnCode != SQLITE_OK){
             recentErrorCode = returnCode;
             *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
@@ -826,7 +861,8 @@
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
-            DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], __LINE__);
+            DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], 
+                          __LINE__);
             return NO;
         } else {
             result = [DBCDatabaseResult resultWithPreparedStatement:statement encoding:dbEncoding];
@@ -860,7 +896,8 @@
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
                 [queryLock unlock];
-                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], errorLine);
+                DBCLockLogger(@"[DBC:Query] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlQuery md5], 
+                              errorLine);
                 return NO;
             }
         }
@@ -890,7 +927,8 @@
  *      NSArray *parameters     - list of parameters for binding
  * @return binding result code
  */
-- (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData parametersOffset:(int*)offset {
+- (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData 
+    parametersOffset:(int*)offset {
     int returnCode = SQLITE_OK;
     int statementBindParametersCount = 0;
     NSString *sql = nil;
@@ -901,8 +939,11 @@
     }
     for (int i = 0; i < statementBindParametersCount; i++) {
         int bindingValueIndex = *offset;
-        int balueBindingTokenIndex = [[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] objectAtIndex:bindingValueIndex] intValue];
-        id bindingValue = [[bindingMapData valueForKey:PARAMETERS_LIST] objectAtIndex:[[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] objectAtIndex:bindingValueIndex] intValue]];
+        int balueBindingTokenIndex = [[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] 
+                                       objectAtIndex:bindingValueIndex] intValue];
+        id bindingValue = [[bindingMapData valueForKey:PARAMETERS_LIST] 
+                           objectAtIndex:[[[bindingMapData valueForKey:PARAMETERS_MAPPING_INFORMATION] 
+                                           objectAtIndex:bindingValueIndex] intValue]];
         returnCode = [self bindObject:bindingValue atIndex:(balueBindingTokenIndex+1) inStatement:statement];
         if(returnCode == SQLITE_OK) *offset = *offset+1;
         else return returnCode;
@@ -926,7 +967,8 @@
         returnCode = sqlite3_bind_blob(statement, index, [object bytes], [object length], SQLITE_STATIC);
     } else if([object isMemberOfClass:[UIImage class]]){
         NSData *imageData = UIImagePNGRepresentation(object);
-        if(imageData) returnCode = sqlite3_bind_blob(statement, index, [imageData bytes], [imageData length], SQLITE_STATIC);
+        if(imageData) 
+            returnCode = sqlite3_bind_blob(statement, index, [imageData bytes], [imageData length], SQLITE_STATIC);
         else returnCode = sqlite3_bind_null(statement, index);
     } else if([object isMemberOfClass:[NSDate class]]){
         returnCode = sqlite3_bind_double(statement, index, [object timeIntervalSince1970]);
@@ -939,12 +981,16 @@
                 if(dbEncoding==DBCDatabaseEncodingUTF8)
                     returnCode = sqlite3_bind_text(statement, index, [[object stringValue] UTF8String], -1, SQLITE_STATIC);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                    returnCode = sqlite3_bind_text16(statement, index, [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], -1, SQLITE_STATIC);
+                    returnCode = sqlite3_bind_text16(statement, index, 
+                                                     [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], -1,
+                                                     SQLITE_STATIC);
             } else if([object intValue] > 1) {
                 if(dbEncoding==DBCDatabaseEncodingUTF8)
                     returnCode = sqlite3_bind_text(statement, index, [[object stringValue] UTF8String], -1, SQLITE_STATIC);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16) 
-                    returnCode = sqlite3_bind_text16(statement, index, [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], -1, SQLITE_STATIC);
+                    returnCode = sqlite3_bind_text16(statement, index, 
+                                                     [[object stringValue] cStringUsingEncoding:NSUTF16StringEncoding], -1,
+                                                     SQLITE_STATIC);
             } else returnCode = sqlite3_bind_int(statement, index, [object boolValue]?1:0);
         } else if(strcmp(dataType, @encode(double)) == 0){
             returnCode = sqlite3_bind_double(statement, index, [object doubleValue]);
@@ -1000,7 +1046,8 @@
         DBCLockLogger(@"[DBC:StatementCache] Lock acquired: %@ (Line: %d)", [sql md5], __LINE__);
         if(cachedStatementsList) [cachedStatementsList removeObjectForKey:[sql md5]];
         [queryLock unlock];
-        DBCLockLogger(@"[DBC:StatementCache] Relinquished from previously acquired lock: %@ (Line: %d)", [sql md5], __LINE__);
+        DBCLockLogger(@"[DBC:StatementCache] Relinquished from previously acquired lock: %@ (Line: %d)", [sql md5], 
+                      __LINE__);
     }
 }
 
@@ -1017,7 +1064,8 @@
     DBCLockLogger(@"[DBC:StatementCache] Lock acquired: %@ (Line: %d)", [sqlRequest md5], __LINE__);
     DBCStatement *statement = [cachedStatementsList valueForKey:[sqlRequest md5]];
     [queryLock unlock];
-    DBCLockLogger(@"[DBC:StatementCache] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlRequest md5], __LINE__);
+    DBCLockLogger(@"[DBC:StatementCache] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlRequest md5], 
+                  __LINE__);
     return statement;
 }
 
@@ -1084,16 +1132,18 @@
     BOOL isNamed = NO;
     for (i = 0; i < sqlStatementLength; i++) {
         unichar currentChar = [sqlStatement characterAtIndex:i];
-        if(!isLiteral && !isNamed && (lastChar==':' || lastChar=='@' || lastChar=='$') && currentChar!=' ' && !isdigit(currentChar)) isNamed = YES;
+        if(!isLiteral && !isNamed && (lastChar==':' || lastChar=='@' || lastChar=='$') && currentChar!=' ' && 
+           !isdigit(currentChar)) isNamed = YES;
         else if(isNamed && currentChar==' ') isNamed = NO;
         if(!isLiteral && currentChar=='\'') isLiteral = YES;
         else if(isLiteral && currentChar=='\'') isLiteral = NO;
         if (!isLiteral && lastChar == '%') {
-            if(currentChar=='@'||currentChar=='d'||currentChar=='i'||currentChar=='u'||currentChar=='f'||currentChar=='g'||currentChar=='s'||
-               currentChar=='S'||currentChar=='c'||currentChar=='C') {
+            if(currentChar=='@'||currentChar=='d'||currentChar=='i'||currentChar=='u'||currentChar=='f'||currentChar=='g'||
+               currentChar=='s'||currentChar=='S'||currentChar=='c'||currentChar=='C') {
                 format = SQLStatementFromatNSStringFormat;
             } else if(currentChar=='l') {
-                if(i+2<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='l' && ([sqlStatement characterAtIndex:(i+2)]=='d' || [sqlStatement characterAtIndex:(i+2)]=='u'))
+                if(i+2<sqlStatementLength && [sqlStatement characterAtIndex:(i+1)]=='l' && 
+                   ([sqlStatement characterAtIndex:(i+2)]=='d' || [sqlStatement characterAtIndex:(i+2)]=='u'))
                     format = SQLStatementFromatNSStringFormat;
             }
         } else if (!isLiteral && lastChar == '?') {
@@ -1178,7 +1228,8 @@
             else if(isLiteral && currentChar=='\'') isLiteral = NO;
             foundToken = NO;
             if (!isLiteral && lastChar == '%') {
-                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset options:NSCaseInsensitiveSearch
+                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset 
+                                                                                  options:NSCaseInsensitiveSearch
                                                                                     range:NSMakeRange(i, count-i)];
                 tokenRange.location = i-1;
                 if(tokenTerminationCharRange.location != NSNotFound)
@@ -1202,51 +1253,71 @@
                     if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithInt:va_arg(parameters, int)]];
                 } else if(currentChar=='u') {
                     foundToken = YES;
-                    if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithUnsignedInt:va_arg(parameters, unsigned int)]];
+                    if(shouldParseValues) 
+                        [parsedParameters addObject:[NSNumber numberWithUnsignedInt:va_arg(parameters, unsigned int)]];
                 } else if(currentChar=='f'||currentChar=='g') {
                     foundToken = YES;
-                    if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithDouble:va_arg(parameters, double)]];
+                    if(shouldParseValues) 
+                        [parsedParameters addObject:[NSNumber numberWithDouble:va_arg(parameters, double)]];
                 } else if(currentChar=='s') {
                     foundToken = YES;
-                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithCString:va_arg(parameters, char*) encoding:NSUTF8StringEncoding]];
+                    if(shouldParseValues) 
+                        [parsedParameters addObject:[NSString stringWithCString:va_arg(parameters, char*) 
+                                                                       encoding:NSUTF8StringEncoding]];
                 } else if(currentChar=='S') {
                     foundToken = YES;
-                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]];
+                    if(shouldParseValues) 
+                        [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]];
                 } else if(currentChar=='c') {
                     foundToken = YES;
-                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithFormat:@"%c", va_arg(parameters, int)]]; 
+                    if(shouldParseValues) 
+                        [parsedParameters addObject:[NSString stringWithFormat:@"%c", va_arg(parameters, int)]]; 
                 } else if(currentChar=='C') {
                     foundToken = YES;
-                    if(shouldParseValues) [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]]; 
+                    if(shouldParseValues) 
+                        [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]]; 
                 } else if(currentChar=='h'){
-                    if(i+1<count && ([sqlStatement characterAtIndex:(i+1)]=='i' || [sqlStatement characterAtIndex:(i+1)]=='x') || 
+                    if(i+1<count && ([sqlStatement characterAtIndex:(i+1)]=='i' || 
+                                     [sqlStatement characterAtIndex:(i+1)]=='x') ||
                        [sqlStatement characterAtIndex:(i+1)]=='o') {
                         foundToken = YES;
-                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithShort:va_arg(parameters, int)]];
+                        if(shouldParseValues) 
+                            [parsedParameters addObject:[NSNumber numberWithShort:va_arg(parameters, int)]];
                     } else if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='u'){
                         foundToken = YES;
-                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
+                        if(shouldParseValues) 
+                           [parsedParameters addObject:[NSNumber numberWithUnsignedShort:va_arg(parameters, unsigned int)]];
                     }
                 } else if(currentChar=='l'){
                     if(i+1<count && [sqlStatement characterAtIndex:(i+1)]=='i'){
                         foundToken = YES;
-                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithLong:va_arg(parameters, long int)]];
-                    } else if(i+2<count && [sqlStatement characterAtIndex:(i+1)]=='l' && [sqlStatement characterAtIndex:(i+2)]=='d') {
+                        if(shouldParseValues) 
+                            [parsedParameters addObject:[NSNumber numberWithLong:va_arg(parameters, long int)]];
+                    } else if(i+2<count && [sqlStatement characterAtIndex:(i+1)]=='l' && 
+                              [sqlStatement characterAtIndex:(i+2)]=='d') {
                         foundToken = YES;
-                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithLongLong:va_arg(parameters, long long)]];
-                    } else if(i+2<count && [sqlStatement characterAtIndex:(i+1)]=='l' && [sqlStatement characterAtIndex:(i+2)]=='u') {
+                        if(shouldParseValues) 
+                            [parsedParameters addObject:[NSNumber numberWithLongLong:va_arg(parameters, long long)]];
+                    } else if(i+2<count && [sqlStatement characterAtIndex:(i+1)]=='l' && 
+                              [sqlStatement characterAtIndex:(i+2)]=='u') {
                         foundToken = YES;
-                        if(shouldParseValues) [parsedParameters addObject:[NSNumber numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
+                        if(shouldParseValues) 
+                           [parsedParameters addObject:[NSNumber 
+                                                        numberWithUnsignedLongLong:va_arg(parameters, unsigned long long)]];
                     }
                 }
                 if(foundToken){
                     tokensCount++;
-                    NSNumber *index = [NSNumber numberWithInt:[parsedParameters indexOfObject:[parsedParameters lastObject]]];
+                    NSNumber *index = [NSNumber numberWithInt:[parsedParameters 
+                                                               indexOfObject:[parsedParameters lastObject]]];
                     if (![parsedParametersMap containsObject:index]) countOfRequiredBindingParameters++;
                     [parsedParametersMap addObject:index];
                     NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", tokensCount];
-                    charToIgnore = tokenRange.length>[tokenReplacement length]?(tokenRange.length-([tokenReplacement length]>1?[tokenReplacement length]-1:[tokenReplacement length])):0;
-                    [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
+                    charToIgnore = tokenRange.length>[tokenReplacement length]?
+                    (tokenRange.length-([tokenReplacement length]>1?
+                                        [tokenReplacement length]-1:[tokenReplacement length])):0;
+                    [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) 
+                                                   withString:tokenReplacement];
                 }
             } else {
                 if(charToIgnore == 0) [newSQLStatement appendFormat:@"%c", currentChar];
@@ -1261,7 +1332,8 @@
             if(!isLiteral && currentChar=='\'') isLiteral = YES;
             else if(isLiteral && currentChar=='\'') isLiteral = NO;
             foundToken = NO;
-            if (!isLiteral && lastChar == '?' && (currentChar == ',' || currentChar == ' ' || currentChar == ')' || currentChar == ';')) {
+            if (!isLiteral && lastChar == '?' && (currentChar == ',' || currentChar == ' ' || currentChar == ')' || 
+                                                  currentChar == ';')) {
                 id object = nil;
                 Class itemClass = nil;
                 if(tokensCount == 0) itemClass = [self getVAItemClass:parameters];
@@ -1276,7 +1348,8 @@
                 if(object != nil && shouldParseValues) [parsedParameters addObject:object];
                 tokensCount++;
                 NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", tokensCount];
-                [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
+                [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) 
+                                               withString:tokenReplacement];
                 NSNumber *index = [NSNumber numberWithInt:(tokensCount-1)];
                 if (![parsedParametersMap containsObject:index]) countOfRequiredBindingParameters++;
                 [parsedParametersMap addObject:index];
@@ -1307,13 +1380,16 @@
                 } else if(shouldReadDataFromVA) object = va_arg(parameters, id);
                 if(object == nil) shouldReadDataFromVA = NO;
                 if(object != nil && shouldParseValues) [parsedParameters addObject:object];
-                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset options:NSCaseInsensitiveSearch
+                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset 
+                                                                                  options:NSCaseInsensitiveSearch
                                                                                     range:NSMakeRange(i, count-i)];
                 int bindingValueIndex = -1;
                 if(tokenTerminationCharRange.location != NSNotFound)
-                    bindingValueIndex = [[sqlStatement substringWithRange:NSMakeRange(i, tokenTerminationCharRange.location-i)] intValue]-1;
+                    bindingValueIndex = [[sqlStatement substringWithRange:
+                                          NSMakeRange(i, tokenTerminationCharRange.location-i)] intValue]-1;
                 else bindingValueIndex = [[sqlStatement substringWithRange:NSMakeRange(i, count-i)] intValue]-1;
-                if (![parsedParametersMap containsObject:[NSNumber numberWithInt:bindingValueIndex]]) countOfRequiredBindingParameters++;
+                if (![parsedParametersMap containsObject:[NSNumber numberWithInt:bindingValueIndex]]) 
+                    countOfRequiredBindingParameters++;
                 [parsedParametersMap addObject:[NSNumber numberWithInt:bindingValueIndex]];
                 tokensCount++;
             }
@@ -1329,7 +1405,8 @@
             else if(isLiteral && currentChar=='\'') isLiteral = NO;
             foundToken = NO;
             if (!isLiteral && (lastChar == ':' || lastChar == '@' || lastChar == '$') && !isdigit(currentChar) && 
-                (currentChar != ',' && currentChar != ' ' && currentChar != ')' && currentChar != ';' && currentChar != '\'')) {
+                (currentChar != ',' && currentChar != ' ' && currentChar != ')' && currentChar != ';' && 
+                 currentChar != '\'')) {
                 id object = nil;
                 Class itemClass = nil;
                 if(tokensCount == 0) itemClass = [self getVAItemClass:parameters];
@@ -1342,7 +1419,8 @@
                             NSString *key = [object objectAtIndex:k];
                             id value = [object objectAtIndex:(k-1)];
                             [parsedParameters addObject:value];
-                            [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] forKey:key];
+                            [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] 
+                                                 forKey:key];
                         }
                     } else if([itemClass isSubclassOfClass:[NSDictionary class]]){
                         object = va_arg(parameters, NSDictionary*);
@@ -1352,7 +1430,8 @@
                             NSString *key = [listOfKeys objectAtIndex:k];
                             id value = [object valueForKey:key];
                             [parsedParameters addObject:value];
-                            [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] forKey:key];
+                            [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] 
+                                                 forKey:key];
                         }
                     } else parsingFromVA = YES;
                 } else if(tokensCount == 0) parsingFromVA = YES;
@@ -1373,11 +1452,13 @@
                         NSString *key = [parametersList objectAtIndex:k];
                         id value = [parametersList objectAtIndex:(k-1)];
                         [parsedParameters addObject:value];
-                        [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] forKey:key];
+                        [namesToIndicesMap setValue:[NSNumber numberWithInt:[parsedParameters indexOfObject:value]] 
+                                             forKey:key];
                     }
                 }
                 tokensCount++;
-                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset options:NSCaseInsensitiveSearch
+                NSRange tokenTerminationCharRange = [sqlStatement rangeOfCharacterFromSet:tokenTerminatorsCharset 
+                                                                                  options:NSCaseInsensitiveSearch
                                                                                     range:NSMakeRange(i, count-i)];
                 NSString *tokenName = nil;
                 if(tokenTerminationCharRange.location != NSNotFound)
@@ -1386,9 +1467,13 @@
                 int bindingValueIndex = [[namesToIndicesMap valueForKey:tokenName] intValue];
                 tokenRange.length = [tokenName length];
                 NSString *tokenReplacement = [NSString stringWithFormat:@"?%i", (bindingValueIndex+1)];
-                charToIgnore = tokenRange.length>[tokenReplacement length]?(tokenRange.length-([tokenReplacement length]>1?[tokenReplacement length]-1:[tokenReplacement length])):0;
-                [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) withString:tokenReplacement];
-                if (![parsedParametersMap containsObject:[NSNumber numberWithInt:bindingValueIndex]]) countOfRequiredBindingParameters++;
+                charToIgnore = tokenRange.length>[tokenReplacement length]?
+                    (tokenRange.length-([tokenReplacement length]>1?[tokenReplacement length]-1:
+                                        [tokenReplacement length])):0;
+                [newSQLStatement replaceCharactersInRange:NSMakeRange([newSQLStatement length]-1, 1) 
+                                               withString:tokenReplacement];
+                if (![parsedParametersMap containsObject:[NSNumber numberWithInt:bindingValueIndex]]) 
+                    countOfRequiredBindingParameters++;
                 [parsedParametersMap addObject:[NSNumber numberWithInt:bindingValueIndex]];
             } else {
                 if(charToIgnore == 0) [newSQLStatement appendFormat:@"%c", currentChar];
@@ -1414,7 +1499,8 @@
     BOOL containsTCL = NO;
     int i, count = [commandsList count];
     for (i=0; i<count; i++) {
-        NSString *lowerCasedCommand = [[[[commandsList objectAtIndex:i] lowercaseString] stringByReplacingOccurrencesOfString:@";" withString:@""] trimmedString];
+        NSString *lowerCasedCommand = [[[[commandsList objectAtIndex:i] lowercaseString] 
+                                        stringByReplacingOccurrencesOfString:@";" withString:@""] trimmedString];
         if([listOfPossibleTCLCommands containsObject:lowerCasedCommand]){
             containsTCL = YES;
             break;

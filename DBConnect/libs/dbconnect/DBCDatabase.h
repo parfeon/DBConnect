@@ -76,10 +76,15 @@
 
 + (id)databaseWithPath:(NSString*)dbFilePath;
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
-+ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath 
+continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
++ (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)databasePath 
+       defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
+                 error:(DBCError**)error;
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding;
-- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
+- (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)databasePath 
+             defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
+                       error:(DBCError**)error;
 
 #pragma mark Database open and close
 
@@ -92,7 +97,8 @@
 
 - (BOOL)executeUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
 - (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery error:(DBCError**)error, ... NS_REQUIRES_NIL_TERMINATION;
-- (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error;
+- (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
+                            error:(DBCError**)error;
 
 #pragma mark TCL methods
 
