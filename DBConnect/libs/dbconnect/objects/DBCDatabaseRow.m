@@ -59,9 +59,9 @@
         for (i = 0; i < columnsCount; i++) {
             int columnType = sqlite3_column_type(statement, i);
             if(columnType != [dataStructureDelegate typeForColumnAtIndex:i]) {
-                DBCDebugLogger(@"[DBC:WARNING] Column '%@' data type (%@) don't match to decalred in table structure (%@)", 
-                               [dataStructureDelegate nameForColumnAtIndex:i], DBCDatabaseDataTypeStringify(columnType),
-                               [dataStructureDelegate stringifiedTypeForColumnAtIndex:i]);
+               DBCDebugLogger(@"[DBC:WARNING] Column '%@' data type (%@) don't match to decalred in table structure (%@)",
+                              [dataStructureDelegate nameForColumnAtIndex:i], DBCDatabaseDataTypeStringify(columnType),
+                              [dataStructureDelegate stringifiedTypeForColumnAtIndex:i]);
             }
             if(columnType == SQLITE_INTEGER) {
                 sqlite_int64 value = sqlite3_column_int64(statement, i);
@@ -72,7 +72,8 @@
             } else if(columnType == SQLITE_TEXT) {
                 if([dataStructureDelegate databaseEncoding] == DBCDatabaseEncodingUTF16){
                     const void *value = sqlite3_column_text16(statement, i);
-                    if(value != NULL) [data addObject:[NSString stringWithCString:(char*)value encoding:NSUTF16StringEncoding]];
+                    if(value != NULL) [data addObject:[NSString stringWithCString:(char*)value 
+                                                                         encoding:NSUTF16StringEncoding]];
                     else [data addObject:[NSNull null]];
                 }else {
                     const char *value = (const char*)sqlite3_column_text(statement, i);

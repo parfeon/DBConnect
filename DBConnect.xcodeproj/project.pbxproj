@@ -16,6 +16,19 @@
 		79032A0A1383ED0D00741EE8 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 79032A091383ED0D00741EE8 /* LICENSE.txt */; };
 		791C957113A2BDA500F47188 /* DBCDatabase+Advanced.m in Sources */ = {isa = PBXBuildFile; fileRef = 791C957013A2BDA500F47188 /* DBCDatabase+Advanced.m */; };
 		791C957413A2CEFE00F47188 /* DBCDatabase+Aliases.m in Sources */ = {isa = PBXBuildFile; fileRef = 791C957313A2CEFE00F47188 /* DBCDatabase+Aliases.m */; };
+		793B65B913C270BD00DD94FB /* DBCConstants.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65AC13C270BD00DD94FB /* DBCConstants.markdown */; };
+		793B65BA13C270BD00DD94FB /* DBCDatabase.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65AD13C270BD00DD94FB /* DBCDatabase.markdown */; };
+		793B65BB13C270BD00DD94FB /* DBCDatabase+Advanced.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65AE13C270BD00DD94FB /* DBCDatabase+Advanced.markdown */; };
+		793B65BC13C270BD00DD94FB /* DBCDatabase+Aliases.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65AF13C270BD00DD94FB /* DBCDatabase+Aliases.markdown */; };
+		793B65BD13C270BD00DD94FB /* DBCDatabaseIndexedColumnInfo.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B013C270BD00DD94FB /* DBCDatabaseIndexedColumnInfo.markdown */; };
+		793B65BE13C270BD00DD94FB /* DBCDatabaseIndexInfo.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B113C270BD00DD94FB /* DBCDatabaseIndexInfo.markdown */; };
+		793B65BF13C270BD00DD94FB /* DBCDatabaseInfo.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B213C270BD00DD94FB /* DBCDatabaseInfo.markdown */; };
+		793B65C013C270BD00DD94FB /* DBCDatabaseResult.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B313C270BD00DD94FB /* DBCDatabaseResult.markdown */; };
+		793B65C113C270BD00DD94FB /* DBCDatabaseRow.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B413C270BD00DD94FB /* DBCDatabaseRow.markdown */; };
+		793B65C213C270BD00DD94FB /* DBCDatabaseTableColumnInfo.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B513C270BD00DD94FB /* DBCDatabaseTableColumnInfo.markdown */; };
+		793B65C313C270BD00DD94FB /* DBCError.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B613C270BD00DD94FB /* DBCError.markdown */; };
+		793B65C413C270BD00DD94FB /* Error codes.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B713C270BD00DD94FB /* Error codes.markdown */; };
+		793B65C513C270BD00DD94FB /* Home.markdown in Resources */ = {isa = PBXBuildFile; fileRef = 793B65B813C270BD00DD94FB /* Home.markdown */; };
 		7962F25913843B6E00765B9D /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7962F25813843B6E00765B9D /* libsqlite3.0.dylib */; };
 		799438E313A8E8BE009801FB /* DBCDatabaseResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 799438DC13A8E8BE009801FB /* DBCDatabaseResult.m */; };
 		799438E413A8E8BE009801FB /* DBCDatabaseRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 799438DE13A8E8BE009801FB /* DBCDatabaseRow.m */; };
@@ -49,6 +62,19 @@
 		791C957013A2BDA500F47188 /* DBCDatabase+Advanced.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "DBCDatabase+Advanced.m"; path = "libs/dbconnect/categories/DBCDatabase+Advanced.m"; sourceTree = "<group>"; };
 		791C957213A2CEFE00F47188 /* DBCDatabase+Aliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "DBCDatabase+Aliases.h"; path = "libs/dbconnect/categories/DBCDatabase+Aliases.h"; sourceTree = "<group>"; };
 		791C957313A2CEFE00F47188 /* DBCDatabase+Aliases.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "DBCDatabase+Aliases.m"; path = "libs/dbconnect/categories/DBCDatabase+Aliases.m"; sourceTree = "<group>"; };
+		793B65AC13C270BD00DD94FB /* DBCConstants.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCConstants.markdown; path = WIKI/DBCConstants.markdown; sourceTree = SOURCE_ROOT; };
+		793B65AD13C270BD00DD94FB /* DBCDatabase.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabase.markdown; path = WIKI/DBCDatabase.markdown; sourceTree = SOURCE_ROOT; };
+		793B65AE13C270BD00DD94FB /* DBCDatabase+Advanced.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "DBCDatabase+Advanced.markdown"; path = "WIKI/DBCDatabase+Advanced.markdown"; sourceTree = SOURCE_ROOT; };
+		793B65AF13C270BD00DD94FB /* DBCDatabase+Aliases.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "DBCDatabase+Aliases.markdown"; path = "WIKI/DBCDatabase+Aliases.markdown"; sourceTree = SOURCE_ROOT; };
+		793B65B013C270BD00DD94FB /* DBCDatabaseIndexedColumnInfo.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabaseIndexedColumnInfo.markdown; path = WIKI/DBCDatabaseIndexedColumnInfo.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B113C270BD00DD94FB /* DBCDatabaseIndexInfo.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabaseIndexInfo.markdown; path = WIKI/DBCDatabaseIndexInfo.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B213C270BD00DD94FB /* DBCDatabaseInfo.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabaseInfo.markdown; path = WIKI/DBCDatabaseInfo.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B313C270BD00DD94FB /* DBCDatabaseResult.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabaseResult.markdown; path = WIKI/DBCDatabaseResult.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B413C270BD00DD94FB /* DBCDatabaseRow.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabaseRow.markdown; path = WIKI/DBCDatabaseRow.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B513C270BD00DD94FB /* DBCDatabaseTableColumnInfo.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCDatabaseTableColumnInfo.markdown; path = WIKI/DBCDatabaseTableColumnInfo.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B613C270BD00DD94FB /* DBCError.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DBCError.markdown; path = WIKI/DBCError.markdown; sourceTree = SOURCE_ROOT; };
+		793B65B713C270BD00DD94FB /* Error codes.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "Error codes.markdown"; path = "WIKI/Error codes.markdown"; sourceTree = SOURCE_ROOT; };
+		793B65B813C270BD00DD94FB /* Home.markdown */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Home.markdown; path = WIKI/Home.markdown; sourceTree = SOURCE_ROOT; };
 		7962F25813843B6E00765B9D /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
 		799438CE13A8E168009801FB /* DBCConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCConfiguration.h; path = libs/dbconnect/misc/DBCConfiguration.h; sourceTree = "<group>"; };
 		799438CF13A8E168009801FB /* DBCMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DBCMacro.h; path = libs/dbconnect/misc/DBCMacro.h; sourceTree = "<group>"; };
@@ -158,6 +184,7 @@
 		790329FC1383EB3F00741EE8 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				793B65AA13C2708300DD94FB /* WIKI */,
 				79D4BCB9138402F5001EC1A3 /* README.markdown */,
 				799A344E13BA1F1100C76831 /* test.sqlite */,
 				799A344713B9F4D000C76831 /* test.sql.dump */,
@@ -185,6 +212,26 @@
 				79032A091383ED0D00741EE8 /* LICENSE.txt */,
 			);
 			name = dbconnect;
+			sourceTree = "<group>";
+		};
+		793B65AA13C2708300DD94FB /* WIKI */ = {
+			isa = PBXGroup;
+			children = (
+				793B65AC13C270BD00DD94FB /* DBCConstants.markdown */,
+				793B65AD13C270BD00DD94FB /* DBCDatabase.markdown */,
+				793B65AE13C270BD00DD94FB /* DBCDatabase+Advanced.markdown */,
+				793B65AF13C270BD00DD94FB /* DBCDatabase+Aliases.markdown */,
+				793B65B013C270BD00DD94FB /* DBCDatabaseIndexedColumnInfo.markdown */,
+				793B65B113C270BD00DD94FB /* DBCDatabaseIndexInfo.markdown */,
+				793B65B213C270BD00DD94FB /* DBCDatabaseInfo.markdown */,
+				793B65B313C270BD00DD94FB /* DBCDatabaseResult.markdown */,
+				793B65B413C270BD00DD94FB /* DBCDatabaseRow.markdown */,
+				793B65B513C270BD00DD94FB /* DBCDatabaseTableColumnInfo.markdown */,
+				793B65B613C270BD00DD94FB /* DBCError.markdown */,
+				793B65B713C270BD00DD94FB /* Error codes.markdown */,
+				793B65B813C270BD00DD94FB /* Home.markdown */,
+			);
+			name = WIKI;
 			sourceTree = "<group>";
 		};
 		799438CC13A8E116009801FB /* misc */ = {
@@ -298,6 +345,19 @@
 				79D4BCBA138402F5001EC1A3 /* README.markdown in Resources */,
 				799A344813B9F4D000C76831 /* test.sql.dump in Resources */,
 				799A344F13BA1F1100C76831 /* test.sqlite in Resources */,
+				793B65B913C270BD00DD94FB /* DBCConstants.markdown in Resources */,
+				793B65BA13C270BD00DD94FB /* DBCDatabase.markdown in Resources */,
+				793B65BB13C270BD00DD94FB /* DBCDatabase+Advanced.markdown in Resources */,
+				793B65BC13C270BD00DD94FB /* DBCDatabase+Aliases.markdown in Resources */,
+				793B65BD13C270BD00DD94FB /* DBCDatabaseIndexedColumnInfo.markdown in Resources */,
+				793B65BE13C270BD00DD94FB /* DBCDatabaseIndexInfo.markdown in Resources */,
+				793B65BF13C270BD00DD94FB /* DBCDatabaseInfo.markdown in Resources */,
+				793B65C013C270BD00DD94FB /* DBCDatabaseResult.markdown in Resources */,
+				793B65C113C270BD00DD94FB /* DBCDatabaseRow.markdown in Resources */,
+				793B65C213C270BD00DD94FB /* DBCDatabaseTableColumnInfo.markdown in Resources */,
+				793B65C313C270BD00DD94FB /* DBCError.markdown in Resources */,
+				793B65C413C270BD00DD94FB /* Error codes.markdown in Resources */,
+				793B65C513C270BD00DD94FB /* Home.markdown in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

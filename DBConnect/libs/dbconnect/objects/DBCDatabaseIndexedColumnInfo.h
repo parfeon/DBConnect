@@ -34,6 +34,8 @@
 @property (nonatomic, readonly, getter = indexInTable)int colIdxInTable;
 @property (nonatomic, readonly, getter = name)NSString *colName;
 
-+ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName;
-- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName;
++ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
+                               name:(NSString*)columnName;
+- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
+                                   name:(NSString*)columnName;
 @end

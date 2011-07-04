@@ -65,7 +65,8 @@
  * @return formatted index description
  */
 - (NSString*)description {
-    return [NSString stringWithFormat:@"\nSequence number: %i\nIndex name: %@\nIndex is unique: %@", idxSeqNumber, idxName, idxUnique?@"YES":@"NO"];
+    return [NSString stringWithFormat:@"\nSequence number: %i\nIndex name: %@\nIndex is unique: %@", idxSeqNumber, 
+            idxName, idxUnique?@"YES":@"NO"];
 }
 
 #pragma mark DBCDatabaseIndexInfo memory management

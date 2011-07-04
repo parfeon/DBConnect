@@ -35,6 +35,7 @@
 @property (nonatomic, readonly, getter = filePath)NSString *dbFilePath;
 
 + (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
-- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
+- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName 
+                          filePath:(NSString*)pathToDatabaseFile;
 
 @end

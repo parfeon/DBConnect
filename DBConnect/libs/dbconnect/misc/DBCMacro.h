@@ -46,7 +46,8 @@
 })
 
 #define DBCDatabaseEncodedSQLiteError(__ENCODING__)({\
-    const char *cErrorMsg = __ENCODING__==DBCDatabaseEncodingUTF16?sqlite3_errmsg16(dbConnection):sqlite3_errmsg(dbConnection);\
+    const char *cErrorMsg = __ENCODING__==DBCDatabaseEncodingUTF16?sqlite3_errmsg16(dbConnection):\
+sqlite3_errmsg(dbConnection);\
     NSString *errorMsg = nil;\
     if(cErrorMsg!=NULL)\
         errorMsg = [NSString stringWithCString:cErrorMsg \

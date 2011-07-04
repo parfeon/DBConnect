@@ -37,9 +37,12 @@
 + (NSString*)errorDescriptionByCode:(int)errorCode;
 + (id)errorWithErrorCode:(NSInteger)code;
 + (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
-+ (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
++ (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath 
+   additionalInformation:(NSString*)additionalInformation;
 - (id)initWithErrorCode:(NSInteger)code;
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
-- (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
-- (id)initWithErrorCode:(NSInteger)code errorDomain:(NSString*)errorDomain forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
+- (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath 
+  additionalInformation:(NSString*)additionalInformation;
+- (id)initWithErrorCode:(NSInteger)code errorDomain:(NSString*)errorDomain 
+            forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
 @end

@@ -43,8 +43,12 @@
  *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
  * @return autoreleased DBCDatabaseTableColumnInfo instance
  */
-+ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
-    return [[[[self class] alloc] initolumnInfoWithSequence:columnNumber columnName:columnName columnDataType:columnDataType isNotNull:isNotNull defaultValue:defaultVallue isPartOfThePrimaryKey:isPartOfThePrimaryKey] autorelease];
++ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
+              columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue 
+       isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
+    return [[[[self class] alloc] initolumnInfoWithSequence:columnNumber columnName:columnName 
+                                             columnDataType:columnDataType isNotNull:isNotNull defaultValue:defaultVallue
+                                      isPartOfThePrimaryKey:isPartOfThePrimaryKey] autorelease];
 }
 
 /**
@@ -58,7 +62,9 @@
  *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
  * @return DBCDatabaseTableColumnInfo instance
  */
-- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
+- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
+                 columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue
+          isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
     if((self = [super init])){
         colIdx = columnNumber;
         colName = [columnName copy];
@@ -75,7 +81,9 @@
  * @return formatted column description
  */
 - (NSString*)description {
-    return [NSString stringWithFormat:@"\nIn sequence column number: %i\nColumn name: %@\nColumn data type: %@\nColumn is NOT NULL: %@\nColumn default value: %@\nColumn is part of the primary key: %@", colIdx, colName, colType, colNotNull?@"YES":@"NO", colDefValue, colIsPartOfPK?@"YES":@"NO"];
+    return [NSString stringWithFormat:@"\nIn sequence column number: %i\nColumn name: %@\nColumn data type: %@\nColumn is\
+ NOT NULL: %@\nColumn default value: %@\nColumn is part of the primary key: %@", colIdx, colName, colType, 
+            colNotNull?@"YES":@"NO", colDefValue, colIsPartOfPK?@"YES":@"NO"];
 }
 
 #pragma mark DBCDatabaseIndexedColumnInfo memory management

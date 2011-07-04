@@ -70,17 +70,23 @@
             const char *columnType = NULL;
             if(databaseEncoding == DBCDatabaseEncodingUTF8) columnName = sqlite3_column_name(statement, i);
             else columnName = sqlite3_column_name16(statement, i);
-            if (columnName != NULL) [colNames addObject:[[NSString stringWithCString:columnName encoding:NSUTF8StringEncoding] lowercaseString]];
+            if (columnName != NULL) 
+                [colNames addObject:[[NSString stringWithCString:columnName 
+                                                        encoding:NSUTF8StringEncoding] lowercaseString]];
             else [colNames addObject:[NSString stringWithFormat:@"%i", i]];
             columnType = sqlite3_column_decltype(statement, i);
             if(columnType != NULL) {
-                NSString *columnTypeName = [[NSString stringWithCString:columnType encoding:NSUTF8StringEncoding] lowercaseString];
-                if([columnTypeName isEqualToString:@"integer"] || [columnTypeName isEqualToString:@"int"] || [columnTypeName isEqualToString:@"number"]) 
+                NSString *columnTypeName = [[NSString stringWithCString:columnType 
+                                                               encoding:NSUTF8StringEncoding] lowercaseString];
+                if([columnTypeName isEqualToString:@"integer"] || [columnTypeName isEqualToString:@"int"] || 
+                   [columnTypeName isEqualToString:@"number"]) 
                     [colTypes addObject:[NSNumber numberWithInt:SQLITE_INTEGER]];
                 else if([columnTypeName isEqualToString:@"float"] || [columnTypeName isEqualToString:@"number"]) 
                     [colTypes addObject:[NSNumber numberWithInt:SQLITE_FLOAT]];
-                else if([columnTypeName isEqualToString:@"text"]) [colTypes addObject:[NSNumber numberWithInt:SQLITE_TEXT]];
-                else if([columnTypeName isEqualToString:@"blob"]) [colTypes addObject:[NSNumber numberWithInt:SQLITE_BLOB]];
+                else if([columnTypeName isEqualToString:@"text"]) 
+                    [colTypes addObject:[NSNumber numberWithInt:SQLITE_TEXT]];
+                else if([columnTypeName isEqualToString:@"blob"]) 
+                    [colTypes addObject:[NSNumber numberWithInt:SQLITE_BLOB]];
                 else [colTypes addObject:[NSNumber numberWithInt:SQLITE_NULL]];
             }
             else [colTypes addObject:[NSNumber numberWithInt:SQLITE_NULL]];
@@ -146,8 +152,10 @@
  * @return formated DBCDatabaseResults instance description
  */
 - (NSString *)description {
-    NSString *executionDuration = queryExecutionDuration==-1.0f?@"":[NSString stringWithFormat:@"Query execution done in %fs\n", queryExecutionDuration];
-    return [NSString stringWithFormat:@"\nResult for: %@\n%@Found: %i records\nColumn names: %@\nResult rows: %@", querySQL, executionDuration, [self count], [colNames componentsJoinedByString:@" | "], rows];
+    NSString *executionDuration = queryExecutionDuration==-1.0f?@"":
+    [NSString stringWithFormat:@"Query execution done in %fs\n", queryExecutionDuration];
+    return [NSString stringWithFormat:@"\nResult for: %@\n%@Found: %i records\nColumn names: %@\nResult rows: %@", 
+            querySQL, executionDuration, [self count], [colNames componentsJoinedByString:@" | "], rows];
 }
 
 #pragma mark DBCDatabaseResultStructure protocol support 

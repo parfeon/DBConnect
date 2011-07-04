@@ -39,8 +39,10 @@
  *      NSString* columnName    - column name
  * @return autoreleased DBCDatabaseIndexedColumnInfo instance
  */
-+ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName {
-    return [[[[self class] alloc] initIndexedColumnInfoWithSequence:columnIndexInIndex inTableSequenceNumber:columnIndexInTable name:columnName] autorelease];
++ (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
+                               name:(NSString*)columnName {
+    return [[[[self class] alloc] initIndexedColumnInfoWithSequence:columnIndexInIndex 
+                                              inTableSequenceNumber:columnIndexInTable name:columnName] autorelease];
 }
 
 /**
@@ -51,7 +53,8 @@
  *      NSString* columnName    - column name
  * @return DBCDatabaseIndexedColumnInfo instance
  */
-- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable name:(NSString*)columnName {
+- (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
+                                   name:(NSString*)columnName {
     if((self = [super init])){
         colIdxInIndex = columnIndexInIndex;
         colIdxInTable = columnIndexInTable;
@@ -65,7 +68,8 @@
  * @return formatted indexed column description
  */
 - (NSString*)description {
-    return [NSString stringWithFormat:@"\nIn index column number: %i\nIn table column index: %i\nColumn name: %@", colIdxInIndex, colIdxInTable, colName];
+    return [NSString stringWithFormat:@"\nIn index column number: %i\nIn table column index: %i\nColumn name: %@", 
+            colIdxInIndex, colIdxInTable, colName];
 }
 
 #pragma mark DBCDatabaseIndexedColumnInfo memory management

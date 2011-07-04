@@ -240,7 +240,7 @@ static int sql_exec(sqlite3 *targetDB, const char *sql, char **pzErrMsg){
  *     const char *pathToFile - full path to file with SQL update commands list
  * @return sqlite exec result code and error information via structure
  */
-int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error) {
+int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error){
     FILE *dumpFile = fopen(pathToFile, "rb");
     char *line = 0;
     char *sql = 0;
@@ -309,13 +309,19 @@ int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continue
                     error->errorCode = SQLITE_GENERAL_PROCESSING_ERROR;
                 }
                 if(zErrMsg!=0){
-                    if(dumpFile!=0) snprintf(error->errorDescription, sizeof(error->errorDescription), "Error near line %d: %s", error->errorLine, zErrMsg);
+                    if(dumpFile!=0) 
+                        snprintf(error->errorDescription, sizeof(error->errorDescription), "Error near line %d: %s", 
+                                 error->errorLine, zErrMsg);
                     else snprintf(error->errorDescription, sizeof(error->errorDescription), "Error: %s", zErrMsg);
                     if(zErrMsg) sqlite3_free(zErrMsg);
                     zErrMsg = 0;
                 } else {
-                    if(dumpFile!=0) snprintf(error->errorDescription, sizeof(error->errorDescription), "Error near line %d: %s", error->errorLine, sqlite3_errmsg(targetDB));
-                    else snprintf(error->errorDescription, sizeof(error->errorDescription), "Error: %s", sqlite3_errmsg(targetDB));
+                    if(dumpFile!=0) 
+                        snprintf(error->errorDescription, sizeof(error->errorDescription), "Error near line %d: %s", 
+                                 error->errorLine, sqlite3_errmsg(targetDB));
+                    else 
+                        snprintf(error->errorDescription, sizeof(error->errorDescription), "Error: %s", 
+                                 sqlite3_errmsg(targetDB));
                 }
                 errorCount++;
             }

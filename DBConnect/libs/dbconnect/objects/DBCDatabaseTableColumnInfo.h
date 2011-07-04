@@ -40,7 +40,11 @@
 @property (nonatomic, readonly, getter = defaultValue)NSString *colDefValue;
 @property (nonatomic, readonly, getter = isPartOfThePrimaryKey)BOOL colIsPartOfPK;
 
-+ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
-- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
++ (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
+              columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue 
+       isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
+- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
+                 columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue 
+          isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
 
 @end

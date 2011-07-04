@@ -41,7 +41,8 @@
  * @return autoreleased DBCDatabaseInfo instance
  */
 + (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile {
-    return [[[[self class] alloc] initDatabaseInfoWithSequence:sequenceNumber name:databaseName filePath:pathToDatabaseFile] autorelease];
+    return [[[[self class] alloc] initDatabaseInfoWithSequence:sequenceNumber name:databaseName 
+                                                      filePath:pathToDatabaseFile] autorelease];
 }
 
 /**
@@ -52,7 +53,8 @@
  *      NSString* pathToDatabaseFile - path to database file
  * @return DBCDatabaseInfo instance
  */
-- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile {
+- (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName 
+                          filePath:(NSString*)pathToDatabaseFile {
     if((self = [super init])){
         dbSeqNumber = sequenceNumber;
         dbName = [databaseName copy];
@@ -66,7 +68,8 @@
  * @return formatted database connection description
  */
 - (NSString*)description {
-    return [NSString stringWithFormat:@"\nSequence number: %i\nDatabase name: %@\nDatabase file path: %@", dbSeqNumber, dbName, dbFilePath];
+    return [NSString stringWithFormat:@"\nSequence number: %i\nDatabase name: %@\nDatabase file path: %@", dbSeqNumber, 
+            dbName, dbFilePath];
 }
 
 #pragma mark DBCDatabaseInfo memory management
