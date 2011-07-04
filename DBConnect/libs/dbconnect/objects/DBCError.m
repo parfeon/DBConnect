@@ -66,7 +66,7 @@
     if(errorCode == SQLITE_GENERAL_PROCESSING_ERROR)                return @"SQL Error.";
     if(errorCode == DBC_TARGET_FILE_MISSED)                         return @"File not exists on provided path.";
     if(errorCode == DBC_WRONG_BINDING_PARMETERS_COUNT)              return @"Not enough binding parameters was passed to statement";
-    if(errorCode == DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE)    return @"Can't create folder for mutable database file storage";
+    if(errorCode == DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE)    return @"Can't create folder for mutable database file on storage";
     if(errorCode == DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION)    return @"Can't copy database file to new location";
     if(errorCode == DBC_CANT_REMOVE_CREATED_CORRUPTED_DATABASE_FILE)return @"Can't remove corrupted database file because of some file manager error";
     if(errorCode == DBC_DATABASE_PATH_NOT_SPECIFIED)                return @"SQLite database filepath not specified";

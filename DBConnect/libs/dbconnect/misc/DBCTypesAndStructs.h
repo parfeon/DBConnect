@@ -24,39 +24,39 @@
 
 // Supported sqlite database encodings
 typedef enum _DBCDatabaseEncoding {
-    DBCDatabaseEncodingUTF8,
-    DBCDatabaseEncodingUTF16
+    DBCDatabaseEncodingUTF8 = 0,
+    DBCDatabaseEncodingUTF16 = 1,
 } DBCDatabaseEncoding;
 
 // Supported sqlite database journaling modes
 typedef enum _DBCDatabaseJournalingMode {
-    DBCDatabaseJournalingModeDelete,
-    DBCDatabaseJournalingModeTruncate,
-    DBCDatabaseJournalingModePersist,
-    DBCDatabaseJournalingModeMemory,
-    DBCDatabaseJournalingModeOff
+    DBCDatabaseJournalingModeDelete = 0,
+    DBCDatabaseJournalingModeTruncate = 1,
+    DBCDatabaseJournalingModePersist = 2,
+    DBCDatabaseJournalingModeMemory = 3,
+    DBCDatabaseJournalingModeOff = 4,
 } DBCDatabaseJournalingMode;
 
 // Supported sqlite database locking modes
 typedef enum _DBCDatabaseLockingMode {
-    DBCDatabaseLockingModeNormal,
-    DBCDatabaseLockingModeExclusive
+    DBCDatabaseLockingModeNormal = 0,
+    DBCDatabaseLockingModeExclusive = 1,
 } DBCDatabaseLockingMode;
 
 // Supported sqlite database transaction locks
 typedef enum _DBCDatabaseTransactionLock {
-    DBCDatabaseAutocommitModeDeferred,
-    DBCDatabaseAutocommitModeImmediate,
-    DBCDatabaseAutocommitModeExclusive
+    DBCDatabaseAutocommitModeDeferred = 0,
+    DBCDatabaseAutocommitModeImmediate = 1,
+    DBCDatabaseAutocommitModeExclusive = 2,
 } DBCDatabaseTransactionLock;
 
 // SQL statement parameters token format
 typedef enum _SQLStatementFromat {
-    SQLStatementFromatUnknown,
-    SQLStatementFromatNSStringFormat,
-    SQLStatementFromatAnonymousToken,
-    SQLStatementFromatIndexedToken,
-    SQLStatementFromatNamedToken
+    SQLStatementFromatUnknown = 0,
+    SQLStatementFromatNSStringFormat = 1,
+    SQLStatementFromatAnonymousToken = 2,
+    SQLStatementFromatIndexedToken = 3,
+    SQLStatementFromatNamedToken = 4,
 } SQLStatementFromat;
 
 // SQLite lib error structure
