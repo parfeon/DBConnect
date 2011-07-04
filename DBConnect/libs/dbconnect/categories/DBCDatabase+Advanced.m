@@ -304,7 +304,7 @@
             if(resultCode == SQLITE_LOCKED || resultCode == SQLITE_BUSY){
                 shouldRetry = YES;
                 sqlite3_sleep(150);
-            } else {
+            } else if(resultCode != SQLITE_DONE){
                 sqlite3_backup_finish(backup);
                 recentErrorCode = resultCode;
                 *error = [[DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
@@ -319,7 +319,7 @@
     }
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Restore] Relinquished from previously acquired lock (Line: %d)", __LINE__);
-    return resultCode==SQLITE_OK;
+    return resultCode==SQLITE_DONE;
 }
 
 /**
@@ -489,7 +489,7 @@
     }
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Backup] Relinquished from previously acquired lock (Line: %d)", __LINE__);
-    return resultCode==SQLITE_OK;
+    return resultCode==SQLITE_DONE;
 }
 
 #pragma mark Transaction journal
@@ -767,7 +767,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 #pragma mark Database functions registration/unregistration
@@ -800,7 +800,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 /**
@@ -827,7 +827,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 /**
@@ -860,7 +860,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 /**
@@ -887,7 +887,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 /**
@@ -920,7 +920,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 /**
@@ -948,7 +948,7 @@
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)] autorelease];
         DBCDebugLogger(@"[DBC:Module] Can't register module due to error: %@", *error);
     }
-    return returnCode==SQLITE_OK;
+    return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
 @end

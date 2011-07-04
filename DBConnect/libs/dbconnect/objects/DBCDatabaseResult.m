@@ -28,7 +28,7 @@
 #import "DBCMacro.h"
 
 @implementation DBCDatabaseResult
-@synthesize queryExecutionDuration;
+@synthesize queryExecutionDuration, querySQL, colNames, count;
 
 #pragma mark DBCDatabaseResult instance creation/initialization
 
@@ -97,14 +97,6 @@
  */
 - (int)count {
     return [rows count];
-}
-
-/**
- * Retrieve list of columns names
- * @return list of columns names
- */
-- (NSArray*)columnNames {
-    return colNames;
 }
 
 #pragma mark Result row management

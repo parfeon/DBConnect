@@ -53,12 +53,13 @@
     DBCDatabaseEncoding dbEncoding;
 }
 @property (nonatomic, assign)NSTimeInterval queryExecutionDuration;
+@property (nonatomic, readonly, getter = query)NSString *querySQL;
+@property (nonatomic, readonly, getter = columnNames)NSArray *colNames;
+@property (nonatomic, readonly)int count;
 
 +(id)resultWithPreparedStatement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding;
 - (id)initWidthPreparedSatetement:(sqlite3_stmt*)statement encoding:(DBCDatabaseEncoding)databaseEncoding;
 
-- (int)count;
-- (NSArray*)columnNames;
 - (void)addRowFromStatement:(sqlite3_stmt*)statement;
 - (DBCDatabaseRow*)rowAtIndex:(int)rowIdx;
 

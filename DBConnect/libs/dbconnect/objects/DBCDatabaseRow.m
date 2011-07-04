@@ -39,7 +39,7 @@
  * @return autoreleased DBCDatabaseRow instance
  */
 + (id)rowWithStatement:(sqlite3_stmt*)statement dataStructureDelegate:(id<DBCDatabaseResultStructure>)dsDelegate {
-    return [[[self class] alloc] initRowWithStatement:statement dataStructureDelegate:dsDelegate];
+    return [[[[self class] alloc] initRowWithStatement:statement dataStructureDelegate:dsDelegate] autorelease];
 }
 
 /**

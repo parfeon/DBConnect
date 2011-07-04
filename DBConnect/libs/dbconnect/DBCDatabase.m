@@ -253,6 +253,7 @@
     BOOL opened = [self openWithFlags:SQLITE_OPEN_READONLY error:error];
     if(opened){
         [self setJournalMode:DBCDatabaseJournalingModeOff error:error];
+        [self setJournalMode:DBCDatabaseJournalingModeOff forDatabase:@"main" error:error];
     }
     return opened;
 }
@@ -727,8 +728,11 @@
         if(statementsCachingEnabled && dbcStatement == nil){
             dbcStatement = [[DBCStatement alloc] initWithSQLQuery:statementCacheKey];
             [dbcStatement setStatement:statement];
+            [dbcStatement reset];
             [self addStatementToCache:dbcStatement];
             DBCReleaseObject(dbcStatement);
+        } else if(statementsCachingEnabled) {
+            [dbcStatement reset];
         } else if(!statementsCachingEnabled) sqlite3_finalize(statement);
     }
     [queryLock unlock];
@@ -863,8 +867,11 @@
         if(statementsCachingEnabled && dbcStatement == nil){
             dbcStatement = [[DBCStatement alloc] initWithSQLQuery:statementCacheKey];
             [dbcStatement setStatement:statement];
+            [dbcStatement reset];
             [self addStatementToCache:dbcStatement];
             DBCReleaseObject(dbcStatement);
+        } else if(statementsCachingEnabled) {
+            [dbcStatement reset];
         } else if(!statementsCachingEnabled) sqlite3_finalize(statement);
     }
 #if DBCShouldProfileQuery
