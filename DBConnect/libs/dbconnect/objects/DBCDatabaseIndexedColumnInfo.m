@@ -31,28 +31,12 @@
 
 #pragma mark DBCDatabaseIndexedColumnInfo instance initialization
 
-/**
- * Initiate DBCDatabaseIndexedColumnInfo instance
- * @parameters
- *      int columnIndexInIndex  - column index inside index
- *      int columnIndexInTable  - column index inside table
- *      NSString* columnName    - column name
- * @return autoreleased DBCDatabaseIndexedColumnInfo instance
- */
 + (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
                                name:(NSString*)columnName {
     return [[[[self class] alloc] initIndexedColumnInfoWithSequence:columnIndexInIndex 
                                               inTableSequenceNumber:columnIndexInTable name:columnName] autorelease];
 }
 
-/**
- * Initiate DBCDatabaseIndexedColumnInfo instance
- * @parameters
- *      int columnIndexInIndex  - column index inside index
- *      int columnIndexInTable  - column index inside table
- *      NSString* columnName    - column name
- * @return DBCDatabaseIndexedColumnInfo instance
- */
 - (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
                                    name:(NSString*)columnName {
     if((self = [super init])){
@@ -63,10 +47,8 @@
     return self;
 }
 
-/**
- * Get formatted indexed column description
- * @return formatted indexed column description
- */
+#pragma mark DBCDatabaseIndexedColumnInfo for NSLog
+
 - (NSString*)description {
     return [NSString stringWithFormat:@"\nIn index column number: %i\nIn table column index: %i\nColumn name: %@", 
             colIdxInIndex, colIdxInTable, colName];
@@ -74,9 +56,6 @@
 
 #pragma mark DBCDatabaseIndexedColumnInfo memory management
 
-/**
- * Deallocate indexed column information and release all retained memory
- */
 - (void)dealloc {
     DBCReleaseObject(colName);
     [super dealloc];

@@ -39,26 +39,139 @@
 
 #pragma mark DDL and DML methods
 
+/**
+ * Execute prepared update SQL statement on current database connection
+ * @parameters
+ *      NSString *sqlUpdate     - SQL udpdate command
+ *      NSArray *bindingMapData - binding map data
+ *      DBCError **error        - if an error occurs, upon return contains an DBCError 
+ *                                object that describes the problem. Pass NULL if you 
+ *                                do not want error information.
+ * @return update request execution result
+ */
 - (BOOL)executeUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error;
+
+/**
+ * Execute prepared query SQL statement on current database connection
+ * @parameters
+ *      NSString *sqlQuery      - SQL query command
+ *      NSArray *bindingMapData - binding map data
+ *      DBCError **error        - if an error occurs, upon return contains an DBCError 
+ *                                object that describes the problem. Pass NULL if you 
+ *                                do not want error information.
+ * @return query resultts if execution successfull or nil in case of error
+ */
 - (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData 
                              error:(DBCError**)error;
 
+/**
+ * Bind statement to parameters list
+ * @parameters
+ *      sqlite3_stmt *statement - statement which will be bound to parameters
+ *      NSArray *bindingMapData - binding map data
+ *      int *offset             - parameters offfset pointer
+ * @return binding result code
+ */
 - (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData 
     parametersOffset:(int*)offset;
+
+/**
+ * Bind object at specific index for provided statement
+ * @parameters
+ *      id object               - object what should be bound to statement
+ *      int index               - object bind index
+ *      sqlite3_stmt *statement - statement which will be bound to object
+ * @return binding result code
+ */
 - (int)bindObject:(id)object atIndex:(int)index inStatement:(sqlite3_stmt*)statement;
+
+#pragma mark DBCStatement caching
+
+/**
+ * Add statement into the statements cache
+ * @parameters
+ *      DBCStatement *statement - initialized and configured DBCStatement instance
+ */
 - (void)addStatementToCache:(DBCStatement*)statement;
+
+/**
+ * Remove DBCSatement from statements cache
+ * @parameters
+ *      DBCStatement *statement - initialized and configured DBCStatement instance
+ */
 - (void)removeStatementFromChache:(DBCStatement*)statement;
+
+/**
+ * Retrieve cached statement for specific SQL query
+ * @parameters
+ *      NSString *sqlRequest - SQL statement for which need to find coresponding compiled statement
+ * @return cached DBCStatement if it was added before
+ */
 - (DBCStatement*)getCachedStatementFor:(NSString*)sqlRequest;
 
 #pragma mark DBCDatabase private getter/setter methods
 
+/**
+ * Get whether provided statement won't modify data or not
+ * @parameters
+ *      NSString *sqlQuery - SQL statements which will be examined
+ * @return YES if statement won't change data, otherwise NO
+ */
 - (BOOL)nonDMLStatement:(NSString*)sqlQuery;
+
+/**
+ * Get whether current database connection opened in read-only mode or not
+ * @return YES if database connection opened in 'read-only' mode in other case NO
+ */
 - (BOOL)isDatabaseConnectionForReadOnlyMode;
+
+/**
+ * Get SQL statement format style
+ * @parameters
+ *      NSString *sqlStatement - SQL statement
+ * @return SQL statement format style
+ */
 - (SQLStatementFromat)getSQLStatementType:(NSString*)sqlStatement;
+
+/**
+ * Extract statements list from SQL statement
+ * @parameters
+ *      NSString *sql - SQL query string
+ * @return commands list
+ */
 - (NSArray*)getSQLStatementsSequence:(NSString*)sql;
+
+/**
+ * Get parameters token count in SQL statement
+ * @parameters
+ *      NSString* sql - SQL statement
+ * @return count of parameters token
+ */
 - (int)getSQLStatementParametersCount:(NSString*)sql;
+
+/**
+ * Get parameters mapping information (values and mapping indices)
+ * @parameters
+ *      NSString *sqlStatement - SQL statement
+ *      va_list parameters     - list of parameters
+ * @return parameters mapping data
+ */
 - (NSDictionary*)getParametersBindingMapData:(NSString*)sqlStatement vaList:(va_list)parameters;
+
+/**
+ * Get whether statements list contains at least one of TCL commands
+ * @parameters
+ *      NSArray *commandsList - list of SQL statements in which we will search TCL
+ * @return whether statements list contains TCL commands or not
+ */
 - (BOOL)SQLStatementsSequenceContainsTCL:(NSArray*)commandsList;
+
+/**
+ * Get class of current item in variable list
+ * @parameters
+ *      va_list parameters     - list of parameters
+ * @return class of parameter stored in variable list
+ */
 - (Class)getVAItemClass:(va_list)parameters;
 
 @end
@@ -70,45 +183,14 @@
 
 #pragma mark DBCDatabase instance initialization
 
-/**
- * Create and initiate DBCDatabase by opening database, which exists at 'dbFilePath' 
- * with default encoding (UTF-8)
- * @parameters
- *      NSString *dbFilePath         - sqlite database file path
- * @return autoreleased DBCDatabase instance
- */
 + (id)databaseWithPath:(NSString*)dbFilePath {
     return [DBCDatabase databaseWithPath:dbFilePath defaultEncoding:DBCDatabaseEncodingUTF8];
 }
 
-/**
- * Create and initiate DBCDatabase by opening database, which exists at 'dbFilePath' 
- * @parameters
- *      NSString *dbFilePath         - sqlite database file path
- *      DBCDatabaseEncoding encoding - default encoding which will be used, when 
- *                                     exists ability to use differenc C API for 
- *                                     different encodings
- * @return autoreleased DBCDatabase instance
- */
 + (id)databaseWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding {
     return [[[[self class] alloc] initWithPath:dbFilePath defaultEncoding:encoding] autorelease];
 }
 
-/**
- * Create and initiate DBCDatabase from sqlite database file, which will be created at
- * specified path and SQL statements list from provided file. Will be used default encoding
- * @oarameters
- *      NSString *sqlStatementsListFilepath - path to file with list of SQL statements list
- *      NSString *dbFilePath                - sqlite database file target location
- *      BOOL      continueOnExecutionErrors - should continue creation on execution 
- *                                            update request error
- *      DBCError **error                    - if an error occurs, upon return contains an DBCError 
- *                                            object that describes the problem. Pass NULL if you 
- *                                            do not want error information.
- * WARNING: databasePath can't be same as application bundle, use application
- *          Documents folder instead
- * @return autoreleased DBCDatabase instance
- */
 + (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath
 continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)error {
     return [DBCDatabase databaseFromFile:sqlStatementsListFilepath atPath:dbFilePath 
@@ -116,24 +198,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                                    error:error];
 }
 
-/**
- * Create and initiate DBCDatabase from sqlite database file, which will be created at
- * specified path and SQL statements list from provided file.
- * @oarameters
- *      NSString *sqlStatementsListFilepath - path to file with list of SQL statements list
- *      NSString *dbFilePath                - sqlite database file target location
- *      DBCDatabaseEncoding encoding        - default encoding which will be used, when 
- *                                            exists ability to use differenc C API for 
- *                                            different encodings
- *      BOOL     continueOnExecutionErrors  - should continue creation on execution 
- *                                            update request error
- *      DBCError **error                    - if an error occurs, upon return contains an DBCError 
- *                                            object that describes the problem. Pass NULL if you 
- *                                            do not want error information.
- * WARNING: databasePath can't be same as application bundle, use application
- *          Documents folder instead
- * @return autoreleased DBCDatabase instance
- */
 + (id)databaseFromFile:(NSString*)sqlStatementsListFilepath atPath:(NSString*)dbFilePath
        defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
                  error:(DBCError**)error {
@@ -142,15 +206,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                                                    error:error] autorelease];
 }
 
-/**
- * Initiate DBCDatabase by opening sqlite database file, which exists at 'dbFilePath' 
- * @parameters
- *      NSString *dbFilePath         - sqlite database file path
- *      DBCDatabaseEncoding encoding - default encoding which will be used, when 
- *                                     exists ability to use differenc C API for 
- *                                     different encodings
- * @return DBCDatabase instance
- */
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding {
     if((self = [super init])){
         [self setCreateTransactionOnSQLSequences:YES];
@@ -177,24 +232,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return self;
 }
 
-/**
- * Initiate DBCDatabase from sqlite database file, which will be created at
- * specified path and SQL query commands list from provided file.
- * @oarameters
- *      NSString *sqlQeryListPath          - path to file with list of SQL query commands list
- *      NSString *dbFilePath               - sqlite database file target location
- *      DBCDatabaseEncoding encoding       - default encoding which will be used, when 
- *                                           exists ability to use differenc C API for 
- *                                           different encodings
- *      BOOL     continueOnExecutionErrors - should continue creation on execution 
- *                                           update request error
- *      DBCError **error                   - if an error occurs, upon return contains an DBCError 
- *                                           object that describes the problem. Pass NULL if you 
- *                                           do not want error information.
- * WARNING: databasePath can't be same as application bundle, use application
- *          Documents folder instead
- * @return DBCDatabase instance
- */
 - (id)createDatabaseFromFile:(NSString*)sqlQeryListPath atPath:(NSString*)dbFilePath 
              defaultEncoding:(DBCDatabaseEncoding)encoding continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
                        error:(DBCError**)error {
@@ -240,30 +277,10 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 
 #pragma mark Database open and close
 
-/**
- * Open new database connection to sqlite database file at path, which was 
- * provided in init
- * Connection will be opened with 'readwrite|create' right
- * @oarameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether database connection was successfully opened or not
- */
 - (BOOL)openError:(DBCError**)error {
     return [self openWithFlags:SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE error:error];
  }
 
-/**
- * Open new database connection to sqlite database file at path, which was 
- * provided in init
- * Connection will be opened with 'readonly' rights
- * @oarameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether database connection was successfully opened or not
- */
 - (BOOL)openReadonlyError:(DBCError**)error {
     BOOL opened = [self openWithFlags:SQLITE_OPEN_READONLY error:error];
     if(opened){
@@ -273,16 +290,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return opened;
 }
 
-
-/**
- * Copy currently opened sqlite database file to provided location assuming what
- * it is outside of application bundle and reopen connection with 'read-write' rights
- * @parameters
- *      NSString *mutableDatabaseStoreDestination - database file copy destination
- *      DBCError **error                          - if an error occurs, upon return contains an DBCError 
- *                                                  object that describes the problem. Pass NULL if you 
- *                                                  do not want error information.
- */
 - (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination error:(DBCError**)error {
     if(dbPath == nil) {
         recentErrorCode = DBC_DATABASE_PATH_NOT_SPECIFIED;
@@ -335,14 +342,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return (shouldReopen?[self openError:error]:YES);
 }
 
-/**
- * Close database connection to sqlite database file if it was opened
- * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether database connection was successfully closed or not
- */
 - (BOOL)closeError:(DBCError**)error {
     DBCLockLogger(@"[DBC:close] Waiting for Lock (Line: %d)", __LINE__);
     [queryLock lock];
@@ -389,16 +388,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 
 #pragma mark DDL and DML methods
 
-/**
- * Execute prepared SQL statement on current database connection
- * @parameters
- *      NSString *sqlUpdate - SQL query command
- *      DBCError **error    - if an error occurs, upon return contains an DBCError 
- *                            object that describes the problem. Pass NULL if you 
- *                            do not want error information.
- *               ...        - list of binding parameters
- * @return whether update request was successfully execution or not
- */
 - (BOOL)executeUpdate:(NSString*)sqlUpdate error:(DBCError**)error, ... {
     recentErrorCode = SQLITE_OK;
     va_list parameters;
@@ -414,16 +403,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return [self executeUpdate:sqlUpdate withBindingMapData:parametersBindingMap error:error];
 }
 
-/**
- * Execute prepared SQL statement on current database connection
- * @parameters
- *      NSString *sqlQuery  - SQL query command
- *      DBCError **error    - if an error occurs, upon return contains an DBCError 
- *                            object that describes the problem. Pass NULL if you 
- *                            do not want error information.
- *               ...        - list of binding parameters
- * @return query resultts if execution successfull or nil in case of error
- */
 - (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery error:(DBCError**)error, ... {
     recentErrorCode = SQLITE_OK;
     va_list parameters;
@@ -439,16 +418,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return [self executeQuery:sqlQuery withBindingMapData:parametersBindingMap error:error];
 }
 
-/**
- * Execute statements list from external file on current database connection
- * @parameters
- *      NSString *statementsFilePath   - sqlite database file path
- *      BOOL continueOnExecutionErrors - should continue statements execution on errors
- *      DBCError **error               - if an error occurs, upon return contains an DBCError 
- *                                       object that describes the problem. Pass NULL if you 
- *                                       do not want error information.
- * @return whether eavluate was successfull or not (always YES if set continueOnExecutionErrors)
- */
 - (BOOL)executeStatementsFromFile:(NSString*)statementsFilePath continueOnExecutionErrors:(BOOL)continueOnExecutionErrors 
                             error:(DBCError**)error {
     recentErrorCode = SQLITE_OK;
@@ -489,10 +458,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 
 #pragma mark TCL methods
 
-/**
- * Move database connection from 'autocommit' mode and begin default transaction
- * @return whether transaction was started or not
- */
 - (BOOL)beginTransactionError:(DBCError**)error {
     NSString *lock = nil;
     if(DBCDatabaseTransactionLockNameFromEnum(defaultSQLSequencesTransactionLock)!=nil) 
@@ -501,74 +466,28 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return [self executeUpdate:[NSString stringWithFormat:@"BEGIN %@ TRANSACTION;", lock] error:error, nil];
 }
 
-/**
- * Move database connection from 'autocommit' mode and begin deferred transaction
- * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether transaction was started or not
- */
 - (BOOL)beginDeferredTransactionError:(DBCError**)error {
     return [self executeUpdate:@"BEGIN DEFERRED TRANSACTION;" error:error, nil];
 }
 
-/**
- * Move database connection from 'autocommit' mode and begin immediate transaction
- * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether transaction was started or not
- */
 - (BOOL)beginImmediateTransactionError:(DBCError**)error {
     return [self executeUpdate:@"BEGIN IMMEDIATE TRANSACTION;" error:error, nil];
 }
 
-/**
- * Move database connection from 'autocommit' mode and begin exclusive transaction
- * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether transaction was started or not
- */
 - (BOOL)beginExclusiveTransactionError:(DBCError**)error {
     return [self executeUpdate:@"BEGIN EXCLUSIVE TRANSACTION;" error:error, nil];
 }
 
-/**
- * Move database connection back to 'autocommit' mode and commit all changes made in 
- * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * transaction
- * @return whether transactoin changes commit was successfull or not
- */
 - (BOOL)commitTransactionError:(DBCError**)error {
     return [self executeUpdate:@"COMMIT TRANSACTION;" error:error, nil];
 }
 
-/**
- * Try rollback current transaction
- * @parameters
- *      DBCError **error - if an error occurs, upon return contains an DBCError 
- *                         object that describes the problem. Pass NULL if you 
- *                         do not want error information.
- * @return whether rollback was successfull or not
- */
 - (BOOL)rollbackTransactionError:(DBCError**)error {
     return [self executeUpdate:@"ROLLBACK TRANSACTION;" error:error, nil];
 }
 
 #pragma mark DBCDatabase getter/setter methods
 
-/**
- * Reloaded statement caching enable method
- * @parameters
- *      BOOL sCacheStatements - caching flag
- */
 - (void)setStatementsCachingEnabled:(BOOL)sCacheStatements {
     DBCLockLogger(@"[DBC:StatementCache] Waiting for Lock (Line: %d)", __LINE__);
     [queryLock lock];
@@ -581,10 +500,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     DBCLockLogger(@"[DBC:StatementCache] Relinquished from previously acquired lock (Line: %d)", __LINE__);
 }
 
-/**
- * Retrieve reference on opened dstabase connection handler instance
- * @return reference on opened database connection handler instance
- */
 - (sqlite3*)database {
     if(!dbConnectionOpened) return NULL;
     return dbConnection;
@@ -612,13 +527,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 
 #pragma mark DDL and DML methods
 
-/**
- * Execute prepared update SQL statement on current database connection
- * @parameters
- *      NSString *sqlUpdate - SQL udpdate command
- *      NSArray *parameters - list of binding parameters
- * @return update request execution result
- */
 - (BOOL)executeUpdate:(NSString*)sqlUpdate withBindingMapData:(NSDictionary*)bindingMapData error:(DBCError**)error {
     DBCDebugLogger(@"[DBC:Update] Binding map data: %@", bindingMapData);
     if([self isDatabaseConnectionForReadOnlyMode] && ![self nonDMLStatement:sqlUpdate]) {
@@ -773,13 +681,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
 }
 
-/**
- * Execute prepared query SQL statement on current database connection
- * @parameters
- *      NSString *sqlUpdate - SQL query command
- *      NSArray *parameters - list of binding parameters
- * @return query resultts if execution successfull or nil in case of error
- */
 - (DBCDatabaseResult*)executeQuery:(NSString*)sqlQuery withBindingMapData:(NSDictionary*)bindingMapData 
                              error:(DBCError**)error {
     DBCDebugLogger(@"[DBC:Query] Binding map data: %@", bindingMapData);
@@ -926,13 +827,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return result;
 }
 
-/**
- * Bind statement to parameters list
- * @parameters
- *      sqlite3_stmt *statement - statement which will be bound to parameters
- *      NSArray *parameters     - list of parameters for binding
- * @return binding result code
- */
 - (int)bindStatement:(sqlite3_stmt*)statement accordingToBindingMapData:(NSDictionary*)bindingMapData 
     parametersOffset:(int*)offset {
     int returnCode = SQLITE_OK;
@@ -957,14 +851,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return returnCode;
 }
 
-/**
- * Bind object at specific index for provided statement
- * @parameters
- *      id object               - object what should be bound to statement
- *      int index               - object bind index
- *      sqlite3_stmt *statement - statement which will be bound to object
- * @return binding result code
- */
 - (int)bindObject:(id)object atIndex:(int)index inStatement:(sqlite3_stmt*)statement {
     int returnCode = SQLITE_OK;
     if(!object || [object isMemberOfClass:[NSNull class]]){
@@ -1025,13 +911,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return returnCode;
 }
 
-#pragma mark Statements caching
+#pragma mark DBCStatement caching
 
-/**
- * Add statement into the statements cache
- * @parameters
- *      DBCStatement *statement - initialized and configured DBCStatement instance
- */
 - (void)addStatementToCache:(DBCStatement*)statement  {
     const char *cSQL = sqlite3_sql([statement statement]);
     if(cSQL != NULL) {
@@ -1040,11 +921,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     }
 }
 
-/**
- * Remove DBCSatement from statements cache
- * @parameters
- *      DBCStatement *statement - initialized and configured DBCStatement instance
- */
 - (void)removeStatementFromChache:(DBCStatement*)statement {
     const char *cSQL = sqlite3_sql([statement statement]);
     if(cSQL != NULL && cachedStatementsList != nil) {
@@ -1059,12 +935,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     }
 }
 
-/**
- * Retrieve cached statement for specific SQL query
- * @parameters
- *      NSString *sqlRequest - SQL statement for which need to find coresponding compiled statement
- * @return cached DBCStatement if it was added before
- */
 - (DBCStatement*)getCachedStatementFor:(NSString*)sqlRequest {
     if(sqlRequest==nil || cachedStatementsList == nil) return nil;
     DBCLockLogger(@"[DBC:StatementCache] Waiting for Lock: %@ (Line: %d)", [sqlRequest md5], __LINE__);
@@ -1079,12 +949,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 
 #pragma mark DBCDatabase private getter/setter methods
 
-/**
- * Get whether provided statement won't modify data or not
- * @parameters
- *      NSString *sqlQuery - SQL statements which will be examined
- * @return YES if statement won't change data, otherwise NO
- */
 - (BOOL)nonDMLStatement:(NSString*)sqlQuery {
     NSArray *statementsList = [self getSQLStatementsSequence:sqlQuery];
     int i, count1 = [statementsList count];
@@ -1117,20 +981,10 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return !isDML;
 }
 
-/**
- * Get whether current database connection opened in read-only mode or not
- * @return YES if database connection opened in 'read-only' mode in other case NO
- */
 - (BOOL)isDatabaseConnectionForReadOnlyMode {
     return dbFlags&SQLITE_OPEN_READONLY;
 }
 
-/**
- * Get SQL statement format style
- * @parameters
- *      NSString *sqlStatement - SQL statement
- * @return SQL statement format style
- */
 - (SQLStatementFromat)getSQLStatementType:(NSString*)sqlStatement {
     SQLStatementFromat format = SQLStatementFromatUnknown;
     if(sqlStatement == nil) return format;
@@ -1164,12 +1018,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return format;
 }
 
-/**
- * Extract statements list from SQL statement
- * @parameters
- *      NSString *sql - SQL query string
- * @return commands list
- */
 - (NSArray*)getSQLStatementsSequence:(NSString*)sql {
     NSMutableArray *commandsList = [NSMutableArray array];
     NSArray *splittedCommands = [sql componentsSeparatedByString:@";"];
@@ -1181,12 +1029,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return commandsList;
 }
 
-/**
- * Get parameters token count in SQL statement
- * @parameters
- *      NSString* sql - SQL statement
- * @return count of parameters token
- */
 - (int)getSQLStatementParametersCount:(NSString*)sql {
     int tokensCount = 0;
     unichar lastChar = '\0';
@@ -1205,13 +1047,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return tokensCount;
 }
 
-/**
- * Get parameters mapping information (values and mapping indices)
- * @parameters
- *      NSString *sqlStatement - SQL statement
- *      va_list parameters     - list of parameters
- * @return parameters mapping data
- */
 - (NSDictionary*)getParametersBindingMapData:(NSString*)sqlStatement vaList:(va_list)parameters {
     NSMutableDictionary *mappingData = [NSMutableDictionary dictionary];
     NSMutableString *newSQLStatement = [NSMutableString string];
@@ -1498,10 +1333,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return mappingData;
 }
 
-/**
- * Get whether statements list contains at least one of TCL commands
- * @return whether statements list contains TCL commands or not
- */
 - (BOOL)SQLStatementsSequenceContainsTCL:(NSArray*)commandsList {
     if(!commandsList) return NO;
     if([commandsList count] == 0) return NO;
@@ -1518,10 +1349,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return containsTCL;
 }
 
-/**
- * Get class of current item in variable list
- * @return class of parameter stored in variable list
- */
 - (Class)getVAItemClass:(va_list)parameters {
     Class class = nil;
     va_list parametersCopy;

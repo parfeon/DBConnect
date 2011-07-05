@@ -34,15 +34,90 @@
     
 }
 
+/**
+ * Return SQLite error description by error code
+ * @parameters
+ *      int errorCode - SQLite error code
+ * @return stringified error code value
+ */
 + (NSString*)errorDescriptionByCode:(int)errorCode;
+
+#pragma mark DBCError instance initialization
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code - error code
+ * @return initialized autoreleased DBCError instance
+ */
 + (id)errorWithErrorCode:(NSInteger)code;
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code     - error code
+ *      NSString *filePath - path to file, which was reason of the error
+ * @return initialized autoreleased DBCError instance
+ */
 + (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code                  - error code
+ *      NSString *filePath              - path to file, which was reason of the error
+ *      NSString *additionalInformation - additional error information
+ * @return initialized autoreleased DBCError instance
+ */
 + (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath 
    additionalInformation:(NSString*)additionalInformation;
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code - error code
+ * @return initialized DBCError instance
+ */
 - (id)initWithErrorCode:(NSInteger)code;
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code     - error code
+ *      NSString *filePath - path to file, which was reason of the error
+ * @return initialized DBCError instance
+ */
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath;
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code                  - error code
+ *      NSString *filePath              - path to file, which was reason of the error
+ *      NSString *additionalInformation - additional error information
+ * @return initialized DBCError instance
+ */
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath 
   additionalInformation:(NSString*)additionalInformation;
+
+/**
+ * Initiate DBCError instance
+ * @parameters
+ *      NSInteger code                  - error code
+ *      NSString *errorDomain           - error domain
+ *      NSString *filePath              - path to file, which was reason of the error
+ *      NSString *additionalInformation - additional error information
+ * @return initialized DBCError instance
+ */
 - (id)initWithErrorCode:(NSInteger)code errorDomain:(NSString*)errorDomain 
             forFilePath:(NSString*)filePath additionalInformation:(NSString*)additionalInformation;
+
+#pragma mark DBCError for NSLog
+
+/**
+ * Stringify DBCError instance
+ * @return stringified DBCError instance
+ */
+- (NSString*)description;
+
 @end

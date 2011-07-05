@@ -19,4 +19,11 @@
 
 #pragma mark SQL dump file import routine
 
+/**
+ * Execute SQL update commands list from file on opened database connection
+ * @prameters
+ *     sqlite3 *targetDB      - opened database connection handler
+ *     const char *pathToFile - full path to file with SQL update commands list
+ * @return sqlite exec result code and error information via structure
+ */
 int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error);

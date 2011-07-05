@@ -34,8 +34,43 @@
 @property (nonatomic, readonly, getter = indexInTable)int colIdxInTable;
 @property (nonatomic, readonly, getter = name)NSString *colName;
 
+#pragma mark DBCDatabaseIndexedColumnInfo instance initialization
+
+/**
+ * Initiate DBCDatabaseIndexedColumnInfo instance
+ * @parameters
+ *      int columnIndexInIndex  - column index inside index
+ *      int columnIndexInTable  - column index inside table
+ *      NSString* columnName    - column name
+ * @return autoreleased DBCDatabaseIndexedColumnInfo instance
+ */
 + (id)indexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
                                name:(NSString*)columnName;
+
+/**
+ * Initiate DBCDatabaseIndexedColumnInfo instance
+ * @parameters
+ *      int columnIndexInIndex  - column index inside index
+ *      int columnIndexInTable  - column index inside table
+ *      NSString* columnName    - column name
+ * @return DBCDatabaseIndexedColumnInfo instance
+ */
 - (id)initIndexedColumnInfoWithSequence:(int)columnIndexInIndex inTableSequenceNumber:(int)columnIndexInTable 
                                    name:(NSString*)columnName;
+
+#pragma mark DBCDatabaseIndexedColumnInfo for NSLog
+
+/**
+ * Get formatted indexed column description
+ * @return formatted indexed column description
+ */
+- (NSString*)description;
+
+#pragma mark DBCDatabaseIndexedColumnInfo memory management
+
+/**
+ * Deallocate indexed column information and release all retained memory
+ */
+- (void)dealloc;
+
 @end

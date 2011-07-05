@@ -34,7 +34,41 @@
 @property (nonatomic, readonly, getter = name)NSString *idxName;
 @property (nonatomic, readonly, getter = isUnique)BOOL idxUnique;
 
+#pragma mark DBCDatabaseIndexInfo instance initialization
+
+/**
+ * Initiate DBCDatabaseIndexInfo instance
+ * @parameters
+ *      int sequenceNumber  - index sequence number in list of other indices
+ *      NSString* indexName - index name
+ *      BOOL isUnique       - unique
+ * @return autoreleased DBCDatabaseIndexInfo instance
+ */
 + (id)indexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique;
+
+/**
+ * Initiate DBCDatabaseIndexInfo instance
+ * @parameters
+ *      int sequenceNumber  - index sequence number in list of other indices
+ *      NSString* indexName - index name
+ *      BOOL isUnique       - unique
+ * @return DBCDatabaseIndexInfo instance
+ */
 - (id)initIndexInfoWithSequence:(int)sequenceNumber name:(NSString*)indexName unique:(BOOL)isUnique;
+
+#pragma mark DBCDatabaseIndexInfo for NSLog
+
+/**
+ * Get formatted index description
+ * @return formatted index description
+ */
+- (NSString*)description;
+
+#pragma mark DBCDatabaseIndexInfo memory management
+
+/**
+ * Deallocate index information and release all retained memory
+ */
+- (void)dealloc;
 
 @end

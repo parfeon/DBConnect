@@ -34,8 +34,42 @@
 @property (nonatomic, readonly, getter = name)NSString *dbName;
 @property (nonatomic, readonly, getter = filePath)NSString *dbFilePath;
 
+#pragma mark DBCDatabaseInfo instance initialization
+
+/**
+ * Initiate DBCDatabaseInfo instance
+ * @parameters
+ *      int sequenceNumber           - database sequence number in list of other databases
+ *      NSString* databaseName       - database name
+ *      NSString* pathToDatabaseFile - path to database file
+ * @return autoreleased DBCDatabaseInfo instance
+ */
 + (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile;
+
+/**
+ * Initiate DBCDatabaseInfo instance
+ * @parameters
+ *      int sequenceNumber           - database sequence number in list of other databases
+ *      NSString* databaseName       - database name
+ *      NSString* pathToDatabaseFile - path to database file
+ * @return DBCDatabaseInfo instance
+ */
 - (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName 
                           filePath:(NSString*)pathToDatabaseFile;
+
+#pragma mark DBCDatabaseInfo for NSLog
+
+/**
+ * Get formatted database connection description
+ * @return formatted database connection description
+ */
+- (NSString*)description;
+
+#pragma mark DBCDatabaseInfo memory management
+
+/**
+ * Deallocate database information and release all retained memory
+ */
+- (void)dealloc;
 
 @end

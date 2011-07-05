@@ -26,12 +26,6 @@
 
 @implementation DBCError
 
-/**
- * Return SQLite error description by error code
- * @parameters
- *      int errorCode - SQLite error code
- * @return stringified error code value
- */
 + (NSString*)errorDescriptionByCode:(int)errorCode {
     if(errorCode == SQLITE_ERROR)
         return @"SQL error or missing database.";
@@ -112,47 +106,22 @@
     return @"Unknown";
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code - error code
- * @return initialized autoreleased DBCError instance
- */
+#pragma mark DBCError instance initialization
+
 + (id)errorWithErrorCode:(NSInteger)code {
     return [[[[self class] alloc] initWithErrorCode:code forFilePath:nil additionalInformation:nil] autorelease];
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code     - error code
- *      NSString *filePath - path to file, which was reason of the error
- * @return initialized autoreleased DBCError instance
- */
 + (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath {
     return [[[[self class] alloc] initWithErrorCode:code forFilePath:filePath additionalInformation:nil] autorelease];
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code                  - error code
- *      NSString *filePath              - path to file, which was reason of the error
- *      NSString *additionalInformation - additional error information
- * @return initialized autoreleased DBCError instance
- */
 + (id)errorWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath 
    additionalInformation:(NSString*)additionalInformation {
     return [[[[self class] alloc] initWithErrorCode:code forFilePath:filePath 
                               additionalInformation:additionalInformation] autorelease];
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code - error code
- * @return initialized DBCError instance
- */
 - (id)initWithErrorCode:(NSInteger)code {
     if((self = [self initWithErrorCode:code forFilePath:nil additionalInformation:nil])){
         
@@ -160,13 +129,6 @@
     return self;
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code     - error code
- *      NSString *filePath - path to file, which was reason of the error
- * @return initialized DBCError instance
- */
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath {
     if((self = [self initWithErrorCode:code forFilePath:filePath additionalInformation:nil])){
         
@@ -174,14 +136,6 @@
     return self;
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code                  - error code
- *      NSString *filePath              - path to file, which was reason of the error
- *      NSString *additionalInformation - additional error information
- * @return initialized DBCError instance
- */
 - (id)initWithErrorCode:(NSInteger)code forFilePath:(NSString*)filePath 
   additionalInformation:(NSString*)additionalInformation {
     if((self = [self initWithErrorCode:code errorDomain:kSQLiteErrorDomain forFilePath:filePath 
@@ -190,15 +144,6 @@
     return self;
 }
 
-/**
- * Initiate DBCError instance
- * @parameters
- *      NSInteger code                  - error code
- *      NSString *errorDomain           - error domain
- *      NSString *filePath              - path to file, which was reason of the error
- *      NSString *additionalInformation - additional error information
- * @return initialized DBCError instance
- */
 - (id)initWithErrorCode:(NSInteger)code errorDomain:(NSString*)errorDomain forFilePath:(NSString*)filePath 
   additionalInformation:(NSString*)additionalInformation {
     if(additionalInformation==nil) {
@@ -214,10 +159,8 @@
     return self;
 }
 
-/**
- * Stringify DBCError instance
- * @return stringified DBCError instance
- */
+#pragma mark DBCError for NSLog
+
 - (NSString*)description {
     NSString *filePath = [self userInfo]!=nil?[[self userInfo] objectForKey:NSFilePathErrorKey]!=nil?
         [[self userInfo] valueForKey:NSFilePathErrorKey]:nil:nil;

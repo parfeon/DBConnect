@@ -31,11 +31,56 @@
 }
 @property (nonatomic, copy)NSString *sqlQuery;
 
+#pragma mark DBCStatement instance initialization
+
+/**
+ * Initiate DBCStatement instance
+ * @return initialized DBCStatement instance
+ */
+- (id)init;
+
+/**
+ * Initiate DBCStatement instance with SQL query request
+ * @parameters
+ *      NSString *sql - SQL query for statement
+ * @return initialized DBCDatabaseStatement instance
+ */
 - (id)initWithSQLQuery:(NSString*)sql;
+
+#pragma mark DBCStatement state manipulation
+
+/**
+ * Reset prepared statement to it's initial state
+ */
 - (void)reset;
+
+/**
+ * Close prepared statement and release it
+ */
 - (void)close;
 
+#pragma mark DBCStatement getter/setter
+
+/**
+ * Set new prepared statement
+ * @parameters
+ *      sqlite3_stmt *newStatement - new statement to store
+ */
 - (void)setStatement:(sqlite3_stmt*)newStatement;
+
+#pragma mark DBCStatement for NSLog
+
+/**
+ * Get stored statement
+ * @return stored statement
+ */
 - (sqlite3_stmt*)statement;
+
+#pragma mark DBCStatement memory management
+
+/**
+ * Deallocating DBCStatement instance and release all retained memory
+ */
+- (void)dealloc;
 
 @end

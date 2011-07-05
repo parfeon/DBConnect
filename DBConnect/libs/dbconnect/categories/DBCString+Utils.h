@@ -27,7 +27,16 @@
 
 @interface NSString (DBCString_Utils)
 
+/**
+ * Return MD5 hash from string
+ * @return generated MD5 hash
+ */
 - (NSString*)md5;
+
+/**
+ * Returns trimmed string
+ * @return string with trimmed leading and ending whitespaces
+ */
 - (NSString*)trimmedString;
 
 @end

@@ -32,17 +32,6 @@
 
 #pragma mark DBCDatabaseTableColumnInfo instance initialization
 
-/**
- * Initiate DBCDatabaseTableColumnInfo instance
- * @parameters
- *      int columnNumber           - column number inside columns sequence
- *      NSString *columnName       - column name
- *      NSString *columnDataType   - column data type
- *      BOOL isNotNull             - whether column in NOT NULL
- *      NSString *defaultVallue    - default column value
- *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
- * @return autoreleased DBCDatabaseTableColumnInfo instance
- */
 + (id)columnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
               columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue 
        isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
@@ -51,17 +40,6 @@
                                       isPartOfThePrimaryKey:isPartOfThePrimaryKey] autorelease];
 }
 
-/**
- * Initiate DBCDatabaseTableColumnInfo instance
- * @parameters
- *      int columnNumber           - column number inside columns sequence
- *      NSString *columnName       - column name
- *      NSString *columnDataType   - column data type
- *      BOOL isNotNull             - whether column in NOT NULL
- *      NSString *defaultVallue    - default column value
- *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
- * @return DBCDatabaseTableColumnInfo instance
- */
 - (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
                  columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue
           isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey {
@@ -76,10 +54,8 @@
     return self;
 }
 
-/**
- * Get formatted column description
- * @return formatted column description
- */
+#pragma mark DBCDatabaseTableColumnInfo for NSLog
+
 - (NSString*)description {
     return [NSString stringWithFormat:@"\nIn sequence column number: %i\nColumn name: %@\nColumn data type: %@\nColumn is\
  NOT NULL: %@\nColumn default value: %@\nColumn is part of the primary key: %@", colIdx, colName, colType, 
@@ -88,9 +64,6 @@
 
 #pragma mark DBCDatabaseIndexedColumnInfo memory management
 
-/**
- * Deallocate indexed column information and release all retained memory
- */
 - (void)dealloc {
     DBCReleaseObject(colName);
     DBCReleaseObject(colType);

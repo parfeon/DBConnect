@@ -32,27 +32,11 @@
 
 #pragma mark DBCDatabaseInfo instance initialization
 
-/**
- * Initiate DBCDatabaseInfo instance
- * @parameters
- *      int sequenceNumber           - database sequence number in list of other databases
- *      NSString* databaseName       - database name
- *      NSString* pathToDatabaseFile - path to database file
- * @return autoreleased DBCDatabaseInfo instance
- */
 + (id)databaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName filePath:(NSString*)pathToDatabaseFile {
     return [[[[self class] alloc] initDatabaseInfoWithSequence:sequenceNumber name:databaseName 
                                                       filePath:pathToDatabaseFile] autorelease];
 }
 
-/**
- * Initiate DBCDatabaseInfo instance
- * @parameters
- *      int sequenceNumber           - database sequence number in list of other databases
- *      NSString* databaseName       - database name
- *      NSString* pathToDatabaseFile - path to database file
- * @return DBCDatabaseInfo instance
- */
 - (id)initDatabaseInfoWithSequence:(int)sequenceNumber name:(NSString*)databaseName 
                           filePath:(NSString*)pathToDatabaseFile {
     if((self = [super init])){
@@ -63,10 +47,8 @@
     return self;
 }
 
-/**
- * Get formatted database connection description
- * @return formatted database connection description
- */
+#pragma mark DBCDatabaseInfo for NSLog
+
 - (NSString*)description {
     return [NSString stringWithFormat:@"\nSequence number: %i\nDatabase name: %@\nDatabase file path: %@", dbSeqNumber, 
             dbName, dbFilePath];
@@ -74,9 +56,6 @@
 
 #pragma mark DBCDatabaseInfo memory management
 
-/**
- * Deallocate database information and release all retained memory
- */
 - (void)dealloc {
     DBCReleaseObject(dbName);
     DBCReleaseObject(dbFilePath);

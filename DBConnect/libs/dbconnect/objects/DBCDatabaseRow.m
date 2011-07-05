@@ -31,24 +31,10 @@
 
 #pragma mark DBCDatabaseRow instance creation/initialization
 
-/**
- * Initiate result row
- * @parameters
- *      sqlite3_stmt *statement - statement which used for query
- *      int colCount            - count of columns
- * @return autoreleased DBCDatabaseRow instance
- */
 + (id)rowWithStatement:(sqlite3_stmt*)statement dataStructureDelegate:(id<DBCDatabaseResultStructure>)dsDelegate {
     return [[[[self class] alloc] initRowWithStatement:statement dataStructureDelegate:dsDelegate] autorelease];
 }
 
-/**
- * Initiate result row
- * @parameters
- *      sqlite3_stmt *statement - statement which used for query
- *      int colCount            - count of columns
- * @return DBCDatabaseRow instance
- */
 - (id)initRowWithStatement:(sqlite3_stmt*)statement dataStructureDelegate:(id<DBCDatabaseResultStructure>)dsDelegate {
     if((self = [super init])){
         dataStructureDelegate = dsDelegate;
@@ -93,42 +79,21 @@
 
 #pragma mark DBCDatabaseRow for NSLog
 
-/**
- * Return formated DBCDatabaseRow instance description
- * @return formated DBCDatabaseRow instance description
- */
 - (NSString *)description {
     return [data componentsJoinedByString:@" | "];
 }
 
 #pragma mark DBCDatabaseRow setters/getters
 
-
-/**
- * Retrieve number of columns in response
- * @return number of columns in response
- */
 - (int)columnsCount {
     return [data count];
 }
 
-/**
- * Retrieve data type holder class
- * @parameters
- *      NSString* columnName - target column name
- * @return column data type holder Class
- */
 - (Class)dataTypeClassForColumn:(NSString*)columnName {
     if(dataStructureDelegate == nil) return nil;
     return [self dataTypeClassAtColumnIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve data type holder class
- * @parameters
- *      int columnIdx - target column index
- * @return column data type holder Class
- */
 - (Class)dataTypeClassAtColumnIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return nil;
     if([[data objectAtIndex:columnIdx] isMemberOfClass:[NSNumber class]]) return [NSNumber class];
@@ -140,231 +105,111 @@
     return nil;
 }
 
-/**
- * Retrieve int value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return int value from object stored in column
- */
 - (int)intForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return -1;
     return [self intForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve int value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return int value from object stored in column
- */
 - (int)intForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return -1;
     return [[data objectAtIndex:columnIdx] intValue];
 }
 
-/**
- * Retrieve integer value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return integer value from object stored in column
- */
 - (NSInteger)integerForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return -1;
     return [self integerForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve integer value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return integer value from object stored in column
- */
 - (NSInteger)integerForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return -1;
     return [[data objectAtIndex:columnIdx] integerValue];
 }
 
-/**
- * Retrieve unsigned integer value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return unsigned integer value from object stored in column
- */
 - (NSUInteger)unsignedIntegerForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return 0;
     return [self unsignedIntegerForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve unsigned integer value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return unsigned integer value from object stored in column
- */
 - (NSUInteger)unsignedIntegerForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return 0;
     return [[data objectAtIndex:columnIdx] unsignedIntegerValue];
 }
 
-/**
- * Retrieve long value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return long value from object stored in column
- */
 - (long)longForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return -1;
     return [self longForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve long value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return long value from object stored in column
- */
 - (long)longForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return -1;
     return [[data objectAtIndex:columnIdx] longValue];
 }
 
-/**
- * Retrieve long long value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return long long value from object stored in column
- */
 - (long long)longLongForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return -1;
     return [self longLongForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve long long value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return long long value from object stored in column
- */
 - (long long)longLongForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return -1;
     return [[data objectAtIndex:columnIdx] longLongValue];
 }
 
-/**
- * Retrieve bool value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return bool value from object stored in column
- */
 - (BOOL)boolForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return NO;
     return [self boolForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve bool value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return bool value from object stored in column
- */
 - (BOOL)boolForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return NO;
     return [[data objectAtIndex:columnIdx] intValue] != 0;
 }
 
-/**
- * Retrieve float value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return float value from object stored in column
- */
 - (float)floatForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return -1.0f;
     return [self floatForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve float value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return float value from object stored in column
- */
 - (float)floatForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return -1.0f;
     return [[data objectAtIndex:columnIdx] floatValue];
 }
 
-/**
- * Retrieve double value from column
- * @parameters
- *      NSString *columnName - target column name
- * @return double value from object stored in column
- */
 - (double)doubleForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return -1.0f;
     return [self doubleForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve double value from column
- * @parameters
- *      NSString *columnName - target column index
- * @return double value from object stored in column
- */
 - (double)doubleForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return -1.0f;
     return [[data objectAtIndex:columnIdx] doubleValue];
 }
 
-/**
- * Retrieve object from column
- * @parameters
- *      NSString *columnName - target column name
- * @return object from object stored in column
- */
 - (id)objectForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return nil;
     return [self objectForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve object from column
- * @parameters
- *      NSString *columnName - target column index
- * @return object from object stored in column
- */
 - (id)objectForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return nil;
     return [data objectAtIndex:columnIdx];
 }
 
-/**
- * Retrieve NSString* from column
- * @parameters
- *      NSString *columnName - target column name
- * @return NSString* from object stored in column
- */
 - (NSString*)stringForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return nil;
     return [self stringForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve NSString* from column
- * @parameters
- *      NSString *columnName - target column index
- * @return NSString* from object stored in column
- */
 - (NSString*)stringForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return nil;
     if([self dataTypeClassAtColumnIndex:columnIdx] == [NSString class]) 
@@ -380,48 +225,24 @@
     return nil;
 }
 
-/**
- * Retrieve NSDate* from column
- * @parameters
- *      NSString *columnName - target column name
- * @return NSDate* from double value stored in column
- */
 - (NSDate*)dateForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return nil;
     return [self dateForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve NSDate* from column
- * @parameters
- *      NSString *columnName - target column index
- * @return NSDate* from double value stored in column
- */
 - (NSDate*)dateForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return nil;
     if([self dataTypeClassAtColumnIndex:columnIdx] == [NSNull class]) return nil;
     return [NSDate dateWithTimeIntervalSince1970:[self doubleForColumnAtIndex:columnIdx]];
 }
 
-/**
- * Retrieve NSData* from column
- * @parameters
- *      NSString *columnName - target column name
- * @return NSData* from blob value stored in column
- */
 - (NSData*)dataForColumn:(NSString*)columnName {
     // This condition should not happen
     if(dataStructureDelegate == nil) return nil;
     return [self dataForColumnAtIndex:[dataStructureDelegate indexForColumn:columnName]];
 }
 
-/**
- * Retrieve NSData* from column
- * @parameters
- *      NSString *columnName - target column index
- * @return NSData* from blob stored in column
- */
 - (NSData*)dataForColumnAtIndex:(int)columnIdx {
     if(columnIdx >= [data count]) return nil;
     if([self dataTypeClassAtColumnIndex:columnIdx] == [NSNull class]) return nil;
@@ -435,9 +256,6 @@
 
 #pragma mark DBCDatabaseRow memory management
 
-/**
- * Deallocate result instance and release all retained memory
- */
 - (void)dealloc{
     dataStructureDelegate = nil;
     DBCReleaseObject(data);
