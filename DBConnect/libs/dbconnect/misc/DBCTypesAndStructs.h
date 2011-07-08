@@ -50,6 +50,13 @@ typedef enum _DBCDatabaseTransactionLock {
     DBCDatabaseAutocommitModeExclusive = 2,
 } DBCDatabaseTransactionLock;
 
+// Supported sqlite database transaction locks
+typedef enum _DBCDatabaseAutoVacuumMode {
+    DBCDatabaseAutoVacuumNone = 0,
+    DBCDatabaseAutoVacuumFull = 1,
+    DBCDatabaseAutoVacuumIncremental = 2,
+} DBCDatabaseAutoVacuumMode;
+
 // SQL statement parameters token format
 typedef enum _SQLStatementFromat {
     SQLStatementFromatUnknown = 0,

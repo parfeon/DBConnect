@@ -316,6 +316,52 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
  */
 - (BOOL)rollbackTransactionError:(DBCError**)error;
 
+#pragma mark DBCDatabase misc methods
+
+/**
+ * Retrieve main database version
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
+ * @return main database version
+ */
+- (int)databaseVersionError:(DBCError**)error;
+
+/**
+ * Retrieve specific database version
+ * @parameters
+ *      NSString *databaseName - target database name 
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
+ * @return specific database version
+ */
+- (int)databaseVersionFor:(NSString*)databaseName error:(DBCError**)error;
+
+/**
+ * Change main database version
+ * @parameters
+ *      int version      - new database version 
+ *      DBCError **error - if an error occurs, upon return contains an DBCError 
+ *                         object that describes the problem. Pass NULL if you 
+ *                         do not want error information.
+ * @return whether version was successfull changed or not
+ */
+- (BOOL)changeDatabaseVersion:(int)version error:(DBCError**)error;
+
+/**
+ * Change specific database version
+ * @parameters
+ *      int version            - new database version 
+ *      NSString *databaseName - target database name 
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
+ * @return whether version was successfull changed or not
+ */
+- (int)changeDatabaseVersion:(int)version forDatabase:(NSString*)databaseName error:(DBCError**)error;
+
 #pragma mark DBCDatabase getter/setter methods
 
 /**

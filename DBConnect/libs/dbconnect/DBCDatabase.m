@@ -486,6 +486,32 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return [self executeUpdate:@"ROLLBACK TRANSACTION;" error:error, nil];
 }
 
+#pragma mark DBCDatabase misc methods
+
+- (int)databaseVersionError:(DBCError**)error {
+    return [self databaseVersionFor:nil error:error];
+}
+
+- (int)databaseVersionFor:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return -1;
+    if(databaseName == nil) databaseName = @"main";
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.user_version;", databaseName]
+                                             error:error, nil];
+    if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"user_version"];
+    return -1;
+}
+
+- (BOOL)changeDatabaseVersion:(int)version error:(DBCError**)error {
+    return [self changeDatabaseVersion:version forDatabase:nil error:error];
+}
+
+- (int)changeDatabaseVersion:(int)version forDatabase:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    if(databaseName == nil) databaseName = @"main";
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.user_version = %i;", databaseName, version]
+                         error:error, nil];
+}
+
 #pragma mark DBCDatabase getter/setter methods
 
 - (void)setStatementsCachingEnabled:(BOOL)sCacheStatements {

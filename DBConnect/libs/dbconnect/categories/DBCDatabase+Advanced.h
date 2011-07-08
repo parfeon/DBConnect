@@ -43,6 +43,88 @@
 #pragma mark SQLite database file pages
 
 /**
+ * Get current auto-vacuum mode for main databse
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
+ * @default default state is set to DBCDatabaseAutoVacuumNone
+ * @return auto-vacuum mode for main database
+ */
+- (DBCDatabaseAutoVacuumMode)autoVacuumModeError:(DBCError**)error;
+
+/**
+ * Get current auto-vacuum mode for specified database
+ * @parameters
+ *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
+ * @default default state is set to DBCDatabaseAutoVacuumNone
+ * @return auto-vacuum mode for specified database
+ */
+- (DBCDatabaseAutoVacuumMode)autoVacuumModeForDatabase:(NSString*)databaseName error:(DBCError**)error;
+
+/**
+ * Change auto-vacuum mode for main databse
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
+ * @return whether set was successfull or not
+ */
+- (BOOL)setAutoVacuumMode:(DBCDatabaseAutoVacuumMode)mode error:(DBCError**)error;
+
+/**
+ * Change auto-vacuum mode for specified database
+ * @parameters
+ *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
+ * @return whether set was successfull or not
+ */
+- (BOOL)setAutoVacuumMode:(DBCDatabaseAutoVacuumMode)mode forDatabase:(NSString*)databaseName error:(DBCError**)error;
+
+/**
+ * Free all unused database pages in main database which was prepared by INCREMENTAL auto-vacuum mode
+ * @parameters
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
+ * @return whether incremental vacuum was successfull or not
+ */
+- (BOOL)freeAllUnusedPagesError:(DBCError**)error;
+
+
+/**
+ * Free specific amount of unused database pages in main which was prepared by INCREMENTAL auto-vacuum mode
+ * @parameters
+ *      int pagesCount   - how much pages should be freed.
+ *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                         Pass NULL if you do not want error information.
+ * @return whether incremental vacuum was successfull or not
+ */
+- (BOOL)freeAmountOfUnusedPages:(int)pagesCount error:(DBCError**)error;
+
+/**
+ * Free all unused database pages in main database which was prepared by INCREMENTAL auto-vacuum mode
+ * @parameters
+ *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                                Pass NULL if you do not want error information.
+ * @return whether incremental vacuum was successfull or not
+ */
+- (BOOL)freeAllUnusedPagesForDatabase:(NSString*)databaseName error:(DBCError**)error;
+
+
+/**
+ * Free specific amount of unused database pages in specified which was prepared by INCREMENTAL auto-vacuum mode
+ * @parameters
+ *      int pagesCount         - how much pages should be freed.
+ *      NSString *databaseName - database name
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError object that describes the problem. 
+ *                               Pass NULL if you do not want error information.
+ * @return whether incremental vacuum was successfull or not
+ */
+- (BOOL)freeAmountOfUnusedPages:(int)pagesCount forDatabase:(NSString*)databaseName error:(DBCError**)error;
+
+/**
  * Free unused database pages
  * @parameters
  *      DBCError **error - if an error occurs, upon return contains an DBCError object that describes the problem. 

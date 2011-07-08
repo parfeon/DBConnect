@@ -52,6 +52,55 @@
 
 #pragma mark SQLite database file pages
 
+- (DBCDatabaseAutoVacuumMode)autoVacuumModeError:(DBCError**)error {
+    return [self autoVacuumModeForDatabase:nil error:error];
+}
+
+- (DBCDatabaseAutoVacuumMode)autoVacuumModeForDatabase:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return DBCDatabaseAutoVacuumNone;
+    if(databaseName == nil) databaseName = @"main";
+    DBCDatabaseResult *result = [self executeQuery:[NSString stringWithFormat:@"PRAGMA %@.auto_vacuum;", databaseName]
+                                             error:error, nil];
+    if(result != nil) if([result count] > 0) return [[result rowAtIndex:0] intForColumn:@"auto_vacuum"];
+    return DBCDatabaseAutoVacuumNone;
+}
+
+- (BOOL)setAutoVacuumMode:(DBCDatabaseAutoVacuumMode)mode error:(DBCError**)error {
+    return [self setAutoVacuumMode:mode forDatabase:nil error:error];
+}
+
+- (BOOL)setAutoVacuumMode:(DBCDatabaseAutoVacuumMode)mode forDatabase:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    if(inMemoryDB) return YES;
+    if(databaseName == nil) databaseName = @"main";
+    DBCDatabaseAutoVacuumMode currentMode = [self autoVacuumModeError:NULL];
+    BOOL shouldVacuum = NO;
+    if((currentMode == DBCDatabaseAutoVacuumNone || mode == DBCDatabaseAutoVacuumNone) && mode != currentMode)
+        shouldVacuum = YES;
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.auto_vacuum = %i; %@", 
+                                databaseName, mode, shouldVacuum?@"VACUUM;":@""] 
+                         error:error, nil];
+}
+
+- (BOOL)freeAllUnusedPagesError:(DBCError**)error {
+    return [self freeAmountOfUnusedPages:-1 forDatabase:nil error:error];
+}
+
+- (BOOL)freeAmountOfUnusedPages:(int)pagesCount error:(DBCError**)error {
+    return [self freeAmountOfUnusedPages:pagesCount forDatabase:nil error:error];
+}
+
+- (BOOL)freeAllUnusedPagesForDatabase:(NSString*)databaseName error:(DBCError**)error {
+    return [self freeAmountOfUnusedPages:-1 forDatabase:databaseName error:error];
+}
+
+- (BOOL)freeAmountOfUnusedPages:(int)pagesCount forDatabase:(NSString*)databaseName error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    if(databaseName == nil) databaseName = @"main";
+    return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.incremental_vacuum(%i)", databaseName, pagesCount]
+                         error:error, nil];
+}
+
 - (BOOL)freeUnusedPagesError:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if([self freePagesCountInDatabase:@"main" error:error] == 0) return YES;
