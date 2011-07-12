@@ -198,11 +198,13 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
  * it is outside of application bundle and reopen connection with 'read-write' rights
  * @parameters
  *      NSString *mutableDatabaseStoreDestination - database file copy destination
+ *      BOOL shouldRewriteExistingFile            - YES if should rewrite existing, otherwise NO
  *      DBCError **error                          - if an error occurs, upon return contains an DBCError 
  *                                                  object that describes the problem. Pass NULL if you 
  *                                                  do not want error information.
  */
-- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination error:(DBCError**)error;
+- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination rewriteExisting:(BOOL)shouldRewriteExistingFile 
+                error:(DBCError**)error;
 
 /**
  * Close database connection to sqlite database file if it was opened

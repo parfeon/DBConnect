@@ -224,7 +224,9 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         dbEncoding = encoding;
         recentErrorCode = -1;
         dbConnection = NULL;
-        dbPath = [dbFilePath copy];
+        if([[dbFilePath stringByDeletingLastPathComponent] length] == 0)
+            dbPath = [[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:dbFilePath] copy];
+        else dbPath = [dbFilePath copy];
         queryLock = [[NSRecursiveLock alloc] init];
         cachedStatementsList = [[NSMutableDictionary alloc] init];
         inMemoryDB = dbPath?[dbPath isEqualToString:@":memory:"]:YES;
@@ -290,7 +292,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return opened;
 }
 
-- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination error:(DBCError**)error {
+- (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination rewriteExisting:(BOOL)shouldRewriteExistingFile error:(DBCError**)error {
     if(dbPath == nil) {
         recentErrorCode = DBC_DATABASE_PATH_NOT_SPECIFIED;
         *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil 
@@ -313,7 +315,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         [fileManager createDirectoryAtPath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent]
                withIntermediateDirectories:YES attributes:nil 
                                      error:&dirCreationError];
-        if(dirCreationError != nil){
+        if(dirCreationError != nil && [dirCreationError code] != NSFileWriteUnknownError){
             recentErrorCode = DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE;
             *error = [DBCError errorWithErrorCode:recentErrorCode 
                                       forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
@@ -323,7 +325,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             return NO;
         }
     }
-    if(![fileManager fileExistsAtPath:dbPath]){
+    if(![fileManager fileExistsAtPath:mutableDatabaseStoreDestination] || shouldRewriteExistingFile){
         NSError *databaseCopyError = nil;
         [fileManager copyItemAtPath:dbPath toPath:mutableDatabaseStoreDestination error:&databaseCopyError];
         if(databaseCopyError != nil){
