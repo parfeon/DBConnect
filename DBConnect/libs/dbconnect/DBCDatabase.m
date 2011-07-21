@@ -326,6 +326,19 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         }
     }
     if(![fileManager fileExistsAtPath:mutableDatabaseStoreDestination] || shouldRewriteExistingFile){
+        NSError *databaseRemoveError = nil;
+        if([fileManager fileExistsAtPath:mutableDatabaseStoreDestination] && shouldRewriteExistingFile) {
+            [fileManager removeItemAtPath:mutableDatabaseStoreDestination error:&databaseRemoveError];
+            if(databaseRemoveError != nil){
+                recentErrorCode = DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION;
+                *error = [DBCError errorWithErrorCode:recentErrorCode 
+                                          forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
+                                additionalInformation:[databaseRemoveError description]];
+                DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+                databaseRemoveError = nil;
+                return NO;
+            }
+        }
         NSError *databaseCopyError = nil;
         [fileManager copyItemAtPath:dbPath toPath:mutableDatabaseStoreDestination error:&databaseCopyError];
         if(databaseCopyError != nil){
