@@ -55,8 +55,8 @@
             if(databaseEncoding == DBCDatabaseEncodingUTF8) columnName = sqlite3_column_name(statement, i);
             else columnName = sqlite3_column_name16(statement, i);
             if (columnName != NULL) 
-                [colNames addObject:[[NSString stringWithCString:columnName 
-                                                        encoding:NSUTF8StringEncoding] lowercaseString]];
+                [colNames addObject:[NSString stringWithCString:columnName 
+                                                        encoding:NSUTF8StringEncoding]];
             else [colNames addObject:[NSString stringWithFormat:@"%i", i]];
             columnType = sqlite3_column_decltype(statement, i);
             if(columnType != NULL) {
@@ -128,7 +128,7 @@
 
 - (int)indexForColumn:(NSString*)columnName {
     if(![colNames containsObject:columnName]){
-        DBCDebugLogger(@"DBC:WARNING] There is no column with name '%@' in response", colNames);
+        DBCDebugLogger(@"[DBC:WARNING] There is no column with name '%@' in response", colNames);
         return -1;
     }
     return [colNames indexOfObject:columnName];
