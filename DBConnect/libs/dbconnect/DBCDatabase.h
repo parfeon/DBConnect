@@ -362,7 +362,52 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
  *                               do not want error information.
  * @return whether version was successfull changed or not
  */
-- (int)changeDatabaseVersion:(int)version forDatabase:(NSString*)databaseName error:(DBCError**)error;
+- (BOOL)changeDatabaseVersion:(int)version forDatabase:(NSString*)databaseName error:(DBCError**)error;
+
+/**
+ * Perform self-checking on main database structure and data 
+ * @parameters
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
+ * @return whether database structure passed validation or not
+ */
+- (BOOL)isDatabaseStructureValidError:(DBCError**)error;
+
+/**
+ * Perform self-checking on main database structure and data 
+ * @parameters
+ *      numberOfErrorsBeforValidationFail - number of errors which may occure before validation will be terminated 
+ *      DBCError **error                  - if an error occurs, upon return contains an DBCError 
+ *                                          object that describes the problem. Pass NULL if you 
+ *                                          do not want error information.
+ * @return whether database structure passed validation or not
+ */
+- (BOOL)isDatabaseStructureValidWithErrorCountBeforeAbort:(int)numberOfErrorsBeforValidationFail error:(DBCError**)error;
+
+/**
+ * Perform self-checking on specific database structure and data 
+ * @parameters
+ *      NSString *databaseName - target database name 
+ *      DBCError **error       - if an error occurs, upon return contains an DBCError 
+ *                               object that describes the problem. Pass NULL if you 
+ *                               do not want error information.
+ * @return whether database structure passed validation or not
+ */
+- (BOOL)isDatabaseStructureValidFor:(NSString*)databaseName error:(DBCError**)error;
+
+/**
+ * Perform self-checking on specific database structure and data 
+ * @parameters
+ *      NSString *databaseName            - target database name 
+ *      numberOfErrorsBeforValidationFail - number of errors which may occure before validation will be terminated 
+ *      DBCError **error                  - if an error occurs, upon return contains an DBCError 
+ *                                          object that describes the problem. Pass NULL if you 
+ *                                          do not want error information.
+ * @return whether database structure passed validation or not
+ */
+- (BOOL)isDatabaseStructureValidFor:(NSString*)databaseName errorCountBeforeAbort:(int)numberOfErrorsBeforValidationFail
+                              error:(DBCError**)error;
 
 #pragma mark DBCDatabase getter/setter methods
 

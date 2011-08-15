@@ -520,11 +520,38 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     return [self changeDatabaseVersion:version forDatabase:nil error:error];
 }
 
-- (int)changeDatabaseVersion:(int)version forDatabase:(NSString*)databaseName error:(DBCError**)error {
+- (BOOL)changeDatabaseVersion:(int)version forDatabase:(NSString*)databaseName error:(DBCError**)error {
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
     return [self executeUpdate:[NSString stringWithFormat:@"PRAGMA %@.user_version = %i;", databaseName, version]
                          error:error, nil];
+}
+
+- (BOOL)isDatabaseStructureValidError:(DBCError**)error {
+    return [self isDatabaseStructureValidFor:nil error:error];
+}
+
+- (BOOL)isDatabaseStructureValidWithErrorCountBeforeAbort:(int)numberOfErrorsBeforValidationFail error:(DBCError**)error {
+    return [self isDatabaseStructureValidFor:nil errorCountBeforeAbort:numberOfErrorsBeforValidationFail error:error];
+}
+
+- (BOOL)isDatabaseStructureValidFor:(NSString*)databaseName error:(DBCError**)error {
+    return [self isDatabaseStructureValidFor:databaseName errorCountBeforeAbort:100 error:error];
+}
+
+- (BOOL)isDatabaseStructureValidFor:(NSString*)databaseName errorCountBeforeAbort:(int)numberOfErrorsBeforValidationFail
+                              error:(DBCError**)error {
+    if(!dbConnectionOpened) return NO;
+    if(databaseName == nil) databaseName = @"main";
+    DBCDatabaseResult *validationResult = [self executeQuery:
+                                           [NSString stringWithFormat:@"PRAGMA %@.integrity_chcek(%i);", databaseName, 
+                                                              numberOfErrorsBeforValidationFail] 
+                                                       error:error, nil];
+    if(validationResult != nil && [validationResult count] > 0){
+        DBCDatabaseRow *dataRow = [validationResult rowAtIndex:0];
+        return [[dataRow stringForColumn:@"integrity_chcek"] isEqualToString:@"ok"];
+    }
+    return NO;
 }
 
 #pragma mark DBCDatabase getter/setter methods
