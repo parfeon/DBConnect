@@ -779,8 +779,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                                             arrayWithArray:[self getSQLStatementsSequence:preparedSQLStatement]];
     int i, count = [preparedCommandsList count];
 #if DBCShouldProfileQuery
-    NSDate *requestProfile = [NSDate date];
-    NSTimeInterval queryStartTime = [requestProfile timeIntervalSince1970];
+    NSTimeInterval queryStartTime = [[NSDate date] timeIntervalSince1970];
 #endif
     for (i = 0; i < count; i++) {
         NSString *sql = [preparedCommandsList objectAtIndex:i];
@@ -887,7 +886,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         } else if(!statementsCachingEnabled) sqlite3_finalize(statement);
     }
 #if DBCShouldProfileQuery
-    NSTimeInterval queryEndTime = [requestProfile timeIntervalSince1970];
+    NSTimeInterval queryEndTime = [[NSDate date] timeIntervalSince1970];
     [result setQueryExecutionDuration:(queryEndTime-queryStartTime)];
 #endif
     [queryLock unlock];
