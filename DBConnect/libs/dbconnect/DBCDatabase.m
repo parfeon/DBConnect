@@ -254,19 +254,23 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                         [[NSFileManager defaultManager] removeItemAtPath:dbFilePath error:&fmError];
                         if(fmError!=nil) {
                             recentErrorCode = DBC_CANT_REMOVE_CREATED_CORRUPTED_DATABASE_FILE;
-                            *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain 
-                                                              forFilePath:sqlQeryListPath 
-                                                    additionalInformation:[fmError description]] autorelease];
-                            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+                            if(error != NULL) {
+                                *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain 
+                                                                  forFilePath:sqlQeryListPath 
+                                                        additionalInformation:[fmError description]] autorelease];
+                                DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+                            }
                         }
                     }
                     [self release];
                     return nil;
                 } else if(execError.errorCode != -1){
                     recentErrorCode = execError.errorCode;
-                    *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:sqlQeryListPath
-                                          additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                    DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+                    if(error != NULL) {
+                        *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:sqlQeryListPath
+                                              additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                        DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+                    }
                 }
             }
         } else {
@@ -295,8 +299,9 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 - (BOOL)makeMutableAt:(NSString*)mutableDatabaseStoreDestination rewriteExisting:(BOOL)shouldRewriteExistingFile error:(DBCError**)error {
     if(dbPath == nil) {
         recentErrorCode = DBC_DATABASE_PATH_NOT_SPECIFIED;
-        *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil 
-                                additionalInformation:nil] autorelease];
+        if(error != NULL)
+            *error = [[[DBCError alloc] initWithErrorCode:recentErrorCode errorDomain:kDBCErrorDomain forFilePath:nil 
+                                    additionalInformation:nil] autorelease];
         return NO;
     }
     if(mutableDatabaseStoreDestination == nil)
@@ -317,10 +322,12 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                                      error:&dirCreationError];
         if(dirCreationError != nil && [dirCreationError code] != NSFileWriteUnknownError){
             recentErrorCode = DBC_CANT_CREATE_FOLDER_FOR_MUTABLE_DATABASE;
-            *error = [DBCError errorWithErrorCode:recentErrorCode 
-                                      forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
-                            additionalInformation:[dirCreationError description]];
-            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+            if(error != NULL) {
+                *error = [DBCError errorWithErrorCode:recentErrorCode 
+                                          forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
+                                additionalInformation:[dirCreationError description]];
+                DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+            }
             dirCreationError = nil;
             return NO;
         }
@@ -331,10 +338,12 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             [fileManager removeItemAtPath:mutableDatabaseStoreDestination error:&databaseRemoveError];
             if(databaseRemoveError != nil){
                 recentErrorCode = DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION;
-                *error = [DBCError errorWithErrorCode:recentErrorCode 
+                if(error != NULL) {
+                    *error = [DBCError errorWithErrorCode:recentErrorCode 
                                           forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
                                 additionalInformation:[databaseRemoveError description]];
-                DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+                    DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+                }
                 databaseRemoveError = nil;
                 return NO;
             }
@@ -343,10 +352,12 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         [fileManager copyItemAtPath:dbPath toPath:mutableDatabaseStoreDestination error:&databaseCopyError];
         if(databaseCopyError != nil){
             recentErrorCode = DBC_CANT_COPY_DATABASE_FILE_TO_NEW_LOCATION;
-            *error = [DBCError errorWithErrorCode:recentErrorCode 
-                                       forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
-                             additionalInformation:[databaseCopyError description]];
-            DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+            if(error != NULL) {
+                *error = [DBCError errorWithErrorCode:recentErrorCode 
+                                           forFilePath:[mutableDatabaseStoreDestination stringByDeletingLastPathComponent] 
+                                 additionalInformation:[databaseCopyError description]];
+                DBCDebugLogger(@"[DBC:ERROR] Can't create mutable database copy due to error: %@", *error);
+            }
             databaseCopyError = nil;
             return NO;
         }
@@ -380,9 +391,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 sqlite3_sleep(150);
             } else {
                 recentErrorCode = returnCode;
-                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", *error);
+                if(error != NULL) {
+                    *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                     additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                    DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", *error);
+                }
             }
         }
     } while (shouldRetry);
@@ -392,9 +405,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         dbConnectionOpened = NO;
     } else {
         recentErrorCode = returnCode;
-        *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                              additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-        DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", *error);
+        if(error != NULL) {
+            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+            DBCDebugLogger(@"[DBC:ERROR] Database can't be closed due to error: %@", *error);
+        }
     }
     [queryLock unlock];
     DBCLockLogger(@"[DBC:close] Relinquished from previously acquired lock (Line: %d)", __LINE__);
@@ -411,8 +426,10 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     va_end(parameters);
     if(parametersBindingMap == nil) {
         recentErrorCode = DBC_WRONG_BINDING_PARMETERS_COUNT;
-        *error = [DBCError errorWithErrorCode:recentErrorCode];
-        DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
+        if(error != NULL) {
+            *error = [DBCError errorWithErrorCode:recentErrorCode];
+            DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
+        }
         return NO;
     }
     return [self executeUpdate:sqlUpdate withBindingMapData:parametersBindingMap error:error];
@@ -426,8 +443,10 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     va_end(parameters);
     if(parametersBindingMap == nil) {
         recentErrorCode = DBC_WRONG_BINDING_PARMETERS_COUNT;
-        *error = [DBCError errorWithErrorCode:recentErrorCode];
-        DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
+        if(error != NULL) {
+            *error = [DBCError errorWithErrorCode:recentErrorCode];
+            DBCDebugLogger(@"[DBC:ERROR] Wrong number of binding parameters: %@", *error);
+        }
         return nil;
     }
     return [self executeQuery:sqlQuery withBindingMapData:parametersBindingMap error:error];
@@ -451,22 +470,28 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 if(fmError!=nil) DBCDebugLogger(@"[DBC:ERROR] %@", fmError);
             }
             recentErrorCode = execError.errorCode;
-            *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
-                            additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+            if(error != NULL) {
+                *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
+                                additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+            }
             return NO;
         } else if(execError.errorCode != -1){
             recentErrorCode = execError.errorCode;
-            *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
-                                  additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+            if(error != NULL) {
+                *error = [DBCError errorWithErrorCode:execError.errorCode forFilePath:statementsFilePath
+                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+            }
         }
-        return continueOnExecutionErrors||execError.errorCode==-1&&!continueOnExecutionErrors;
+        return continueOnExecutionErrors||(execError.errorCode==-1&&!continueOnExecutionErrors);
     } else {
         recentErrorCode = DBC_SPECIFIED_FILE_NOT_FOUND;
-        *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:statementsFilePath
-                        additionalInformation:nil];
-        DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+        if(error != NULL) {
+            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:statementsFilePath
+                            additionalInformation:nil];
+            DBCDebugLogger(@"[DBC:ERROR] %@", *error);
+        }
     }
     return NO;
 }
@@ -599,8 +624,10 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     DBCDebugLogger(@"[DBC:Update] Binding map data: %@", bindingMapData);
     if([self isDatabaseConnectionForReadOnlyMode] && ![self nonDMLStatement:sqlUpdate]) {
         recentErrorCode = SQLITE_READONLY;
-        *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil additionalInformation:nil];
-        DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+        if(error != NULL) {
+            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil additionalInformation:nil];
+            DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+        }
         return NO;
     }
     DBCLockLogger(@"[DBC:Update] Waiting for Lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
@@ -676,9 +703,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             } while (shouldRetry);
             if(sqlError){
                 recentErrorCode = returnCode;
-                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+                if(error != NULL) {
+                    *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                    additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                    DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+                }
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
                     [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
@@ -693,9 +722,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                         parametersOffset:&bindedParametersOffset];
         if(returnCode != SQLITE_OK){
             recentErrorCode = returnCode;
-            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                            additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-            DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+            if(error != NULL) {
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+            }
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
@@ -722,9 +753,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             } while (shouldRetry);
             if(sqlError){
                 recentErrorCode = returnCode;
-                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                      additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+                if(error != NULL) {
+                    *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                          additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                    DBCDebugLogger(@"[DBC:Update] Can't execute update due to error: %@", *error);
+                }
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
                     [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
@@ -812,9 +845,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             } while (shouldRetry);
             if(sqlError){
                 recentErrorCode = returnCode;
-                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
+                if(error != NULL) {
+                    *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                     additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                    DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
+                }
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
                     [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
@@ -828,9 +863,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                         parametersOffset:&bindedParametersOffset];
         if(returnCode != SQLITE_OK){
             recentErrorCode = returnCode;
-            *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                             additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-            DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
+            if(error != NULL) {
+                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
+            }
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
             [queryLock unlock];
@@ -863,9 +900,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             } while (shouldRetry || shouldStep);
             if(sqlError){
                 recentErrorCode = returnCode;
-                *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
-                                 additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
-                DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
+                if(error != NULL) {
+                    *error = [DBCError errorWithErrorCode:recentErrorCode forFilePath:nil 
+                                     additionalInformation:DBCDatabaseEncodedSQLiteError(dbEncoding)];
+                    DBCDebugLogger(@"[DBC:Query] Can't execute query due to error: %@", *error);
+                }
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
                     [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
