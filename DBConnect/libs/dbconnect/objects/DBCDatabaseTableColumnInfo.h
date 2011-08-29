@@ -68,7 +68,7 @@
  *      BOOL isPartOfThePrimaryKey - whether column is part of the primary key
  * @return DBCDatabaseTableColumnInfo instance
  */
-- (id)initolumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
+- (id)initColumnInfoWithSequence:(int)columnNumber columnName:(NSString*)columnName 
                  columnDataType:(NSString*)columnDataType isNotNull:(BOOL)isNotNull defaultValue:(NSString*)defaultVallue 
           isPartOfThePrimaryKey:(BOOL)isPartOfThePrimaryKey;
 

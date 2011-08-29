@@ -1226,8 +1226,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                     if(shouldParseValues) 
                         [parsedParameters addObject:[NSString stringWithFormat:@"%C", va_arg(parameters, int)]]; 
                 } else if(currentChar=='h'){
-                    if(i+1<count && ([sqlStatement characterAtIndex:(i+1)]=='i' || 
-                                     [sqlStatement characterAtIndex:(i+1)]=='x') ||
+                    if((i+1<count && ([sqlStatement characterAtIndex:(i+1)]=='i' || 
+                                     [sqlStatement characterAtIndex:(i+1)]=='x')) ||
                        [sqlStatement characterAtIndex:(i+1)]=='o') {
                         foundToken = YES;
                         if(shouldParseValues) 

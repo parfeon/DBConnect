@@ -217,9 +217,9 @@
     if([self dataTypeClassAtColumnIndex:columnIdx] == [NSNull class]) 
         return @"null";
     if([self dataTypeClassAtColumnIndex:columnIdx] == [NSData class]) 
-        return [[NSString alloc] initWithBytes:(NSData*)[data objectAtIndex:columnIdx] 
+        return [[[NSString alloc] initWithBytes:(NSData*)[data objectAtIndex:columnIdx] 
                                         length:[(NSData*)[data objectAtIndex:columnIdx] length] 
-                                      encoding:NSUTF8StringEncoding];
+                                      encoding:NSUTF8StringEncoding] autorelease];
     if([self dataTypeClassAtColumnIndex:columnIdx] == [NSNumber class]) 
         return [(NSNumber*)[data objectAtIndex:columnIdx] stringValue];
     return nil;
