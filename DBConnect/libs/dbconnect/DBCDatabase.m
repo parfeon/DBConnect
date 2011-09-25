@@ -224,9 +224,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         dbEncoding = encoding;
         recentErrorCode = -1;
         dbConnection = NULL;
-        if([[dbFilePath stringByDeletingLastPathComponent] length] == 0)
-            dbPath = [[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:dbFilePath] copy];
-        else dbPath = [dbFilePath copy];
+        if(dbFilePath != nil && ![dbFilePath isEqualToString:@":memory:"]) {
+            if([[dbFilePath stringByDeletingLastPathComponent] length] == 0)
+                dbPath = [[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:dbFilePath] copy];
+            else dbPath = [dbFilePath copy];
+        } else dbPath = [dbFilePath copy];
         queryLock = [[NSRecursiveLock alloc] init];
         cachedStatementsList = [[NSMutableDictionary alloc] init];
         inMemoryDB = dbPath?[dbPath isEqualToString:@":memory:"]:YES;
@@ -569,12 +571,12 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     if(!dbConnectionOpened) return NO;
     if(databaseName == nil) databaseName = @"main";
     DBCDatabaseResult *validationResult = [self executeQuery:
-                                           [NSString stringWithFormat:@"PRAGMA %@.integrity_chcek(%i);", databaseName, 
+                                           [NSString stringWithFormat:@"PRAGMA %@.integrity_check(%i);", databaseName, 
                                                               numberOfErrorsBeforValidationFail] 
                                                        error:error, nil];
     if(validationResult != nil && [validationResult count] > 0){
         DBCDatabaseRow *dataRow = [validationResult rowAtIndex:0];
-        return [[dataRow stringForColumn:@"integrity_chcek"] isEqualToString:@"ok"];
+        return [[dataRow stringForColumn:@"integrity_check"] isEqualToString:@"ok"];
     }
     return NO;
 }
