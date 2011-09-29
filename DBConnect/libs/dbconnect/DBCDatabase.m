@@ -208,6 +208,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 
 - (id)initWithPath:(NSString*)dbFilePath defaultEncoding:(DBCDatabaseEncoding)encoding {
     if((self = [super init])){
+        cachedStatementsList = nil;
         [self setCreateTransactionOnSQLSequences:YES];
         [self setRollbackSQLSequenceTransactionOnError:YES];
         [self setStatementsCachingEnabled:YES];
@@ -230,7 +231,6 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             else dbPath = [dbFilePath copy];
         } else dbPath = [dbFilePath copy];
         queryLock = [[NSRecursiveLock alloc] init];
-        cachedStatementsList = [[NSMutableDictionary alloc] init];
         inMemoryDB = dbPath?[dbPath isEqualToString:@":memory:"]:YES;
     }
     return self;
