@@ -45,6 +45,8 @@
     int                         executionRetryCount;
     BOOL                        statementsCachingEnabled;
     
+    BOOL                        automaticallyOmmitReadLock;
+    
     BOOL                        createTransactionOnSQLSequences;
     BOOL                        rollbackSQLSequenceTransactionOnError;
     DBCDatabaseTransactionLock  defaultSQLSequencesTransactionLock;
@@ -67,6 +69,7 @@
 @property (nonatomic)int executionRetryCount;
 @property (nonatomic)DBCDatabaseTransactionLock defaultSQLSequencesTransactionLock;
 @property (nonatomic, getter = isStatementsCachingEnabled)BOOL statementsCachingEnabled;
+@property (nonatomic, assign, getter = shouldAutomaticallyOmmitReadLock)BOOL automaticallyOmmitReadLock;
 @property (nonatomic)BOOL rollbackSQLSequenceTransactionOnError;
 @property (nonatomic)BOOL createTransactionOnSQLSequences;
 @property (nonatomic, readonly, getter = database)sqlite3 *dbConnection;

@@ -178,7 +178,7 @@
 
 @implementation DBCDatabase
 
-@synthesize executionRetryCount, statementsCachingEnabled, createTransactionOnSQLSequences;
+@synthesize executionRetryCount, statementsCachingEnabled, automaticallyOmmitReadLock, createTransactionOnSQLSequences;
 @synthesize rollbackSQLSequenceTransactionOnError, defaultSQLSequencesTransactionLock;
 
 #pragma mark DBCDatabase instance initialization
@@ -292,6 +292,7 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
 - (BOOL)openReadonlyError:(DBCError**)error {
     BOOL opened = [self openWithFlags:SQLITE_OPEN_READONLY error:error];
     if(opened){
+        [self setAutomaticallyOmmitReadLock:NO];
         [self setJournalMode:DBCDatabaseJournalingModeOff error:error];
         [self setJournalMode:DBCDatabaseJournalingModeOff forDatabase:@"main" error:error];
     }
@@ -643,6 +644,13 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
         return NO;
     }
     
+    // Check whether should automatically remove omit read-locks or not
+    if([self shouldAutomaticallyOmmitReadLock]) {
+        
+        // Place read-lock back for time while DML in process
+        [self setOmitReadlockLike:NO error:NULL];
+    }
+    
     int retryCount = 0;
     int returnCode = SQLITE_OK;
     int bindedParametersOffset = 0;
@@ -713,6 +721,14 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
                     [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
+                
+                // Check whether should automatically remove omit read-locks or not
+                if([self shouldAutomaticallyOmmitReadLock]) {
+                    
+                    // Remove read-lock
+                    [self setOmitReadlockLike:YES error:NULL];
+                }
+                
                 [queryLock unlock];
                 DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5],
                               errorLine);
@@ -731,6 +747,14 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             }
             if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) [self rollbackTransactionError:NULL];
             sqlite3_finalize(statement);
+            
+            // Check whether should automatically remove omit read-locks or not
+            if([self shouldAutomaticallyOmmitReadLock]) {
+                
+                // Remove read-lock
+                [self setOmitReadlockLike:YES error:NULL];
+            }
+            
             [queryLock unlock];
             DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], 
                           __LINE__);
@@ -763,9 +787,18 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 if(i > 0 && transactionUsed && rollbackSQLSequenceTransactionOnError) 
                     [self rollbackTransactionError:NULL];
                 sqlite3_finalize(statement);
+                
+                // Check whether should automatically remove omit read-locks or not
+                if([self shouldAutomaticallyOmmitReadLock]) {
+                    
+                    // Remove read-lock
+                    [self setOmitReadlockLike:YES error:NULL];
+                }
+                
                 [queryLock unlock];
                 DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5],
                               errorLine);
+                
                 return NO;
             }
         }
@@ -779,6 +812,14 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             [dbcStatement reset];
         } else if(!statementsCachingEnabled) sqlite3_finalize(statement);
     }
+    
+    // Check whether should automatically remove omit read-locks or not
+    if([self shouldAutomaticallyOmmitReadLock]) {
+        
+        // Remove read-lock
+        [self setOmitReadlockLike:YES error:NULL];
+    }
+    
     [queryLock unlock];
     DBCLockLogger(@"[DBC:Update] Relinquished from previously acquired lock: %@ (Line: %d)", [sqlUpdate md5], __LINE__);
     return returnCode==SQLITE_OK||returnCode==SQLITE_DONE;
