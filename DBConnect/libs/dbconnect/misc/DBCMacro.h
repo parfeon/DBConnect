@@ -24,7 +24,7 @@
 
 #import "DBCConfiguration.h"
 
-#define DBCReleaseObject(__OBJECT__) if(__OBJECT__!=nil){[__OBJECT__ release], __OBJECT__ = nil; }
+#define DBCReleaseObject(__OBJECT__) [__OBJECT__ release], __OBJECT__ = nil;
 
 #define DBCDatabaseTransactionLockNameFromEnum(__LOCK_ENUM__) ({\
     NSString *lockName = nil;\
