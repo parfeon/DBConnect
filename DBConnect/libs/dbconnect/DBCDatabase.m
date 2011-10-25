@@ -645,7 +645,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     }
     
     // Check whether should automatically remove omit read-locks or not
-    if([self shouldAutomaticallyOmmitReadLock]) {
+    if([self shouldAutomaticallyOmmitReadLock] && 
+       [sqlUpdate rangeOfString:@"PRAGMA omit_readlock ="].location == NSNotFound) {
         
         // Place read-lock back for time while DML in process
         [self setOmitReadlockLike:NO error:NULL];
@@ -723,7 +724,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 sqlite3_finalize(statement);
                 
                 // Check whether should automatically remove omit read-locks or not
-                if([self shouldAutomaticallyOmmitReadLock]) {
+                if([self shouldAutomaticallyOmmitReadLock] &&
+                   [sqlUpdate rangeOfString:@"PRAGMA omit_readlock ="].location == NSNotFound) {
                     
                     // Remove read-lock
                     [self setOmitReadlockLike:YES error:NULL];
@@ -749,7 +751,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
             sqlite3_finalize(statement);
             
             // Check whether should automatically remove omit read-locks or not
-            if([self shouldAutomaticallyOmmitReadLock]) {
+            if([self shouldAutomaticallyOmmitReadLock] &&
+               [sqlUpdate rangeOfString:@"PRAGMA omit_readlock ="].location == NSNotFound) {
                 
                 // Remove read-lock
                 [self setOmitReadlockLike:YES error:NULL];
@@ -789,7 +792,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                 sqlite3_finalize(statement);
                 
                 // Check whether should automatically remove omit read-locks or not
-                if([self shouldAutomaticallyOmmitReadLock]) {
+                if([self shouldAutomaticallyOmmitReadLock] &&
+                   [sqlUpdate rangeOfString:@"PRAGMA omit_readlock ="].location == NSNotFound) {
                     
                     // Remove read-lock
                     [self setOmitReadlockLike:YES error:NULL];
@@ -814,7 +818,8 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     }
     
     // Check whether should automatically remove omit read-locks or not
-    if([self shouldAutomaticallyOmmitReadLock]) {
+    if([self shouldAutomaticallyOmmitReadLock] &&
+       [sqlUpdate rangeOfString:@"PRAGMA omit_readlock ="].location == NSNotFound) {
         
         // Remove read-lock
         [self setOmitReadlockLike:YES error:NULL];
