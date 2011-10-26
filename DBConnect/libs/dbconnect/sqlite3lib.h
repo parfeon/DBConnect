@@ -26,4 +26,4 @@
  *     const char *pathToFile - full path to file with SQL update commands list
  * @return sqlite exec result code and error information via structure
  */
-int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error);
+int dbc_executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error);

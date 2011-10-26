@@ -6,15 +6,15 @@
 #import "DBCAdditionalErrorCodes.h"
 
 #if !defined(HAVE_EDITLINE) && (!defined(HAVE_READLINE) || HAVE_READLINE!=1)
-# define readline(p) local_getline(p,stdin)
+# define readline(p) dbc_local_getline(p,stdin)
 # define add_history(X)
 # define read_history(X)
 # define write_history(X)
 # define stifle_history(X)
 #endif
 
-static char mainPrompt[20];    
-static char continuePrompt[20];
+static char dbc_mainPrompt[20];    
+static char dbc_continuePrompt[20];
 
 #pragma mark SQL dump file import routine
 
@@ -25,7 +25,7 @@ static char continuePrompt[20];
  *      const char *z - string for computation
  * @return computed string length
  */
-static int strlen30(const char *z){
+static int dbc_strlen30(const char *z){
     const char *z2 = z;
     while(*z2){z2++;}
     return 0x3fffffff&(int)(z2-z);
@@ -37,7 +37,7 @@ static int strlen30(const char *z){
  *      const char *z - examination string
  * @return examination result
  */
-static int _all_whitespace(const char *z){
+static int dbc_all_whitespace(const char *z){
     for(; *z; z++){
         if(isspace(*(unsigned char*)z)) continue;
         if(*z=='/' && z[1]=='*'){
@@ -66,10 +66,10 @@ static int _all_whitespace(const char *z){
  *      const char *zLine - examination string
  * @return examination result
  */
-static int _is_command_terminator(const char *zLine){
+static int dbc_is_command_terminator(const char *zLine){
     while(isspace(*(unsigned char*)zLine) ){ zLine++; };
-    if(zLine[0]=='/'&&_all_whitespace(&zLine[1])) return 1; // Oracle
-    if(tolower(zLine[0])=='g'&&tolower(zLine[1])=='o'&&_all_whitespace(&zLine[2])) return 1; // SQL Server
+    if(zLine[0]=='/'&&dbc_all_whitespace(&zLine[1])) return 1; // Oracle
+    if(tolower(zLine[0])=='g'&&tolower(zLine[1])=='o'&&dbc_all_whitespace(&zLine[2])) return 1; // SQL Server
     return 0;
 }
 
@@ -81,7 +81,7 @@ static int _is_command_terminator(const char *zLine){
  *     int N         - how much characters to check in string
  * @return semicolon search result
  */
-static int _contains_semicolon(const char *z, int N){
+static int dbc_contains_semicolon(const char *z, int N){
     int i;
     for(i=0; i<N; i++){if(z[i]==';') return 1;}
     return 0;
@@ -95,7 +95,7 @@ static int _contains_semicolon(const char *z, int N){
  *      int nSql - SQL line length
  * @return examination result
  */
-static int _is_complete(char *zSql, int nSql){
+static int dbc_is_complete(char *zSql, int nSql){
     int rc;
     if(zSql==0) return 1;
     zSql[nSql] = ';';
@@ -114,7 +114,7 @@ static int _is_complete(char *zSql, int nSql){
  * The interface is like "readline" but no command-line editing
  * is done.
  */
-static char *local_getline(char *zPrompt, FILE *dumpFile){
+static char *dbc_local_getline(char *zPrompt, FILE *dumpFile){
     char *zLine;
     int nLine;
     int n;
@@ -162,15 +162,15 @@ static char *local_getline(char *zPrompt, FILE *dumpFile){
  *                           empty string, then issue a continuation prompt.
  * @return single string from input file
  */
-static char *one_input_line(const char *zPrior, FILE *dumpFile){
+static char *dbc_one_input_line(const char *zPrior, FILE *dumpFile){
     char *zPrompt;
     char *zResult;
-    if(dumpFile!=0) return local_getline(0, dumpFile);
-    if(zPrior&&zPrior[0]) zPrompt = continuePrompt;
-    else zPrompt = mainPrompt;
+    if(dumpFile!=0) return dbc_local_getline(0, dumpFile);
+    if(zPrior&&zPrior[0]) zPrompt = dbc_continuePrompt;
+    else zPrompt = dbc_mainPrompt;
     zResult = readline(zPrompt);
 #if defined(HAVE_READLINE) && HAVE_READLINE==1
-    if( zResult && *zResult ) add_history(zResult);
+    if( zResult && *zResult ) dbc_add_history(zResult);
 #endif
     return zResult;
 }
@@ -180,8 +180,8 @@ static char *one_input_line(const char *zPrior, FILE *dumpFile){
  * @prameters
  *     sqlite3 *targetDB - opened database connection to retrieve error from
  */
-static char *save_err_msg(sqlite3 *targetDB){
-    int nErrMsg = 1+strlen30(sqlite3_errmsg(targetDB));
+static char *dbc_save_err_msg(sqlite3 *targetDB){
+    int nErrMsg = 1+dbc_strlen30(sqlite3_errmsg(targetDB));
     char *zErrMsg = sqlite3_malloc(nErrMsg);
     if(zErrMsg) memcpy(zErrMsg, sqlite3_errmsg(targetDB), nErrMsg);
     return zErrMsg;
@@ -199,7 +199,7 @@ static char *save_err_msg(sqlite3 *targetDB){
  *      char **pzErrMsg   - Error message will be written here
  * @return SQL request execution result code
  */
-static int sql_exec(sqlite3 *targetDB, const char *sql, char **pzErrMsg){
+static int dbc_sql_exec(sqlite3 *targetDB, const char *sql, char **pzErrMsg){
     sqlite3_stmt *statement = NULL;
     int returnCode = SQLITE_OK;
     const char *unusedSQLPortion = 0;
@@ -208,7 +208,7 @@ static int sql_exec(sqlite3 *targetDB, const char *sql, char **pzErrMsg){
     while(sql[0]&&returnCode==SQLITE_OK){
         returnCode = sqlite3_prepare_v2(targetDB, sql, -1, &statement, &unusedSQLPortion);
         if(returnCode != SQLITE_OK){
-            if(pzErrMsg) *pzErrMsg = save_err_msg(targetDB);
+            if(pzErrMsg) *pzErrMsg = dbc_save_err_msg(targetDB);
         } else {
             if(!statement){
                 sql = unusedSQLPortion;
@@ -226,14 +226,15 @@ static int sql_exec(sqlite3 *targetDB, const char *sql, char **pzErrMsg){
                 sql = unusedSQLPortion;
                 while(isspace(sql[0])) sql++;
             } else if(pzErrMsg){
-                *pzErrMsg = save_err_msg(targetDB);
+                *pzErrMsg = dbc_save_err_msg(targetDB);
             }
         }
     }
     return returnCode;
 }
 
-int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, struct sqlite3lib_error *error){
+int dbc_executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continueOnErrors, 
+                             struct sqlite3lib_error *error){
     FILE *dumpFile = fopen(pathToFile, "rb");
     char *line = 0;
     char *sql = 0;
@@ -252,18 +253,18 @@ int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continue
     }
     while(errorCount==0||continueOnErrors){
         free(line);
-        line = local_getline(0, dumpFile);
+        line = dbc_local_getline(0, dumpFile);
         if(line==0) break; // Reached EOF
         lineNumber++;
-        if((sql==0 || sql[0]==0) && _all_whitespace(line)) continue;
+        if((sql==0 || sql[0]==0) && dbc_all_whitespace(line)) continue;
         if(line&&line[0]=='.') continue;
-        if(_is_command_terminator(line) && _is_complete(sql, nSql)) memcpy(line,";",2);
+        if(dbc_is_command_terminator(line) && dbc_is_complete(sql, nSql)) memcpy(line,";",2);
         nSqlPrior = nSql;
         if(sql==0){
             int i = 0;
             for(i=0;line[i]&&isspace((unsigned char)line[i]);i++){};
             if(line[i]!=0){
-                nSql = strlen30(line);
+                nSql = dbc_strlen30(line);
                 sql = malloc(nSql+3);
                 if(sql==0){
                     error->errorCode = SQLITE_OOM;
@@ -277,7 +278,7 @@ int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continue
                 startLine = lineNumber;
             }
         } else {
-            int lenght = strlen30(line);
+            int lenght = dbc_strlen30(line);
             sql = realloc(sql, nSql+lenght+4);
             if(sql==0){
                 error->errorCode = SQLITE_OOM;
@@ -291,8 +292,8 @@ int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continue
             memcpy(&sql[nSql], line, lenght+1);
             nSql += lenght;
         }
-        if(sql&&_contains_semicolon(&sql[nSqlPrior], nSql-nSqlPrior)&&sqlite3_complete(sql)){
-            returnCode = sql_exec(targetDB, sql, &zErrMsg);
+        if(sql&&dbc_contains_semicolon(&sql[nSqlPrior], nSql-nSqlPrior)&&sqlite3_complete(sql)){
+            returnCode = dbc_sql_exec(targetDB, sql, &zErrMsg);
             if(returnCode||zErrMsg){
                 if(dumpFile!=0){
                     error->errorLine = startLine;
@@ -324,7 +325,7 @@ int executeQueryFromFile(sqlite3 *targetDB, const char *pathToFile, int continue
         }
     }
     if(sql){
-        if(!_all_whitespace(sql)) {
+        if(!dbc_all_whitespace(sql)) {
             snprintf(error->errorDescription, sizeof(error->errorDescription), "Error: incomplete SQL: %s", sql);
             error->errorCode = SQLITE_INCOMPLETE_REQUEST;
         }

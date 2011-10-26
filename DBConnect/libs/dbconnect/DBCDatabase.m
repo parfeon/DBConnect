@@ -245,11 +245,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
                [[NSFileManager defaultManager] fileExistsAtPath:sqlQeryListPath]){
                 struct sqlite3lib_error execError = {"", -1, -1};
                 if(dbEncoding==DBCDatabaseEncodingUTF8) 
-                    executeQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], 
-                                         continueOnExecutionErrors, &execError);
+                    dbc_executeQueryFromFile(dbConnection, [sqlQeryListPath UTF8String], 
+                                             continueOnExecutionErrors, &execError);
                 else if(dbEncoding==DBCDatabaseEncodingUTF16)
-                    executeQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding], 
-                                         continueOnExecutionErrors, &execError);
+                    dbc_executeQueryFromFile(dbConnection, [sqlQeryListPath cStringUsingEncoding:NSUTF16StringEncoding],
+                                             continueOnExecutionErrors, &execError);
                 if(execError.errorCode != -1 && !continueOnExecutionErrors){
                     if([[NSFileManager defaultManager] fileExistsAtPath:dbFilePath]){
                         NSError *fmError = nil;
@@ -462,10 +462,11 @@ continueOnExecutionErrors:(BOOL)continueOnExecutionErrors error:(DBCError**)erro
     if(statementsFilePath != nil && [[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
         struct sqlite3lib_error execError = {"", -1, -1};
         if(dbEncoding==DBCDatabaseEncodingUTF8) 
-            executeQueryFromFile(dbConnection, [statementsFilePath UTF8String], continueOnExecutionErrors, &execError);
+            dbc_executeQueryFromFile(dbConnection, [statementsFilePath UTF8String], continueOnExecutionErrors, 
+                                     &execError);
         else if(dbEncoding==DBCDatabaseEncodingUTF16)
-            executeQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding], 
-                                 continueOnExecutionErrors, &execError);
+            dbc_executeQueryFromFile(dbConnection, [statementsFilePath cStringUsingEncoding:NSUTF16StringEncoding],
+                                     continueOnExecutionErrors, &execError);
         if(execError.errorCode != -1 && !continueOnExecutionErrors){
             if([[NSFileManager defaultManager] fileExistsAtPath:statementsFilePath]){
                 NSError *fmError = nil;
