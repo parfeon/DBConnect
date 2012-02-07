@@ -1,10 +1,10 @@
 #DBConnect
 
-__DBConnect__ is a thread-safe Objective-C [SQLite][sqliteweb] wrapper for embedded systems. I was inspired by [EGODatabase][EGODatabasews] and [FMDB][FMDBws] when were writing __DBConnect__  
+__DBConnect__ is a thread-safe Objective-C [SQLite][sqliteweb] wrapper for embedded systems. I was inspired by [EGODatabase][EGODatabasews] and [FMDB][FMDBws] when writing __DBConnect__  
 [sqliteweb]:http://www.sqlite.org  
 [EGODatabasews]:https://github.com/enormego/egodatabase  
 [FMDBws]:https://github.com/shifu/fmdb  
-__DBConnect__ is tested to work on iOS
+__DBConnect__ was tested to work on iOS
 
 #__DBConnect library structure__  
 __DBConnect__ consist from four basic classes:  
@@ -12,23 +12,23 @@ __1.__ DBCDatabase
 __2.__ DBCDatabaseResult  
 __3.__ DBCDatabaseRow  
 __4.__ DBCError  
-There also other classes: __DBCDatabaseInfo__, __DBCDatabaseIndexInfo__, __DBCDatabaseTableColumnInfo__, __DBCDatabaseIndexedColumnInfo__  
-Also __DBConnect__ have 2 categories to extend it abilities: __Advanced__, __Aliases__. __DBConnect__ functionality was knowingly separated. __Advanced__ will be interested for advanced users. __Aliases__ contains methods, which are basically aliases for frequent queries. Functionality was separated to keep autocomplete from bunch of methods, which you possibly won't never use.
+There are also other classes: __DBCDatabaseInfo__, __DBCDatabaseIndexInfo__, __DBCDatabaseTableColumnInfo__, __DBCDatabaseIndexedColumnInfo__  
+Also __DBConnect__ has 2 categories to extend its abilities: __Advanced__, __Aliases__. __DBConnect__ functionality was knowingly separated. __Advanced__ will be interested for advanced users. __Aliases__ contains methods, which are basically aliases for frequent queries. Functionality was separated to keep autocomplete away from bunch of methods, which you will possibly never use.
 
 ##__DBCDatabase__  
-This is basic class, which provide intuitive Objective-C API to work with SQLite3 library. It allows to open connection to sqlite database file in _read-write_ and _read-only_ mode. Of course it also allow you to perform DDL, DML and TCL queries. Also this class allows you to create database from scratch, using SQL dump (like dump from MySQL). 
+This is a basic class, which provides intuitive Objective-C API to work with SQLite3 library. It allows opening connection to sqlite database file in _read-write_ and _read-only_ modes. Of course, it also allows you to perform DDL, DML and TCL queries. Also this class allows you to create database from scratch, using SQL dump (like dump from MySQL). 
 
 ##__DBCDatabaseResult__
-This class used by __DBConnect__ to provide results from query execution. This class implements fast enumeration for faster iteration through result entries.
+This class is used by __DBConnect__ to provide results from query execution. This class implements fast enumeration for faster iteration through result's entries.
 
 ##__DBCDatabaseRow__
-__DBConnect__ uses this class to store data retrieved when stepped with sqlite statement. 
+__DBConnect__ uses this class to store data retrieved when stepped using sqlite statement. 
 
 ##__DBCError__
-__DBCError__ used by __DBConnect__ to represent errors, which occurred during lifetime.
+__DBCError__ is used by __DBConnect__ to represent errors, which occurred during lifetime.
 
-#__Documentation and how-to's__
-Documentation and additional information about usage you can find in [Wiki][wikiMain]  
+#__Documentation and how-to__
+Documentation and additional information about the usage you can find in [Wiki][wikiMain]  
 [wikiMain]:https://github.com/parfeon/DBConnect/wiki
 
 #__License__
