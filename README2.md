@@ -32,9 +32,27 @@ Table of Contents
   - [Stream controller](#stream-controller)
   - [APNS](#apns-methods)
   - [PAM](#pam-methods)
+- [Data representation objects](#data-representation-objects)
+  - [PNChannel](#pnchannel-object)
+  - [PNChannelGroup](#pnchannelgroup-object)
+  - [PNChannelGroupNamespace](#pnchannelgroupnamespace-object)
+  - [PNMessage](#pnmessage-object)
+  - [PNClient](#pnclient-object)
+  - [PNHereNow](#pnherenow-object)
+  - [PNWhereNow](#pnwherenow-object)
+  - [PNChannelGroupChange](#pnchannelgroupchange-object)
+  - [PNAccessRightOptions](#pnaccessrightoptions-object)
+  - [PNAccessRightsCollection](#pnaccessrightscollection-object)
+  - [PNAccessRightsInformation](#pnaccessrightsinformation-object)
+  - [PNDate](#pndate-object)
 - [Error handling](#error-handling)
 - [Events handling](#event-handling)
   - [Delegate callbacks](#event-handling-with-delegate)
+  - [Block callbacks](#event-handling-with-callback-blocks)
+  - [Observation center](#event-handling-with-observatino-center)
+  - [Notifications](#event-handling-with-notifications)
+- [Logging](#logger)
+- [Tests](#tests)
 
 <a name="use_in_project" />
 # How to use in project  
@@ -697,7 +715,7 @@ The client provides a set of methods which allow you to subscribe to channel(s):
 - (void)         subscribeOn:(NSArray *)channelObjects withClientState:(NSDictionary *)clientState
   andCompletionHandlingBlock:(PNClientChannelSubscriptionHandlerBlock)handlerBlock;
 ```
-`channelObjects` can be any of this objects: [__PNChannel__](PubNub/PubNub/PubNub/Data/Channels/PNChannel.h) or [__PNChannelGroup__](PubNub/PubNub/PubNub/Data/PNChannelGroup.h).  
+`channelObjects` can be any of this objects: [**PNChannel**](#pnchannel-object) or [**PNChannelGroup**](#pnchannelgroup-object).  
 
 **DEPRECATED** Starting from **3.7.0** this set of methods has been deprecated:  
 ```objc
@@ -842,7 +860,7 @@ The client of course also provides a set of methods which allow you to unsubscri
 - (void)    unsubscribeFrom:(NSArray *)channelObjects
 withCompletionHandlingBlock:(PNClientChannelUnsubscriptionHandlerBlock)handlerBlock;
 ```
-`channelObjects` can be any of this objects: [__PNChannel__](PubNub/PubNub/PubNub/Data/Channels/PNChannel.h) or [__PNChannelGroup__](PubNub/PubNub/PubNub/Data/PNChannelGroup.h).
+`channelObjects` can be any of this objects: [**PNChannel**](#pnchannel-object) or [**PNChannelGroup**](#pnchannelgroup-object).  
 
 **DEPRECATED** Starting from **3.7.0** this set of methods has been deprecated: 
 ```objc
@@ -894,7 +912,7 @@ To use the Presence feature in your app, the follow methods are provided:
 - (void)disablePresenceObservationFor:(NSArray *)channelObjects
           withCompletionHandlingBlock:(PNClientPresenceDisableHandlingBlock)handlerBlock;
 ```
-`channelObjects` and `object` can be any of this objects: [__PNChannel__](PubNub/PubNub/PubNub/Data/Channels/PNChannel.h) or [__PNChannelGroup__](PubNub/PubNub/PubNub/Data/PNChannelGroup.h).  
+`channelObjects` and `object` can be any of this objects: [**PNChannel**](#pnchannel-object) or [**PNChannelGroup**](#pnchannelgroup-object).  
 
 **DEPRECATED** Starting from **3.7.0** this set of methods has been deprecated: 
 ```objc
@@ -950,7 +968,7 @@ There is a set of methods which provide you access to the presence data:
 - (void)requestParticipantChannelsList:(NSString *)clientIdentifier
                    withCompletionBlock:(PNClientParticipantChannelsHandlingBlock)handleBlock;
 ```
-`channelObjects` can be any of this objects: [__PNChannel__](PubNub/PubNub/PubNub/Data/Channels/PNChannel.h) or [__PNChannelGroup__](PubNub/PubNub/PubNub/Data/PNChannelGroup.h).  
+`channelObjects` can be any of this objects: [**PNChannel**](#pnchannel-object) or [**PNChannelGroup**](#pnchannelgroup-object).  
 
 **DEPRECATED** Starting from **3.7.0** this set of methods has been deprecated: 
 ```objc
@@ -994,8 +1012,8 @@ Example:
 }];
 ```
 `requestParticipantsList` methods "family" can be used to pull out information about how is where globally for your `subscribe` key.  
-Each of presence methods allow to specify whether client identifiers required or not (if not, then [**PNHereNow**](PubNub/PubNub/PubNub/Data/PNHereNow.h) instance will have information only about number of participants via `-participantsCountForChannel:` method). Also methods allow to specify whether client's state should be fetched as well or not.  
-Presence information now represented with [**PNHereNow**](PubNub/PubNub/PubNub/Data/PNHereNow.h) instance. `channels` argument stores list of channels for which presence information available.
+Each of presence methods allow to specify whether client identifiers required or not (if not, then [**PNHereNow**](#pnherenow-object) instance will have information only about number of participants via `-participantsCountForChannel:` method). Also methods allow to specify whether client's state should be fetched as well or not.  
+Presence information now represented with [**PNHereNow**](#pnherenow-object) instance. `channels` argument stores list of channels for which presence information available.
 
 ### Where Now?
 This feature allow to pull out full list of subscribers along with information on which channels they subscribed at this moment.  
@@ -1027,7 +1045,7 @@ Usage is very simple:
     }  
 }];
 ```
-All client information now represented with [**PNClient**](PubNub/PubNub/PubNub/Data/PNClient.h).  
+All client information now represented with [**PNClient**](#pnclient-object).  
 **NOTE:** Too frequent usage of this API may force server to disable it for you on some period of time. Don't misuse this API.  
 
 <a name="client-presence-state" />
@@ -1043,7 +1061,7 @@ PubNub client provide endpoints for client's state manipulation. They allow you 
                     forObject:(id <PNChannelProtocol>)object
   withCompletionHandlingBlock:(PNClientStateUpdateHandlingBlock)handlerBlock;
  ```
-`object` can be any of this objects: [__PNChannel__](PubNub/PubNub/PubNub/Data/Channels/PNChannel.h) or [__PNChannelGroup__](PubNub/PubNub/PubNub/Data/PNChannelGroup.h).  
+`object` can be any of this objects: [**PNChannel**](#pnchannel-object) or [**PNChannelGroup**](#pnchannelgroup-object).  
 
 **DEPRECATED** Starting from **3.7.0** this set of methods has been deprecated:  
 ```objc
@@ -1285,7 +1303,7 @@ withCompletionBlock:(PNClientMessageProcessingBlock)success;
      storeInHistory:(BOOL)shouldStoreInHistory
 withCompletionBlock:(PNClientMessageProcessingBlock)success;
 ```
-Methods from first section return reference on [__PNMessage__](PubNub/PubNub/PubNub/Data/PNMessage.h) instance. If there is a need to re-publish this message for any reason, (for example, the publish request timed-out due to lack of Internet connection), it can be passed back to the last two methods to easily re-publish.  
+Methods from first section return reference on [**PNMessage**](#pnmessage-object) instance. If there is a need to re-publish this message for any reason, (for example, the publish request timed-out due to lack of Internet connection), it can be passed back to the last two methods to easily re-publish.  
 ```objc
 PubNub *pubNub = [PubNub clientWithConfiguration:[PNConfiguration defaultConfiguration]];
 [pubNub connect];
@@ -1766,7 +1784,7 @@ PubNub client provide large set of methods which allow to specify any aspect of 
                      clients:(NSArray *)clientsAuthorizationKeys
  withCompletionHandlingBlock:(PNClientChannelAccessRightsAuditBlock)handlerBlock;
 ```
-`channelObjects` and `object` can be any of this objects: [__PNChannel__](PubNub/PubNub/PubNub/Data/Channels/PNChannel.h), [__PNChannelGroup__](PubNub/PubNub/PubNub/Data/PNChannelGroup.h) or [__PNChannelGroupNamespace__](PubNub/PubNub/PubNub/Data/PNChannelGroupNamespace.h).  
+`channelObjects` and `object` can be any of this objects: [**PNChannel**](#pnchannel-object), [**PNChannelGroup**](#pnchannelgroup-object) or [**PNChannelGroupNamespace**](#pnchannelgroupnamespace-object).  
 
 **DEPRECATED** Starting from **3.7.0** this set of methods has been deprecated: 
 ```objc
@@ -1892,6 +1910,207 @@ PubNub *pubNub = [PubNub clientWithConfiguration:configuration andDelegate:self]
 ```
 Code above configure access rights in a way, which won't allow message posting for clients with _spectator_ and _visitor_ authorization keys into _iosdev_ channel for **10** minutes. But despite the fact that _iosdev_ channel access rights allow only subscription for _spectator_ and _visitor_, PubNub client allowed to post messages to any channels because of upper-layer configuration (__channel__ access level allow message posting to any channels for **10** minutes).  
 
+
+<a name="data-representation-objects" />
+## Data representation objects
+Mostly all data which returned to the used wrapped into specific objects to ease access to some complex structures.
+
+<a name="pnchannel-object" />
+### PNChannel object
+Base object which is used along with subscribe API. Wrapper used to store additional information along with channel name. This object used along with: [subscribe](#client-subscribe-unsubscribe), [presence](#client-presence), [here now](#client-here-now), [state](#client-presence-state), [publish](#message-post), [history](#message-history), [stream controller](#stream-controller), [APNS](#apns-methods) and [PAM](#pam-methods) APIs.  
+
+This object conforms to [**PNChannelProtocol**](PubNub/PubNub/PubNub/Misc/Protocols/PNChannelProtocol.h) and expose next information to the user:  
+- `name` - unique string which represent single channel entity  
+- `updateTimeToken` - [**PNDate**](#pndate-object) object (represent server time token) which is updated every time when new event arrive on channel  
+- `channelGroup` - [**PNChannelGroup**](#pnchannelgroup-object) object which is set when event arrive to the channel which is part of channel group on which client subscribed at this moment  
+- `presenceUpdateDate` - [**PNDate**](#pndate-object) object (represent server time token) which is updated every time when new presence event arrive on channel (if enabled presence observation)  
+- `participantsCount` - number of subscribers on this concrete channel. This value updates every time when presence event arrive or explicitly requested presence information for this channel  
+- `participants` - list of [**PNClient**](#pnclient-object) objects each of which represent single subscriber with his state (if has been passed in event or explicitly requested)  
+
+Also it provide few constructor methods:  
+```objc
++ (NSArray *)channelsWithNames:(NSArray *)channelsName;
+
++ (id)channelWithName:(NSString *)channelName;
++ (id)channelWithName:(NSString *)channelName shouldObservePresence:(BOOL)observePresence;
+```
+First method from list above allow to create set of channels from list of names in single call. Last method allow to specify whether created channel should try to enable presence observation after subscription or not.  
+
+<a name="pnchannelgroup-object" />
+### PNChannelGroup object
+Client's representation of collection of [**PNChannel**](#pnchannel-object) instances grouped on server under unique name in global or unique namespace. This object used along with: [subscribe](#client-subscribe-unsubscribe), [presence](#client-presence), [here now](#client-here-now), [state](#client-presence-state), [stream controller](#stream-controller) and [PAM](#pam-methods) APIs.  
+Group will be created on server when there will be added first channels.  
+
+This object is subclass of [**PNChannel**](#pnchannel-object) but have different set of information which is useful in context of stream controller:  
+- `groupName` - unique group name which is persistently registered on server and store list of channels.
+- `nspace` - unique namespace under which channel group is stored on server. This value can be `nil` and it mean that group is stored in global namespace.
+- `channels` - list of [**PNChannel**](#pnchannel-object) objects which is stored on server for this channel group. This property is filled only if concrete request for channels fetch has been made.
+
+Also it provide few constructor methods:
+```objc
++ (PNChannelGroup *)channelGroupWithName:(NSString *)name;
++ (PNChannelGroup *)channelGroupWithName:(NSString *)name shouldObservePresence:(BOOL)observePresence;
+
++ (PNChannelGroup *)channelGroupWithName:(NSString *)name inNamespace:(NSString *)nspace;
++ (PNChannelGroup *)channelGroupWithName:(NSString *)name inNamespace:(NSString *)nspace
+                   shouldObservePresence:(BOOL)observePresence;
+```
+First group of methods can accept simple channel group name ("group") or composed with namespace ("namespace:group"), but if you don't want to pre-compose string there is second group of methods which accept group and namespace names separately. Both groups of methods has designated method which allow to specify whether created group should try to enable presence observation after subscription or not.  
+
+<a name="pnchannelgroupnamespace-object" />
+### PNChannelGroupNamespace object
+Client's representation of collection of [**PNChannelGroup**](#pnchannelgroup-object) instances grouped on server under unique namespace name. This object used along with [PAM](#pam-methods) API.  
+Namespace will be created on server when there will be added first channel group with channels.  
+
+This object is subclass of [**PNChannelGroup**](#pnchannelgroup-object) but have different set of information which is useful in context of stream controller:  
+- `nspace` - unique namespace under which channel group is stored on server. This value can be `nil` and it mean that group is stored in global namespace.
+
+Also it provide few constructor methods:
+```objc
++ (PNChannelGroupNamespace *)allNamespaces;
++ (PNChannelGroupNamespace *)namespaceWithName:(NSString *)name;
+```
+First method is useful if you need to address all namespaces which is registered for your application keys (publish/subscribe key pair).
+
+<a name="pnmessage-object" />
+### PNMessage object
+This is object which wrap received message or message which should be sent along with information about where and how it should be sent. `PNMessage` conforms to _NSCoding_ protocol which mean that you can save messages on file system if you want using corresponding methods. This object used along with [subscribe](#client-subscribe-unsubscribe) and [publish](#message-post) APIs.  
+
+This object provide next information:  
+- `channel` - [**PNChannel**](#pnchannel-object) object to/from which this message has been sent / received  
+- `channelGroup` - [**PNChannelGroup**](#pnchannelgroup-object) object inside of which target channel is registered. This value is set only if message has been received from channel inside of channel group on which client subscribed at this moment.  
+- `message` - reference on message which should be sent or received from channel (it is native Objective-C object)  
+- `receiveDate` - [**PNDate**](#pndate-object) object which represent date when this message has been received on server side. This value is set only through [history](#message-history) API when stored messages received with request of store date.  
+- `date` - [**PNDate**](#pndate-object) object which represent date when server accepted this message. This value is set through [publish](#message-post) when server report about successful delivery (means that message reached PubNub service).  
+
+This object provide methods which allow to load and store instance from / to file system:
+```objc
++ (PNMessage *)messageFromFileAtPath:(NSString *)messageFilePath;
+- (BOOL)writeToFileAtPath:(NSString *)messageStoreFilePath;
+```
+
+<a name="pnclient-object" />
+### PNClient object
+Local representation of current client or any other subscriber on the channel. This object used along with: [here now](#client-here-now), [where now](#client-where-now) and [state](#client-presence-state) APIs.  
+
+This object provide next information:  
+- `channels` - list of [**PNChannel**](#pnchannel-object) objects for which this client has state information. This value is set through [where now](#client-where-now) by user request for state of concrete subscriber on channels  
+- `channel` - [**PNChannel**](#pnchannel-object) object which represent channel on which this subscriber is noticed. This value is set through [here now](#client-here-now) and [where now](#client-where-now) APIs as well as through presence events on channel  
+- `group` - [**PNChannelGroup**](#pnchannelgroup-object) object inside of which stored target channel on which client subscribed. This is set through [here now](#client-here-now) API and can be `nil` if request has been done on regular channel (not for channel group)  
+- `identifier` - unique subscriber identifier which is given during client configuration  
+
+This object provide method which allow to fetch client state information for particular channel:  
+```objc
+- (NSDictionary *)stateForChannel:(PNChannel *)channel;
+```
+
+<a name="pnherenow-object" />
+### PNHereNow object
+Abstraction for presence information which has been received by user request through [here now](#client-here-now) API.  
+
+This object provide few methods to receive detailed presence information:  
+```objc
+- (NSArray *)channels;
+
+- (NSArray *)participantsForChannel:(PNChannel *)channel;
+- (NSUInteger)participantsCountForChannel:(PNChannel *)channel;
+```
+First method may contain different set of channels (for example less then has been requested) because there is no presence information for some subset of channels which has been passed by user.  
+Last two methods allow to receiver list of [**PNClient**](#pnclient-object) objects and their count for particular channel.  
+
+<a name="pnwherenow-object" />
+### PNWhereNow object
+Object which is used to represent presence information of single subscriber by his unique identifier across all active [**PNChannel**](#pnchannel-object) objects. This object used along with [where now](#client-where-now) API.  
+
+This object provide next information:  
+- `identifier` - reference on unique subscriber identifier for which presence information has been received  
+- `channels` - list of [**PNChannel**](#pnchannel-object) objects where requested subscriber has been found  
+
+<a name="pnchannelgroupchange-object" />
+### PNChannelGroupChange object
+Object which is used to represent manipulation which has been done with channel group using [stream controller](#stream-controller) API. This object is passed in error callbacks when there is some issues during request to [stream controller](#stream-controller) API.  
+
+This object provide next information:  
+- `group` - [**PNChannelGroup**](#pnchannelgroup-object) object for which change has been issued  
+- `addingChannels` - `BOOL` flag which specify whether change has been done for channels addition or removal to/from channel group  
+- `channels` - list of [**PNChannel**](#pnchannel-object) objects which has been used for channel group channels list modification  
+
+<a name="pnaccessrightoptions-object" />
+### PNAccessRightOptions object
+Object which is used to represent access rights manipulation options on channel, channel group and namespace objects through [PAM](#pam-methods) API. This object is passed in error callbacks when there is some issues during request to [PAM](#pam-methods) API.  
+This object provide next information:  
+- `level` - target object level for which this access rights should be applied: application, channel, channel group, namespace or user  
+- `rights` - bit field which allow to compose set of access rights: read, write, manage or none  
+- `applicationKey` - reference on application (by subscribe key)  
+- `channels` - list of [**PNChannel**](#pnchannel-object) objects in case if access rights manipulation is done for channel level  
+- `clientsAuthorizationKeys` - list of unique subscriber identifiers for which on user level access rights should be changed  
+- `accessPeriodDuration` - time for which new access rights should be applied for target level  
+
+This object provide helper methods to check what kind of access rights is granted or revoked:  
+```objc
+- (BOOL)isEnablingReadAccessRight;
+- (BOOL)isEnablingWriteAccessRight;
+- (BOOL)isEnablingAllAccessRights;
+- (BOOL)isRevokingAccessRights;
+```
+
+<a name="pnaccessrightscollection-object" />
+### PNAccessRightsCollection object
+Object which is used to represent set of [**PNAccessRightsInformation**](#pnaccessrightsinformation-object) objects which represent access right for different levels (depending on PAM audit request options). This object used along with [PAM](#pam-methods) API.  
+
+This object provide next information:  
+- `level` - original access object level for which audit has been done: application, channel group, channel and user  
+
+This object provide methods to receive concrete information for different access rights level and objects (object can be channel. channel group or subscriber identifier):
+```objc
+- (PNAccessRightsInformation *)accessRightsInformationForApplication;
+- (NSArray *)accessRightsInformationForAllChannels;
+- (NSArray *)accessRightsInformationForAllChannelGroups;
+- (NSArray *)accessRightsInformationForAllChannelGroupNamespaces;
+- (PNAccessRightsInformation *)accessRightsInformationFor:(id<PNChannelProtocol>)object;
+
+- (NSArray *)accessRightsForClientsOn:(id<PNChannelProtocol>)object;
+- (NSArray *)accessRightsInformationForAllClientAuthorizationKeys;
+- (NSArray *)accessRightsInformationForClientAuthorizationKey:(NSString *)clientAuthorizationKey;
+- (PNAccessRightsInformation *)accessRightsInformationClientAuthorizationKey:(NSString *)clientAuthorizationKey
+                                                                   onChannel:(PNChannel *)channel;
+```
+First group of methods allow to fetch access rights information for non-user objects as well as group of objects of concrete type. Last group of methods allow to retrieve access rights information for set of users on specified object or for single user with fully specified target object.
+
+<a name="pnaccessrightsinformation-object" />
+### PNAccessRightsInformation object
+Object which is used to represent access rights for concrete object (application, channel group, channel or user). This object used along with [PAM](#pam-methods) API.  
+  
+This object provide next information:  
+- `level` - target object level for which this access rights received: application, channel, channel group, namespace or user  
+- `rights` - bit field which store object's access rights: read, write, manage or none  
+- `subscriptionKey` - reference on application (by subscribe key)  
+- `object` - one of [**PNChannel**](#pnchannel-object) or [**PNChannelGroup**](#pnchannelgroup-object) instances for which access rights is described (for application level this value is `nil`)  
+- `authorizationKey` - unique subscriber identifiers for which on user level access rights has been received. This value is set only if information for **user** access level  
+- `accessPeriodDuration` - time for which new access rights has been granted for target level  
+
+This object provide helper methods to check what kind of access rights is granted or revoked:  
+```objc
+- (BOOL)hasReadRight;
+- (BOOL)hasWriteRight;
+- (BOOL)hasAllRights;
+- (BOOL)hasManagementRight;
+- (BOOL)isAllRightsRevoked;
+```
+
+<a name="pndate-object" />
+### PNDate object
+Object used to represent dates which is received from PubNub client to the user or when user want to specify time frame for [history](#message-history) API.  
+
+This object provide next information:  
+- `timeToken` - this is time token which is used by PubNub. This value represent unixtimestamp with nanoseconds w/o decimal part  
+- `date` - **NSDate** which is build from time token value and make it possible to use with standard Objective-C API which work with dates  
+
+This object provide few constructors:  
+```objc
++ (instancetype)dateWithDate:(NSDate *)date;
++ (instancetype)dateWithToken:(NSNumber *)number;
+```
 
 <a name="error-handling" />
 ## Error handling
@@ -2032,7 +2251,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client didSubscribeOn:(NSArray *)channelObjects;  
 
 This delegate method is called when the client is successfully subscribed call to the channels. 
-“channelObjects” will contain the array of [PNChannel]() and [PNChannelGroup]() instances to which the client is subscribed.  
+“channelObjects” will contain the array of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances to which the client is subscribed.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didSubscribeOn:(NSArray *)channelObjects {
@@ -2055,7 +2274,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client willRestoreSubscriptionOn:(NSArray *)channelObjects; 
 
 This delegate method is called when the subscription on the channels is about to be restored after a network disconnect.
-“channelObjects” will contain the array of [PNChannel]() and [PNChannelGroup]() instances to which the subscription is about to be restored.  
+“channelObjects” will contain the array of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances to which the subscription is about to be restored.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client willRestoreSubscriptionOn:(NSArray *)channelObjects {
@@ -2078,7 +2297,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client didRestoreSubscriptionOn:(NSArray *)channelObjects;  
 
 This delegate method is called when the subscription on the channels is successfully restored after a network disconnect.
-“channelObjects” will contain the array of [PNChannel]() and [PNChannelGroup]() instances to which the subscription has been restored.  
+“channelObjects” will contain the array of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances to which the subscription has been restored.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didRestoreSubscriptionOn:(NSArray *)channelObjects {
@@ -2112,7 +2331,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client didUnsubscribeFrom:(NSArray *)channelObjects;  
 
 This delegate method is called if the channels are successfully unsubscribed.
-“channelObjects” will contain the array of [PNChannel]() and [PNChannelGroup]() instances which have been unsubscribed.  
+“channelObjects” will contain the array of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances which have been unsubscribed.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didUnsubscribeFrom:(NSArray *)channelObjects {    
@@ -2146,7 +2365,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client didEnablePresenceObservationOn:(NSArray *)channelObjects;
 
 This delegate method is called if the presence notifications are successfully enabled.
-“channelObjects” will contain the array of [PNChannel]() and [PNChannelGroup]() instances which have presence notifications enabled.  
+“channelObjects” will contain the array of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances which have presence notifications enabled.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didEnablePresenceObservationOn:(NSArray *)channelObjects {
@@ -2180,7 +2399,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client didDisablePresenceObservationOn:(NSArray *)channelObjects;
 
 This delegate method is called if the presence notifications are successfully disabled.
-“channelObjects” will contain the array of [PNChannel]() and [PNChannelGroup]() instances which have presence notifications disabled.  
+“channelObjects” will contain the array of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances which have presence notifications disabled.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didDisablePresenceObservationOn:(NSArray *)channelObjects {
@@ -2288,7 +2507,7 @@ Example usage follows:
 ```
 #### - (void)pubnubClient:(PubNub *)client didChangeAccessRights:(PNAccessRightsCollection *)accessRightsCollection;
 
-This delegate method is called when PubNub client did complete access rights change operation. [PNAccessRightsCollection](PubNub/PubNub/PubNub/Data/PNAccessRightsCollection.h) contains set of [PNAccessRightsInformation](PubNub/PubNub/PubNub/Data/PNAccessRightsCollection.h) instance which is used to describe access rights which has been applied by the server at the end (parameters may differ from the one which is required by user).  
+This delegate method is called when PubNub client did complete access rights change operation. [**PNAccessRightsCollection**](#pnaccessrightscollection-object) contains set of [**PNAccessRightsInformation**](#pnaccessrightsinformation-object) instance which is used to describe access rights which has been applied by the server at the end (parameters may differ from the one which is required by user).  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didChangeAccessRights:(PNAccessRightsCollection *)accessRightsCollection {
@@ -2298,7 +2517,7 @@ Example usage follows:
 ```
 #### - (void)pubnubClient:(PubNub *)client accessRightsChangeDidFailWithError:(PNError *)error;
 
-This delegate method is called when PubNub client did fail access rights change operation. “error” will contain the details of the error and _error.associatedObject_ contains reference on [PNAccessRightOptions](PubNub/PubNub/PubNub/Data/PNAccessRightOptions.h) instance which contains information about access rights which user tried to apply to some object.  
+This delegate method is called when PubNub client did fail access rights change operation. “error” will contain the details of the error and _error.associatedObject_ contains reference on [**PNAccessRightOptions**](#pnaccessrightoptions-object) instance which contains information about access rights which user tried to apply to some object.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client accessRightsChangeDidFailWithError:(PNError *)error {
@@ -2308,7 +2527,7 @@ Example usage follows:
 ```
 #### - (void)pubnubClient:(PubNub *)client didAuditAccessRights:(PNAccessRightsCollection *)accessRightsCollection;
 
-This delegate method is called when PubNub client did complete access rights audition operation. [PNAccessRightsCollection](PubNub/PubNub/PubNub/Data/PNAccessRightsCollection.h) contains set of [PNAccessRightsInformation](PubNub/PubNub/PubNub/Data/PNAccessRightsCollection.h) instance which is used to describe access rights which has been give during previous PAM API grant / revoke usage.  
+This delegate method is called when PubNub client did complete access rights audition operation. [**PNAccessRightsCollection**](#pnaccessrightscollection-object) contains set of [**PNAccessRightsInformation**](#pnaccessrightsinformation-object) instance which is used to describe access rights which has been give during previous PAM API grant / revoke usage.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didAuditAccessRights:(PNAccessRightsCollection *)accessRightsCollection {
@@ -2318,7 +2537,7 @@ Example usage follows:
 ```
 #### - (void)pubnubClient:(PubNub *)client accessRightsAuditDidFailWithError:(PNError *)error;
 
-This delegate method is called when PubNub client did fail access rights audition operation. “error” will contain the details of the error and _error.associatedObject_ contains reference on [PNAccessRightOptions](PubNub/PubNub/PubNub/Data/PNAccessRightOptions.h) instance which contains information about object for which user tried to pull our access rights information.  
+This delegate method is called when PubNub client did fail access rights audition operation. “error” will contain the details of the error and _error.associatedObject_ contains reference on [**PNAccessRightOptions**](#pnaccessrightoptions-object) instance which contains information about object for which user tried to pull our access rights information.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client accessRightsAuditDidFailWithError:(PNError *)error {
@@ -2328,7 +2547,7 @@ Example usage follows:
 ```
 #### - (void)pubnubClient:(PubNub *)client didReceiveClientState:(PNClient *)remoteClient;
 
-This delegate method is called when PubNub client successfully retrieved client state information. [PNClient](PubNub/PubNub/PubNub/Data/PNClient.h) represent all information via properties.  
+This delegate method is called when PubNub client successfully retrieved client state information. [**PNClient**](#pnclient-object) represent all information via properties.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didReceiveClientState:(PNClient *)remoteClient {
@@ -2616,7 +2835,7 @@ Example usage follows:
 ```
 #### ~~- (void)pubnubClient:(PubNub *)client didReceiveParticipantsLits:(NSArray *)participantsList forChannel:(PNChannel *)channel;~~  
 
-This delegate method is called when the client successfully retrieves the info of other connected users on the channel. "participantsList" will contain list of [PNClient](PubNub/PubNub/PubNub/Data/PNClient.h) instances. “channel” will contain the value of the PubNub channel.  
+This delegate method is called when the client successfully retrieves the info of other connected users on the channel. "participantsList" will contain list of [**PNClient**](#pnclient-object) instances. “channel” will contain the value of the PubNub channel.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didReceiveParticipantsLits:(NSArray *)participantsList 
@@ -2628,7 +2847,7 @@ Example usage follows:
 **DEPRECATED** Since **3.7.0**
 #### - (void)pubnubClient:(PubNub *)client didReceiveParticipants:(PNHereNow *)presenceInformation forObjects:(NSArray *)channelObjects;  
 
-This delegate method is called when the client successfully retrieves the info of other connected users on the channel. “channelObjects” will contain list of [PNChannel]() and [PNChannelGroup]() instances.  
+This delegate method is called when the client successfully retrieves the info of other connected users on the channel. “channelObjects” will contain list of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didReceiveParticipants:(PNHereNow *)presenceInformation
@@ -2654,7 +2873,7 @@ Example usage follows:
 #### - (void)pubnubClient:(PubNub *)client didFailParticipantsListDownloadFor:(NSArray *)channelObjects withError:(PNError *)error;  
 
 This delegate method is called when the client fails to get the info of other connected users on the channel. 
-““channelObjects” will contain list of [PNChannel]() and [PNChannelGroup]() instances and “error” will contain the error info.  
+““channelObjects” will contain list of [**PNChannel**](#pnchannel-object) and [**PNChannelGroup**](#pnchannelgroup-object) instances and “error” will contain the error info.  
 Example usage follows:
 ```objc
 - (void)pubnubClient:(PubNub *)client didFailParticipantsListDownloadFor:(NSArray *)channelObjects
@@ -2755,11 +2974,13 @@ Example usage follows:
   return shouldRestoreSubscriptionFromLastTimeToken;
 }
 ```
-	
+
+<a name="event-handling-with-callback-blocks" />
 ### Block callbacks
 
 Many of the client methods support callback blocks as a way to handle events in lieu of a delegate. For each method, only the last block callback will be triggered -- that is, in the case you send many identical requests via a handling block, only last one will register.  
 
+<a name="event-handling-with-observatino-center" />
 ### Observation center
 
 [__PNObservationCenter__](PubNub/PubNub/PubNub/Core/PNObservationCenter.h) is used in the same way as NSNotificationCenter, but instead of observing with selectors it allows you to specify a callback block for particular events.  
@@ -2768,7 +2989,8 @@ These blocks are described in [__PNStructures.h__](PubNub/PubNub/PubNub/Misc/PNS
 
 This is the set of methods which can be used to handle events:  
 ```objc
-- (void)addClientConnectionStateObserver:(id)observer withCallbackBlock:(PNClientConnectionStateChangeBlock)callbackBlock;
+- (void)addClientConnectionStateObserver:(id)observer
+                       withCallbackBlock:(PNClientConnectionStateChangeBlock)callbackBlock;
 - (void)removeClientConnectionStateObserver:(id)observer;
 
 - (void)addClientStateRequestObserver:(id)observer withBlock:(PNClientStateRetrieveHandlingBlock)handleBlock;
@@ -2799,18 +3021,16 @@ This is the set of methods which can be used to handle events:
                          withCallbackBlock:(PNClientChannelsRemovalFromGroupHandlingBlock)callbackBlock;
 - (void)removeChannelsRemovalFromGroupObserver:(id)observer;
 
-- (void)addClientChannelSubscriptionStateObserver:(id)observer 
+- (void)addClientChannelSubscriptionStateObserver:(id)observer
                                 withCallbackBlock:(PNClientChannelSubscriptionHandlerBlock)callbackBlock;
 - (void)removeClientChannelSubscriptionStateObserver:(id)observer;
-
-- (void)addClientChannelUnsubscriptionObserver:(id)observer 
+- (void)addClientChannelUnsubscriptionObserver:(id)observer
                              withCallbackBlock:(PNClientChannelUnsubscriptionHandlerBlock)callbackBlock;
 - (void)removeClientChannelUnsubscriptionObserver:(id)observer;
 
 - (void)addClientPresenceEnablingObserver:(id)observer withCallbackBlock:(PNClientPresenceEnableHandlingBlock)handlerBlock;
 - (void)removeClientPresenceEnablingObserver:(id)observer;
-- (void)addClientPresenceDisablingObserver:(id)observer 
-                         withCallbackBlock:(PNClientPresenceDisableHandlingBlock)handlerBlock;
+- (void)addClientPresenceDisablingObserver:(id)observer withCallbackBlock:(PNClientPresenceDisableHandlingBlock)handlerBlock;
 - (void)removeClientPresenceDisablingObserver:(id)observer;
 
 - (void)addClientPushNotificationsEnableObserver:(id)observer
@@ -2820,13 +3040,14 @@ This is the set of methods which can be used to handle events:
                                 withCallbackBlock:(PNClientPushNotificationsDisableHandlingBlock)handlerBlock;
 - (void)removeClientPushNotificationsDisableObserver:(id)observer;
 - (void)addClientPushNotificationsEnabledChannelsObserver:(id)observer
-                                      withCallbackBlock:(PNClientPushNotificationsEnabledChannelsHandlingBlock)handlerBlock;
+                                        withCallbackBlock:(PNClientPushNotificationsEnabledChannelsHandlingBlock)handlerBlock;
 - (void)removeClientPushNotificationsEnabledChannelsObserver:(id)observer;
 - (void)addClientPushNotificationsRemoveObserver:(id)observer
                                withCallbackBlock:(PNClientPushNotificationsRemoveHandlingBlock)handlerBlock;
 - (void)removeClientPushNotificationsRemoveObserver:(id)observer;
 
-- (void)addTimeTokenReceivingObserver:(id)observer withCallbackBlock:(PNClientTimeTokenReceivingCompleteBlock)callbackBlock;
+- (void)addTimeTokenReceivingObserver:(id)observer
+                    withCallbackBlock:(PNClientTimeTokenReceivingCompleteBlock)callbackBlock;
 - (void)removeTimeTokenReceivingObserver:(id)observer;
 
 - (void)addMessageProcessingObserver:(id)observer withBlock:(PNClientMessageProcessingBlock)handleBlock;
@@ -2848,15 +3069,19 @@ This is the set of methods which can be used to handle events:
 
 - (void)addChannelParticipantsListProcessingObserver:(id)observer withBlock:(PNClientParticipantsHandlingBlock)handleBlock;
 - (void)removeChannelParticipantsListProcessingObserver:(id)observer;
+- (void)addClientParticipantChannelsListDownloadObserver:(id)observer
+                                                 withBlock:(PNClientParticipantChannelsHandlingBlock)handleBlock;
+- (void)removeClientParticipantChannelsListDownloadObserver:(id)observer;
 ```
 
+<a name="event-handling-with-notifications" />
 ### Notifications
 
-The client also triggers notifications with custom user information, so from any place in your application you can listen for notifications and perform appropriate actions.
-
+The client also triggers notifications with custom user information, so from any place in your application you can listen for notifications and perform appropriate actions.  
 A full list of notifications are stored in [__PNNotifications.h__](PubNub/PubNub/PubNub/Misc/PNNotifications.h) along with their description, their parameters, and how to handle them.  
 
-### Logging
+<a name="logger" />
+## Logging
 
 You can use logging system provided by PubNub for you using [__PNLogger__](PubNub/PubNub/PubNub/Misc/PNLogger.h) singleton instance. You can use logger for your own need and also logger output is used by PubNub support team to help you resolve any possible issues which may occur.  
 [__PNMacro.h__](PubNub/PubNub/PubNub/Misc/PNMacro.h#L44) contains defines for initial [__PNLogger__](PubNub/PubNub/PubNub/Misc/PNLogger.h) configuration:  
@@ -2912,23 +3137,9 @@ PNLogCommunicationChannelLayerWarnLevel = 1 << 9,
 PNLogCommunicationChannelLayerInfoLevel = 1 << 10
 ```
 
-To log out message for any of provided levels you can use corresponding methods:  
+To log out message with general level you can use corresponding method:  
 ```objc
 + (void)logGeneralMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logDelegateMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logReachabilityMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logDeserializerInfoMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logDeserializerErrorMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logConnectionErrorMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logConnectionInfoMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logCommunicationChannelErrorMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logCommunicationChannelWarnMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-+ (void)logCommunicationChannelInfoMessageFrom:(id)sender message:(NSString *(^)(void))messageBlock;
-```
-
-Or use method which allow you manually specify logging levels (not shorthand):  
-```objc
-+ (void)logFrom:(id)sender forLevel:(PNLogLevel)level message:(NSString *(^)(void))messageBlock;
 ```
 
 Here is how we can log out simple hello world message:  
@@ -2949,16 +3160,17 @@ Sometimes there is situations when dump of HTTP packets maybe required to resolv
 
 You can use a utility such as [iExplorer](http://www.macroplant.com/iexplorer/) to easily pull the _pubnub-console-dump.txt_ file off your device for later review.  
 
-### Tests with OCUnit and OCMock
+<a name="tests" />
+## Tests with OCUnit and OCMock
 
 Unit-tests integrated in XCode allow the developer to easily start them anytime during development. 
 
-#### Running
+### Running
 
 1. Choose pubnubTests from Product -> Scheme
 2. Run -> Test or Product -> Test or CMD+U
 
-#### Configuring
+### Configuring
 
 Unit-tests for each class are grouped by class. To configure the test scheme further:
 
